@@ -24,7 +24,7 @@ return new class extends Migration
       $table->decimal('total_amount', 15, 2); // Tổng tiền đơn hàng (đã bao gồm thuế)
       $table->decimal('discount_amount', 15, 2)->default(0); // Số tiền giảm giá (nếu có)
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete();
-      $table->string('voucher_code')->unique(); // Mã đơn hàng
+      $table->string('voucher_code')->nullable()->unique(); // Mã đơn hàng
       $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending'); // Trạng thái thanh toán
       $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng
       $table->string('notes')->nullable(); // Ghi chú
