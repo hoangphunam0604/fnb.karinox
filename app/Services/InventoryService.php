@@ -86,6 +86,12 @@ class InventoryService
           'product_id'     => $item['product_id'],
           'quantity'       => $item['quantity']
         ]);
+        // Nếu có topping, cập nhật tồn kho cho topping
+        if (!empty($item['toppings'])) {
+          foreach ($item['toppings'] as $topping) {
+            $this->updateStock($branchId, $topping['product_id'], $topping['quantity'], $transactionType);
+          }
+        }
       }
 
       return $transaction;
@@ -127,42 +133,10 @@ class InventoryService
       }
     }
 
-    // Cập nhật topping và nguyên liệu nếu có
-    $this->updateToppingStock($branchId, $productId, $quantity, $transactionType);
+    // Cập nhật nguyên liệu nếu có
     $this->updateIngredientStock($branchId, $productId, $quantity, $transactionType);
   }
 
-  /**
-   * Cập nhật tồn kho topping
-   */
-  private function updateToppingStock($branchId, $productId, $quantity, $transactionType)
-  {
-    $toppings = ProductTopping::where('product_id', $productId)->get();
-
-    foreach ($toppings as $topping) {
-      $toppingBranch = ProductBranch::where('branch_id', $branchId)
-        ->where('product_id', $topping->topping_id)
-        ->first();
-
-      if ($toppingBranch) {
-        switch ($transactionType) {
-          case 'sale':
-          case 'export':
-          case 'transfer_out':
-            $toppingBranch->stock_quantity -= $quantity * $topping->quantity;
-            break;
-          case 'return':
-          case 'transfer_in':
-            $toppingBranch->stock_quantity += $quantity * $topping->quantity;
-            break;
-          case 'stocktaking':
-            $toppingBranch->stock_quantity = $quantity * $topping->quantity;
-            break;
-        }
-        $toppingBranch->save();
-      }
-    }
-  }
 
   /**
    * Cập nhật tồn kho nguyên liệu
