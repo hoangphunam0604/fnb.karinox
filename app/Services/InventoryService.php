@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InventoryTransaction;
 use App\Models\InventoryTransactionItem;
+use App\Models\Product;
 use App\Models\ProductBranch;
 use App\Models\ProductTopping;
 use App\Models\ProductFormula;
@@ -68,7 +69,7 @@ class InventoryService
    */
   private function processTransaction($branchId, $transactionType, $items, $note = null, $referenceId = null, $destination_branch_id = null)
   {
-    return DB::transaction(function () use ($branchId, $transactionType, $items, $referenceId, $destination_branch_id, $note) {
+    return DB::transaction(function () use ($branchId, $transactionType, $items, $note, $referenceId, $destination_branch_id) {
       $transaction = InventoryTransaction::create([
         'branch_id'       => $branchId,
         'transaction_type' => $transactionType,
@@ -92,7 +93,7 @@ class InventoryService
   }
 
   /**
-   * Cập nhật tồn kho sản phẩm, topping và nguyên liệu
+   * Cập nhật tồn kho sản phẩm, topping, nguyên liệu, xử lý cả combo
    */
   private function updateStock($branchId, $productId, $quantity, $transactionType)
   {
@@ -106,19 +107,25 @@ class InventoryService
       case 'transfer_in':
         $productBranch->stock_quantity += $quantity;
         break;
-
       case 'export':
       case 'sale':
       case 'transfer_out':
         $productBranch->stock_quantity -= $quantity;
         break;
-
       case 'stocktaking':
         $productBranch->stock_quantity = $quantity;
         break;
     }
-
     $productBranch->save();
+
+    // Kiểm tra nếu sản phẩm là combo, xử lý các sản phẩm thành phần
+    $product = Product::find($productId);
+    if ($product && $product->product_type === 'combo') {
+      $comboItems = ProductFormula::where('product_id', $productId)->get();
+      foreach ($comboItems as $item) {
+        $this->updateStock($branchId, $item->ingredient_id, $quantity * $item->quantity, $transactionType);
+      }
+    }
 
     // Cập nhật topping và nguyên liệu nếu có
     $this->updateToppingStock($branchId, $productId, $quantity, $transactionType);
