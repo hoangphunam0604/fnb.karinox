@@ -15,10 +15,10 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->timestamp('ordered_at')->useCurrent(); // Thời gian đặt hàng
-      $table->foreignId('creator_id')->constrained('users')->nullOnDelete(); // Người tạo đơn
+      $table->foreignId('creator_id')->nullable()->constrained('users')->nullOnDelete(); // Người tạo đơn
       $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete(); // Người nhận đơn
-      $table->foreignId('branch_id')->constrained()->nullOnDelete(); // Chi nhánh thực hiện đơn hàng
-      $table->foreignId('table_id')->nullable()->constrained('tables_and_rooms')->nullOnDelete(); // Bàn / Phòng
+      $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Chi nhánh thực hiện đơn hàng
+      $table->foreignId('table_id')->nullable()->constrained('table_and_rooms')->nullOnDelete(); // Bàn / Phòng
       $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete(); // Khách hàng (nếu có)
       $table->string('order_code')->unique(); // Mã đơn hàng
       $table->decimal('total_amount', 15, 2); // Tổng tiền đơn hàng (đã bao gồm thuế)

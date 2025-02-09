@@ -6,25 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('areas', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-            $table->string('name')->unique();
-            $table->string('notes')->nullable();
-            $table->foreignId('branch_id')->constrained()->nullOnDelete(); 
-        });
-    }
+  /**
+   * Run the migrations.
+   */
+  public function up(): void
+  {
+    Schema::create('areas', function (Blueprint $table) {
+      $table->id();
+      $table->timestamps();
+      $table->string('name')->unique();
+      $table->string('notes')->nullable();
+      $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
+    });
+  }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('areas');
-    }
+  /**
+   * Reverse the migrations.
+   */
+  public function down(): void
+  {
+    Schema::dropIfExists('areas');
+  }
 };

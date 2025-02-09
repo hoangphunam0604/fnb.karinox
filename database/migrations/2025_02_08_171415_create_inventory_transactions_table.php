@@ -25,7 +25,7 @@ return new class extends Migration
        * stocktaking - Điều chỉnh tồn kho dựa trên kết quả kiểm kho.
        */
       $table->enum('transaction_type', ['import', 'export', 'sale', 'return', 'transfer_out', 'transfer_in', 'stocktaking']);
-      $table->foreignId('branch_id')->constrained()->nullOnDelete(); // Chi nhánh thực hiện giao dịch
+      $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Chi nhánh thực hiện giao dịch
       $table->foreignId('destination_branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Dành cho chuyển kho
       $table->foreignId('reference_id')->nullable(); // Liên kết đến orders, invoices, inventory_transactions...
       $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // Người thực hiện giao dịch

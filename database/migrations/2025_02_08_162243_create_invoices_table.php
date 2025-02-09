@@ -14,7 +14,7 @@ return new class extends Migration
     Schema::create('invoices', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
-      $table->foreignId('order_id')->constrained()->nullOnDelete();
+      $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
       $table->decimal('total_amount', 15, 2); //Tổng số tiền khách cần thanh toán.
       $table->decimal('paid_amount', 15, 2); //Số tiền thực tế khách đã trả.
       $table->decimal('change_amount', 15, 2)->default(0); //Tiền thừa trả lại cho khách (mặc định = 0).
@@ -22,6 +22,15 @@ return new class extends Migration
       $table->string('payment_method'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->string('status')->default('paid'); // Trạng thái của hóa đơn (paid, refunded, pending, v.v.).
       $table->text('note')->nullable(); //Ghi chú thêm về hóa đơn.
+
+      // Liên kết với khách hàng (có thể null nếu khách vãng lai)
+      $table->foreignId('customer_id')->nullable()->constrained()->onDelete('set null');
+      $table->string('loyalty_card_number')->nullable(); // Mã thẻ khách hàng thân thiết (nếu có)
+      // Thông tin khách hàng tại thời điểm lập hóa đơn
+      $table->string('customer_name')->nullable(); // Tên khách hàng
+      $table->string('customer_phone')->nullable(); // Số điện thoại khách hàng
+      $table->string('customer_email')->nullable(); // Email khách hàng
+      $table->string('customer_address')->nullable(); // Địa chỉ khách hàng
     });
   }
 

@@ -17,6 +17,12 @@ class Invoice extends Model
     'payment_method',
     'status',
     'note',
+    'customer_id',
+    'loyalty_card_number',
+    'customer_name',
+    'customer_phone',
+    'customer_email',
+    'customer_address',
   ];
 
   public function order()
