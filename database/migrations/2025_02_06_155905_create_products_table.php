@@ -23,7 +23,7 @@ return new class extends Migration
       $table->text('description')->nullable();
       $table->decimal('cost_price', 10, 2)->default(0);
       $table->decimal('price', 10, 2)->nullable();
-      $table->string('unit', 50);
+      $table->string('unit', 50)->nullable();
       $table->boolean('allows_sale')->default(true);
       $table->boolean('is_reward_point')->default(true);
       $table->boolean('has_toppings')->default(false);

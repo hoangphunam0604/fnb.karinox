@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('invoices', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
       $table->decimal('total_amount', 15, 2); //Tổng số tiền khách cần thanh toán.
       $table->decimal('paid_amount', 15, 2); //Số tiền thực tế khách đã trả.
