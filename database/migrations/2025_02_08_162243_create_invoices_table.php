@@ -14,14 +14,17 @@ return new class extends Migration
     Schema::create('invoices', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->string('code')->unique(); // Mã hóa đơn
       $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
       $table->decimal('total_amount', 15, 2); //Tổng số tiền khách cần thanh toán.
       $table->decimal('paid_amount', 15, 2); //Số tiền thực tế khách đã trả.
       $table->decimal('change_amount', 15, 2)->default(0); //Tiền thừa trả lại cho khách (mặc định = 0).
+      $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); //Nếu khách hàng dùng mã giảm giá, liên kết với bảng vouchers.
+      $table->enum('invoice_status', ['pending', 'canceled', 'completed'])->default('pending'); // Trạng thái hóa đơn
+      $table->enum('payment_status', ['unpaid', 'partial', 'paid', 'refunded'])->default('unpaid'); // Trạng thái thanh toán
       $table->string('payment_method'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
-      $table->string('status')->default('paid'); // Trạng thái của hóa đơn (paid, refunded, pending, v.v.).
       $table->text('note')->nullable(); //Ghi chú thêm về hóa đơn.
 
       // Liên kết với khách hàng (có thể null nếu khách vãng lai)

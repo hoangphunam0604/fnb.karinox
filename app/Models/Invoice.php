@@ -15,8 +15,9 @@ class Invoice extends Model
     'paid_amount',
     'change_amount',
     'voucher_id',
+    'invoice_status',
+    'payment_status',
     'payment_method',
-    'status',
     'note',
     'customer_id',
     'loyalty_card_number',
@@ -34,5 +35,40 @@ class Invoice extends Model
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault();
+  }
+
+  /**
+   * Mối quan hệ với khách hàng
+   */
+  public function customer()
+  {
+    return $this->belongsTo(Customer::class);
+  }
+
+  /**
+   * Kiểm tra hóa đơn đã thanh toán đầy đủ chưa
+   */
+  public function isPaid()
+  {
+    return $this->payment_status === 'paid';
+  }
+
+  /**
+   * Kiểm tra hóa đơn đã hoàn tất chưa
+   */
+  public function isCompleted()
+  {
+    return $this->invoice_status === 'completed';
+  }
+
+  /**
+   * Đánh dấu hóa đơn là hoàn tất nếu đã thanh toán đầy đủ
+   */
+  public function markAsCompleted()
+  {
+    if ($this->isPaid()) {
+      $this->invoice_status = 'completed';
+      $this->save();
+    }
   }
 }

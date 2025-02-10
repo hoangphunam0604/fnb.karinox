@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->string('name')->unique();
-      $table->string('notes')->nullable();
+      $table->string('note')->nullable();
       $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
     });
   }

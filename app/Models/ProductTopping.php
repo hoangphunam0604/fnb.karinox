@@ -11,8 +11,7 @@ class ProductTopping extends Model
 
   protected $fillable = [
     'product_id',
-    'topping_product_id',
-    'quantity', // Số lượng topping cho sản phẩm
+    'topping_id',
   ];
 
 
@@ -23,6 +22,6 @@ class ProductTopping extends Model
 
   public function toppingProduct()
   {
-    return $this->belongsTo(Product::class, 'topping_product_id');
+    return $this->belongsTo(Product::class, 'topping_id');
   }
 }

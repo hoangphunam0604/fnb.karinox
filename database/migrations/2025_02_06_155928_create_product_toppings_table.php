@@ -16,7 +16,6 @@ return new class extends Migration
       $table->timestamps();
       $table->foreignId('product_id')->constrained()->onDelete('cascade');
       $table->foreignId('topping_id')->constrained('products')->onDelete('cascade');
-      $table->decimal('extra_price', 10, 2)->default(0);
     });
   }
 

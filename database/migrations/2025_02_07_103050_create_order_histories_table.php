@@ -18,7 +18,7 @@ return new class extends Migration
       $table->foreignId('order_id')->constrained()->onDelete('cascade'); // Đơn hàng
       $table->string('old_status')->nullable(); // Trạng thái cũ
       $table->string('new_status'); // Trạng thái mới
-      $table->text('notes')->nullable(); // Ghi chú về thay đổi
+      $table->text('note')->nullable(); // Ghi chú về thay đổi
     });
   }
 

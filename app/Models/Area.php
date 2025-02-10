@@ -7,19 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Area extends Model
 {
-    use HasFactory;
+  use HasFactory;
 
-    protected $fillable = ['name', 'branch_id', 'notes'];
+  protected $fillable = ['name', 'branch_id', 'note'];
 
-    
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
 
-    public function tablesAndRooms()
-    {
-        return $this->hasMany(TableAndRoom::class, 'area_id');
-    }
+  public function branch()
+  {
+    return $this->belongsTo(Branch::class);
+  }
 
+  public function tablesAndRooms()
+  {
+    return $this->hasMany(TableAndRoom::class, 'area_id');
+  }
 }

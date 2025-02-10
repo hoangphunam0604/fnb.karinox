@@ -14,7 +14,7 @@ class OrderHistory extends Model
     'old_status',
     'new_status',
     'user_id',
-    'notes'
+    'note'
   ];
 
   public function order()

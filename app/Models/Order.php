@@ -11,25 +11,29 @@ class Order extends Model
   use HasFactory;
 
   protected $fillable = [
+    'order_code',
     'ordered_at',
     'creator_id',
     'receiver_id',
+    'customer_id',
     'branch_id',
     'table_id',
-    'customer_id',
-    'order_code',
-    'total_amount',
+    'total_price',
     'discount_amount',
     'voucher_id',
     'voucher_code',
-    'payment_status',
     'status',
-    'notes',
+    'payment_status',
+    'note',
   ];
 
   protected static function boot()
   {
     parent::boot();
+
+    static::creating(function ($order) {
+      $order->order_code = self::generateOrderCode($order->branch_id);
+    });
 
     static::updating(function ($order) {
       if ($order->isDirty('status')) {
@@ -38,10 +42,21 @@ class Order extends Model
           'old_status' => $order->getOriginal('status'),
           'new_status' => $order->status,
           'user_id'    => Auth::id(),
-          'notes'      => 'Trạng thái đơn hàng được cập nhật.'
+          'note'      => 'Cập nhật trạng thái đơn hàng.'
         ]);
       }
     });
+  }
+  public static function generateOrderCode($branchId)
+  {
+    $latestOrder = self::whereDate('created_at', now()->toDateString())
+      ->where('branch_id', $branchId)
+      ->orderBy('id', 'desc')
+      ->first();
+
+    $increment = $latestOrder ? ((int) substr($latestOrder->order_code, -4)) + 1 : 1;
+
+    return sprintf("ORD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
   }
 
   public function receiver()
@@ -69,8 +84,37 @@ class Order extends Model
     return $this->hasMany(OrderHistory::class);
   }
 
+  public function items()
+  {
+    return $this->hasMany(OrderHistory::class);
+  }
+
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault([]);
+  }
+
+  /**
+   * Kiểm tra đơn hàng đã hoàn tất chưa
+   */
+  public function isCompleted()
+  {
+    return $this->status === 'completed';
+  }
+
+  /**
+   * Kiểm tra đơn hàng đã thanh toán chưa
+   */
+  public function isPaid()
+  {
+    return $this->payment_status === 'paid';
+  }
+
+  /**
+   * Kiểm tra đơn hàng có đang nợ không
+   */
+  public function isUnpaid()
+  {
+    return in_array($this->payment_status, ['unpaid', 'partial']);
   }
 }

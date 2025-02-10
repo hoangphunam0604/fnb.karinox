@@ -8,12 +8,37 @@ use Illuminate\Database\Eloquent\Model;
 class TableAndRoom extends Model
 {
   use HasFactory;
-  protected $fillable = ['name', 'area_id', 'capacity', 'notes', 'is_active'];
+
+  protected $table = 'tables_and_rooms';
+
+  protected $fillable = ['name', 'area_id', 'capacity', 'note', 'status'];
+
+  protected $casts = [
+    'capacity' => 'integer',
+    'status' => 'string',
+  ];
+
 
   public function area()
   {
     return $this->belongsTo(Area::class)->withDefault([
       'name' => 'Không có khu vực'
     ]);
+  }
+
+  /**
+   * Scope tìm kiếm phòng/bàn theo trạng thái
+   */
+  public function scopeByStatus($query, $status)
+  {
+    return $query->where('status', $status);
+  }
+
+  /**
+   * Kiểm tra phòng/bàn có sẵn không
+   */
+  public function isAvailable()
+  {
+    return $this->status === 'available';
   }
 }

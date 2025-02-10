@@ -5,32 +5,31 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderDetail extends Model
+class OrderItem extends Model
 {
   use HasFactory;
 
   protected $fillable = [
     'order_id',
     'product_id',
-    'product_name',
     'quantity',
     'unit_price',
-    'total_price',
+    'total_price'
   ];
 
   /**
-   * Quan hệ với Order
+   * Mối quan hệ với đơn hàng
    */
   public function order()
   {
-    return $this->belongsTo(Order::class)->withDefault();
+    return $this->belongsTo(Order::class);
   }
 
   /**
-   * Quan hệ với Product
+   * Mối quan hệ với topping
    */
-  public function product()
+  public function toppings()
   {
-    return $this->belongsTo(Product::class)->withDefault();
+    return $this->hasMany(OrderTopping::class);
   }
 }

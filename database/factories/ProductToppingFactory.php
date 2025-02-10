@@ -15,7 +15,6 @@ class ProductToppingFactory extends Factory
     return [
       'product_id' => Product::factory(), // Sản phẩm chính
       'topping_id' => Product::factory(), // Topping là một sản phẩm khác
-      'quantity' => $this->faker->numberBetween(1, 3), // Số lượng topping (1-3)
     ];
   }
 }

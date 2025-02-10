@@ -11,14 +11,20 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('table_and_rooms', function (Blueprint $table) {
+    Schema::create('tables_and_rooms', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
       $table->foreignId('area_id')->nullable()->constrained()->nullOnDelete();
       $table->string('name');
       $table->integer('capacity')->default(0);
-      $table->text('notes')->nullable();
-      $table->boolean('is_active')->default(true);
+      $table->text('note')->nullable();
+      /**
+       * available → Còn trống, sẵn sàng sử dụng.
+       * occupied → Đang có khách sử dụng.
+       * reserved → Đã đặt trước.
+       * maintenance → Đang bảo trì.
+       */
+      $table->enum('status', ['available', 'occupied', 'reserved', 'maintenance'])->default('available'); // Trạng thái phòng/bàn
     });
   }
 
@@ -27,6 +33,6 @@ return new class extends Migration
    */
   public function down(): void
   {
-    Schema::dropIfExists('table_and_rooms');
+    Schema::dropIfExists('tables_and_rooms');
   }
 };
