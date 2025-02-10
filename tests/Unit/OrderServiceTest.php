@@ -136,13 +136,13 @@ class OrderServiceTest extends TestCase
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping1->id,
-      'price' => $topping1->price,
+      'unit_price' => $topping1->price,
     ]);
 
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping2->id,
-      'price' => $topping2->price,
+      'unit_price' => $topping2->price,
     ]);
   }
 
@@ -293,7 +293,102 @@ class OrderServiceTest extends TestCase
     // Kiểm tra topping mới đã được thêm
     $this->assertDatabaseHas('order_toppings', [
       'topping_id' => $topping3->id,
-      'price' => $topping3->price,
+      'unit_price' => $topping3->price,
+    ]);
+  }
+
+  public function test_order_history_is_recorded_when_status_changes()
+  {
+    $order = Order::factory()->create(['status' => 'pending']);
+
+    // Cập nhật trạng thái đơn hàng
+    $this->orderService->updateOrderStatus($order->id, 'confirmed');
+
+    // Kiểm tra lịch sử thay đổi trạng thái
+    $this->assertDatabaseHas('order_histories', [
+      'order_id' => $order->id,
+      'old_status' => 'pending',
+      'new_status' => 'confirmed',
+      'note'      => 'Cập nhật trạng thái đơn hàng.'
+    ]);
+  }
+
+  public function test_mark_order_as_completed_creates_invoice_with_items_and_toppings()
+  {
+
+    // Tạo sản phẩm chính
+    $product = Product::factory()->create(['price' => 50000]);
+
+    // Tạo topping và gán vào sản phẩm chính
+    $topping = Product::factory()->create(['price' => 10000]);
+
+    // Gán toppings vào sản phẩm chính thông qua ProductService
+    $this->productService->updateProduct($product->id, [
+      'toppings' => [$topping->id]
+    ]);
+
+    $dataOrderItems = [
+      [
+        'product_id' => $product->id,
+        'quantity' => 2,
+        'toppings' => [
+          $topping->id
+        ]
+      ]
+    ];
+
+    // Tạo đơn hàng với sản phẩm và topping ban đầu
+    $order = Order::factory()->create(['status' => 'confirmed']);
+    $order = $this->orderService->updateOrder($order->id, [
+      'items' => $dataOrderItems
+    ]);
+    $paymentMethod = 'momo';
+    $paidAmount = 100000;
+    $total_amount = ($product->price + $topping->price) * 2;
+    // Hoàn tất đơn hàng
+    $this->orderService->markAsCompleted($order->id, $paymentMethod, $paidAmount);
+
+    // Kiểm tra trạng thái đơn hàng đã chuyển sang `completed`
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'status' => 'completed',
+    ]);
+
+    // Kiểm tra hóa đơn đã được tạo
+    $invoice = \App\Models\Invoice::where('order_id', $order->id)->first();
+    $this->assertNotNull($invoice);
+    $this->assertEquals('pending', $invoice->invoice_status);
+
+    // Kiểm tra hoá đơn
+    $this->assertDatabaseHas('invoices', [
+      'order_id' => $order->id,
+      'customer_id' => $order->customer_id,
+      'branch_id' => $order->branch_id,
+      'discount_amount' => $order->discount_amount,
+      'paid_amount' => $paidAmount,
+      'payment_method'  =>  $paymentMethod,
+      'note' => $order->note,
+      'total_amount' => $total_amount,
+    ]);
+
+    // Kiểm tra sản phẩm có trong hóa đơn
+    $this->assertDatabaseHas('invoice_items', [
+      'invoice_id' => $invoice->id,
+      'product_id' => $product->id,
+      'quantity' => 2,
+      'unit_price' => $product->price,
+      'total_price' => $product->price * 2,
+      'total_price_with_topping' => $total_amount
+    ]);
+
+    // Kiểm tra topping có trong hóa đơn
+    $invoiceItem = \App\Models\InvoiceItem::where('invoice_id', $invoice->id)->first();
+    $this->assertNotNull($invoiceItem);
+
+    $this->assertDatabaseHas('invoice_toppings', [
+      'invoice_item_id' => $invoiceItem->id,
+      'topping_id' => $topping->id,
+      'unit_price' => $topping->price,
     ]);
   }
 }

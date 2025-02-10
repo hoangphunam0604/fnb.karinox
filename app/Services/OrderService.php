@@ -108,7 +108,7 @@ class OrderService
       OrderTopping::create([
         'order_item_id' => $orderItem->id,
         'topping_id' => $toppingId,
-        'price' => $toppingPrice,
+        'unit_price' => $toppingPrice,
       ]);
     }
   }
@@ -163,16 +163,14 @@ class OrderService
   /**
    * Hoàn tất đơn hàng
    */
-  public function markAsCompleted($orderId)
+  public function markAsCompleted($orderId, $paymentMethod = 'cash', $paidAmount = 0)
   {
-    return DB::transaction(function () use ($orderId) {
-      $order = Order::findOrFail($orderId);
-      $order->status = 'completed';
-      $order->save();
+    return DB::transaction(function () use ($orderId, $paymentMethod, $paidAmount) {
+      $order = $this->updateOrderStatus($orderId, 'completed');
 
       // Gọi `InvoiceService` để tạo hóa đơn
       $invoiceService = new InvoiceService();
-      $invoiceService->createInvoiceFromOrder($orderId);
+      $invoiceService->createInvoiceFromOrder($orderId, $paymentMethod, $paidAmount);
 
       return $order;
     });
@@ -181,7 +179,7 @@ class OrderService
   /**
    * Cập nhật trạng thái đơn hàng
    */
-  private function updateOrderStatus($orderId, $status)
+  public function updateOrderStatus($orderId, $status)
   {
     $order = Order::findOrFail($orderId);
     $order->status = $status;

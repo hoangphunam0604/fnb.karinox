@@ -26,6 +26,30 @@ class Invoice extends Model
     'customer_email',
     'customer_address',
   ];
+  protected static function boot()
+  {
+    parent::boot();
+
+    static::creating(function ($invoice) {
+      $invoice->code = self::generateInvoiceCode($invoice->branch_id);
+    });
+  }
+
+  public static function generateInvoiceCode($branchId)
+  {
+    $latestOrder = self::whereDate('created_at', now()->toDateString())
+      ->where('branch_id', $branchId)
+      ->orderBy('id', 'desc')
+      ->first();
+
+    $increment = $latestOrder ? ((int) substr($latestOrder->order_code, -4)) + 1 : 1;
+
+    return sprintf("HD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
+  }
+  public function items()
+  {
+    return $this->hasMany(InvoiceItem::class);
+  }
 
   public function order()
   {

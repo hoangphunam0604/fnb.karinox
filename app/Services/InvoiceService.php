@@ -15,9 +15,9 @@ class InvoiceService
   /**
    * Tạo hóa đơn từ đơn hàng
    */
-  public function createInvoiceFromOrder($orderId)
+  public function createInvoiceFromOrder($orderId, $paymentMethod = 'cash', $paidAmount = 0)
   {
-    return DB::transaction(function () use ($orderId) {
+    return DB::transaction(function () use ($orderId, $paymentMethod, $paidAmount) {
       $order = Order::findOrFail($orderId);
 
       if ($order->status !== 'completed') {
@@ -26,18 +26,23 @@ class InvoiceService
 
       // Tạo hóa đơn
       $invoice = Invoice::create([
-        'code' => strtoupper(uniqid('INV')),
         'order_id' => $order->id,
         'customer_id' => $order->customer_id,
         'branch_id' => $order->branch_id,
-        'total_price' => 0, // Sẽ được cập nhật sau
         'discount_amount' => $order->discount_amount,
+        'paid_amount' => $paidAmount,
         'status' => 'unpaid',
+        'payment_method'  =>  $paymentMethod,
         'note' => $order->note,
       ]);
 
+      //Tải items và toppings
+      $order->loadMissing(['items', 'items.toppings']);
+
       // Sao chép sản phẩm từ đơn hàng
       $this->copyOrderItemsToInvoice($order, $invoice);
+
+      $invoice->refresh();
 
       // Cập nhật tổng tiền hóa đơn
       $this->updateInvoiceTotal($invoice);
@@ -54,6 +59,7 @@ class InvoiceService
         'product_id' => $orderItem->product_id,
         'quantity' => $orderItem->quantity,
         'unit_price' => $orderItem->unit_price,
+        'total_price' => $orderItem->unit_price * $orderItem->quantity,
       ]);
 
       $this->copyOrderToppingsToInvoice($orderItem, $invoiceItem);
@@ -77,19 +83,20 @@ class InvoiceService
   private function updateInvoiceTotal(Invoice $invoice)
   {
     $total = 0;
-
     foreach ($invoice->items as $invoiceItem) {
       // Tổng tiền sản phẩm
       $productTotal = $invoiceItem->unit_price * $invoiceItem->quantity;
 
       // Tổng tiền topping
-      $toppingTotal = $invoiceItem->toppings->sum(fn($t) => $t->unit_price * $invoiceItem->quantity);
+      $toppingTotal = $invoiceItem->toppings?->sum(fn($t) => $t->unit_price * $invoiceItem->quantity) ?? 0;
 
       $total += ($productTotal + $toppingTotal);
+      $invoiceItem->total_price_with_topping = ($productTotal + $toppingTotal);
+      $invoiceItem->save();
     }
 
     // Trừ giảm giá nếu có
-    $invoice->total_price = max($total - $invoice->discount_amount, 0);
+    $invoice->total_amount = max($total - $invoice->discount_amount, 0);
     $invoice->save();
   }
 

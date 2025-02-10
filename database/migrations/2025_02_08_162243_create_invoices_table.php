@@ -17,8 +17,8 @@ return new class extends Migration
       $table->string('code')->unique(); // Mã hóa đơn
       $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
-      $table->decimal('total_amount', 15, 2); //Tổng số tiền khách cần thanh toán.
-      $table->decimal('paid_amount', 15, 2); //Số tiền thực tế khách đã trả.
+      $table->decimal('total_amount', 15, 2)->default(0); //Tổng số tiền khách cần thanh toán.
+      $table->decimal('paid_amount', 15, 2)->default(0); //Số tiền thực tế khách đã trả.
       $table->decimal('change_amount', 15, 2)->default(0); //Tiền thừa trả lại cho khách (mặc định = 0).
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); //Nếu khách hàng dùng mã giảm giá, liên kết với bảng vouchers.
