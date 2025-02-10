@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Order;
 use App\Models\Customer;
@@ -21,8 +22,8 @@ class OrderFactory extends Factory
   {
     return [
       'customer_id' => Customer::factory(),
-      'branch_id' => $this->faker->numberBetween(1, 5),
-      'status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'canceled']),
+      'branch_id' => Branch::factory(),
+      'status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'note' => $this->faker->sentence(),
     ];
   }

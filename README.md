@@ -4,6 +4,12 @@
 
 ## Cài đặt
 
+## Test
+
+```sh
+php artisan migrate:fresh --env=testing
+```
+
 ## Phân tích hệ thống
 
 ### **Tổng hợp các bảng dữ liệu quan trọng của hệ thống bán hàng quán cà phê**
@@ -12,6 +18,12 @@
 
 -   ~~**`shelves`**: Lưu danh sách kệ sản phẩm để tái sử dụng.~~
 -   ~~**`product_shelves`**: Lưu thông tin kệ sản phẩm để tái sử dụng.~~
+
+## **Quản lý khách hàng và thành viên**
+
+-   **`customers`**: Lưu thông tin khách hàng.
+
+-   **`customer_points`**: Quản lý điểm thưởng của khách hàng.
 
 ## **1. Quản lý chi nhánh**
 
@@ -62,11 +74,6 @@
 -   **`order_vouchers`**: Lưu thông tin mã giảm giá đã sử dụng trong đơn hàng.
 
 ---
-
-## **7. Quản lý khách hàng và thành viên**
-
--   **`customers`**: Lưu thông tin khách hàng.
--   **`customer_points`**: Quản lý điểm thưởng của khách hàng.
 
 ## Các trường trong từng bảng dữ liệu
 

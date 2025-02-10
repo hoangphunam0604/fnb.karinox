@@ -86,7 +86,7 @@ class Order extends Model
 
   public function items()
   {
-    return $this->hasMany(OrderHistory::class);
+    return $this->hasMany(OrderItem::class);
   }
 
   public function voucher()

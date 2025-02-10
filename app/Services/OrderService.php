@@ -11,38 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-  /**
-   * Tạo hoặc cập nhật đơn đặt hàng
-   */
-  public function saveOrder(array $data, $orderId = null)
-  {
-    return DB::transaction(function () use ($data, $orderId) {
-      $order = $orderId ? Order::findOrFail($orderId) : new Order();
-
-      $order->fill([
-        'code' => $data['code'] ?? $order->code ?? strtoupper(uniqid('ORD')),
-        'customer_id' => $data['customer_id'] ?? $order->customer_id,
-        'branch_id' => $data['branch_id'] ?? $order->branch_id,
-        'status' => $data['status'] ?? 'pending',
-        'payment_status' => $data['payment_status'] ?? 'pending',
-        'table_id' => $data['table_id'] ?? $order->table_id,
-        'note' => $data['note'] ?? $order->note,
-      ]);
-
-      $order->save();
-
-      // Cập nhật danh sách sản phẩm trong đơn hàng
-      if (!empty($data['items'])) {
-        $this->updateOrderItems($order, $data['items']);
-      }
-
-      // Cập nhật tổng tiền đơn hàng
-      $order->total_price = $this->calculateOrderTotal($order);
-      $order->save();
-
-      return $order;
-    });
-  }
 
   /**
    *Tạo đơn đặt hàng
@@ -59,6 +27,44 @@ class OrderService
   {
     return $this->saveOrder($data, $orderId);
   }
+  /**
+   * Tạo hoặc cập nhật đơn đặt hàng
+   */
+  public function saveOrder(array $data, $orderId = null)
+  {
+    return DB::transaction(function () use ($data, $orderId) {
+      $order = $orderId ? Order::findOrFail($orderId) : new Order();
+
+      $order->fill([
+        'code' => $data['code'] ?? $order->code,
+        'customer_id' => $data['customer_id'] ?? $order->customer_id,
+        'branch_id' => $data['branch_id'] ?? $order->branch_id,
+        'status' => $data['status'] ?? 'pending',
+        'payment_status' => $data['payment_status'] ?? 'pending',
+        'table_id' => $data['table_id'] ?? $order->table_id,
+        'note' => $data['note'] ?? $order->note,
+      ]);
+
+      $order->save();
+
+      // Cập nhật danh sách sản phẩm trong đơn hàng
+      if (!empty($data['items'])) {
+        $this->updateOrderItems($order, $data['items']);
+      }
+
+      // Làm mới order để lấy danh sách sản phẩm mới cập nhật
+      $order->refresh();
+
+      // Cập nhật tổng tiền đơn hàng
+      $order->total_price = $this->calculateOrderTotal($order);
+
+
+      $order->save();
+
+      return $order;
+    });
+  }
+
 
   /**
    * Cập nhật danh sách sản phẩm trong đơn hàng
@@ -112,8 +118,13 @@ class OrderService
    */
   private function calculateOrderTotal(Order $order)
   {
+    if ($order->items->isEmpty()) {
+      return 0;
+    }
+
     return $order->items->sum(function ($item) {
-      return ($item->unit_price * $item->quantity) + $item->toppings->sum(fn($t) => $t->unit_price);
+      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price) : 0;
+      return ($item->unit_price * $item->quantity) + $toppingTotal;
     });
   }
 

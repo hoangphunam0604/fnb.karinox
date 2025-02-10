@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('customers', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
       $table->string('name'); // Tên khách hàng
       $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
@@ -31,9 +32,7 @@ return new class extends Migration
       $table->string('tax_id')->nullable(); // Mã số thuế công ty
       $table->string('facebook_id')->nullable(); // ID Facebook khách hàng
       $table->string('zalo_id')->nullable(); // ID Zalo khách hàng
-      $table->json('preferences')->nullable(); // Sở thích hoặc tùy chọn khách hàng
-      $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
-      $table->enum('signup_source', ['website', 'mobile_app', 'store'])->nullable(); // Nguồn đăng ký tài khoản
+      $table->string('signup_source')->nullable(); // Nguồn đăng ký tài khoản
       $table->text('note')->nullable(); // Ghi chú nội bộ về khách hàng
     });
   }

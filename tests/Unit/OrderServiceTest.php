@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Services\OrderService;
+use App\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,12 +17,14 @@ class OrderServiceTest extends TestCase
 {
   use RefreshDatabase;
 
+  protected ProductService $productService;
   protected OrderService $orderService;
   protected Branch $branch;
 
   protected function setUp(): void
   {
     parent::setUp();
+    $this->productService = new ProductService();
     $this->orderService = new OrderService();
 
     $this->branch = Branch::factory()->create();
@@ -49,8 +52,8 @@ class OrderServiceTest extends TestCase
       'status' => 'pending',
       'note' => 'Giao hàng nhanh',
       'items' => [
-        ['product_id' => $product1->id, 'quantity' => 2, 'unit_price' => 50000],
-        ['product_id' => $product2->id, 'quantity' => 1, 'unit_price' => 40000],
+        ['product_id' => $product1->id, 'quantity' => 2],
+        ['product_id' => $product2->id, 'quantity' => 1],
       ]
     ];
 
@@ -87,10 +90,13 @@ class OrderServiceTest extends TestCase
   public function test_create_order_with_products_and_toppings()
   {
     $customer = Customer::factory()->create();
+    $topping1 = Product::factory()->create(['price' => 10000]);
+    $topping2 = Product::factory()->create(['price' => 15000]);
     $product = Product::factory()->create(['price' => 50000]);
-    $topping1 = Product::factory()->create(['product_id' => $product->id, 'price' => 10000]);
-    $topping2 = Product::factory()->create(['product_id' => $product->id, 'price' => 15000]);
-    
+    $this->productService->updateProduct($product->id, [
+      'toppings' =>  [$topping1->id, $topping2->id]
+    ]);
+
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
@@ -100,7 +106,6 @@ class OrderServiceTest extends TestCase
         [
           'product_id' => $product->id,
           'quantity' => 2,
-          'unit_price' => 50000,
           'toppings' => [$topping1->id, $topping2->id],
         ]
       ]
@@ -131,13 +136,13 @@ class OrderServiceTest extends TestCase
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping1->id,
-      'price' => 10000,
+      'price' => $topping1->price,
     ]);
 
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping2->id,
-      'price' => 15000,
+      'price' => $topping2->price,
     ]);
   }
 
@@ -146,12 +151,23 @@ class OrderServiceTest extends TestCase
    */
   public function test_update_order_info()
   {
-    $order = Order::factory()->create(['status' => 'pending', 'note' => 'Giao nhanh']);
-
+    $branch = Branch::factory()->create();
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->create(['price' => 50000]);
+    // Tạo đơn hàng ban đầu
+    $order = $this->orderService->saveOrder([
+      'customer_id' => $customer->id,
+      'branch_id' => $branch->id,
+      'status' => 'pending',
+      'items' => [
+        ['product_id' => $product->id, 'quantity' => 2],
+      ]
+    ]);
+    $newBrand = Branch::factory()->create();
     $updateData = [
       'status' => 'confirmed',
       'note' => 'Giao vào buổi sáng',
-      'branch_id' => 2
+      'branch_id' => $newBrand->id
     ];
 
     $this->orderService->updateOrder($order->id, $updateData);
@@ -161,7 +177,7 @@ class OrderServiceTest extends TestCase
       'id' => $order->id,
       'status' => 'confirmed',
       'note' => 'Giao vào buổi sáng',
-      'branch_id' => 2,
+      'branch_id' => $newBrand->id,
     ]);
   }
 
@@ -170,21 +186,25 @@ class OrderServiceTest extends TestCase
    */
   public function test_update_order_items()
   {
-    $order = Order::factory()->create();
+    $branch = Branch::factory()->create();
+    $customer = Customer::factory()->create();
     $product1 = Product::factory()->create(['price' => 50000]);
     $product2 = Product::factory()->create(['price' => 40000]);
 
-    // Tạo sản phẩm ban đầu
-    $orderItem1 = OrderItem::factory()->create([
-      'order_id' => $order->id,
-      'product_id' => $product1->id,
-      'quantity' => 2,
-      'unit_price' => 50000,
+    // Tạo đơn hàng ban đầu
+    $order = $this->orderService->saveOrder([
+      'customer_id' => $customer->id,
+      'branch_id' => $branch->id,
+      'status' => 'pending',
+      'items' => [
+        ['product_id' => $product1->id, 'quantity' => 2],
+      ]
     ]);
 
+    // Cập nhật danh sách sản phẩm (xóa product1, thêm product2)
     $updateData = [
       'items' => [
-        ['product_id' => $product2->id, 'quantity' => 3, 'unit_price' => 40000], // Thay sản phẩm
+        ['product_id' => $product2->id, 'quantity' => 3], // Thay sản phẩm
       ]
     ];
 
@@ -201,7 +221,8 @@ class OrderServiceTest extends TestCase
       'order_id' => $order->id,
       'product_id' => $product2->id,
       'quantity' => 3,
-      'unit_price' => 40000,
+      'unit_price' => $product2->price,
+      'total_price' =>  $product2->price * 3,
     ]);
   }
 
@@ -210,53 +231,69 @@ class OrderServiceTest extends TestCase
    */
   public function test_update_order_toppings()
   {
-    $order = Order::factory()->create();
+    $branch = Branch::factory()->create();
+    $customer = Customer::factory()->create();
+
+    // Tạo sản phẩm chính
     $product = Product::factory()->create(['price' => 50000]);
+
+    // Tạo topping và gán vào sản phẩm chính
     $topping1 = Product::factory()->create(['price' => 10000]);
     $topping2 = Product::factory()->create(['price' => 15000]);
+    $topping3 = Product::factory()->create(['price' => 20000]);
 
-    // Thêm sản phẩm vào đơn hàng
-    $orderItem = OrderItem::factory()->create([
-      'order_id' => $order->id,
-      'product_id' => $product->id,
-      'quantity' => 2,
-      'unit_price' => 50000,
+    // Gán toppings vào sản phẩm chính thông qua ProductService
+    $this->productService->updateProduct($product->id, [
+      'toppings' => [$topping1->id, $topping2->id, $topping3->id]
     ]);
 
-    // Thêm topping ban đầu
-    OrderTopping::factory()->create([
-      'order_item_id' => $orderItem->id,
-      'topping_id' => $topping1->id,
-      'unit_price' => 10000,
+    $dataOrderItems = [
+      [
+        'product_id' => $product->id,
+        'quantity' => 2,
+        'unit_price' => 50000,
+        'toppings' => [
+          $topping1->id,
+          $topping2->id
+        ]
+      ]
+    ];
+    // Tạo đơn hàng với sản phẩm và topping ban đầu
+    $order = $this->orderService->createOrder([
+      'customer_id' => $customer->id,
+      'branch_id' => $branch->id,
+      'status' => 'pending',
+      'items' => $dataOrderItems
     ]);
 
-    // Cập nhật topping: Thay topping1 bằng topping2
-    $updateData = [
-      'items' => [
-        [
-          'product_id' => $product->id,
-          'quantity' => 2,
-          'unit_price' => 50000,
-          'toppings' => [
-            ['topping_id' => $topping2->id, 'unit_price' => 15000], // Thay đổi topping
-          ]
+    $orderItem = OrderItem::where('order_id', $order->id)->first();
+    // Cập nhật topping: Thay topping1,topping2 bằng topping3
+    $dataUpdateOrderItems = [
+      [
+        'product_id' => $product->id,
+        'quantity' => 2,
+        'unit_price' => 50000,
+        'toppings' => [
+          $topping3->id
         ]
       ]
     ];
 
-    $this->orderService->updateOrder($order->id, $updateData);
-
+    $this->orderService->updateOrder($order->id, [
+      'items' => $dataUpdateOrderItems
+    ]);
     // Kiểm tra topping cũ bị xóa
     $this->assertDatabaseMissing('order_toppings', [
-      'order_item_id' => $orderItem->id,
       'topping_id' => $topping1->id,
+    ]);
+    $this->assertDatabaseMissing('order_toppings', [
+      'topping_id' => $topping2->id,
     ]);
 
     // Kiểm tra topping mới đã được thêm
     $this->assertDatabaseHas('order_toppings', [
-      'order_item_id' => $orderItem->id,
-      'topping_id' => $topping2->id,
-      'unit_price' => 15000,
+      'topping_id' => $topping3->id,
+      'price' => $topping3->price,
     ]);
   }
 }

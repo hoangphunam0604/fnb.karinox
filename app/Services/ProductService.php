@@ -12,6 +12,23 @@ use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
+
+  /**
+   * Tạo sản phẩm
+   */
+  public function createProduct(array $data)
+  {
+    return $this->saveProduct($data);
+  }
+
+  /**
+   * Cập nhật sản phẩm
+   */
+  public function updateProduct($productId, array $data)
+  {
+    return $this->saveProduct($data, $productId);
+  }
+
   /**
    * Tạo hoặc cập nhật sản phẩm (hỗ trợ chi nhánh, thuộc tính, thành phần, topping)
    */
@@ -108,10 +125,9 @@ class ProductService
     // Cập nhật topping sản phẩm
     if (isset($data['toppings'])) {
       ProductTopping::where('product_id', $productId)->delete();
-      $toppings = array_map(fn($topping) => [
+      $toppings = array_map(fn($toppingId) => [
         'product_id' => $productId,
-        'topping_id' => $topping['topping_id'],
-        'quantity' => $topping['quantity'] ?? 1,
+        'topping_id' => $toppingId
       ], $data['toppings']);
       ProductTopping::insert($toppings);
     }

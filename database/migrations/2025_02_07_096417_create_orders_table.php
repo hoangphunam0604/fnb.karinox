@@ -16,7 +16,7 @@ return new class extends Migration
      * pending -	Đơn hàng mới, chưa xác nhận.
      * confirmed -	Đã xác nhận bởi nhân viên.
      * completed -	Đơn hàng hoàn tất, có thể tạo hóa đơn.
-     * canceled -	Đã hủy bởi khách hoặc nhân viên.
+     * cancelled -	Đã hủy bởi khách hoặc nhân viên.
      */
     Schema::create('orders', function (Blueprint $table) {
       $table->id();
