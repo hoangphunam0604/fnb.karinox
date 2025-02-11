@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('voucher_branches', function (Blueprint $table) {
       $table->foreignId('voucher_id')->constrained('vouchers')->onDelete('cascade');
       $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
+      $table->primary(['voucher_id', 'branch_id']); // Khóa chính là cặp voucher_id + branch_id
     });
   }
 
