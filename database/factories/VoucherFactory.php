@@ -2,32 +2,47 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Voucher;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Voucher>
- */
 class VoucherFactory extends Factory
 {
   /**
+   * The name of the factory's corresponding model.
+   *
+   * @var string
+   */
+  protected $model = Voucher::class;
+
+  /**
    * Define the model's default state.
    *
-   * @return array<string, mixed>
+   * @return array
    */
-  public function definition(): array
+  public function definition()
   {
+    $discountType = $this->faker->randomElement(['fixed', 'percentage']);
+    $discountValue = $discountType === 'fixed'
+      ? $this->faker->randomFloat(2, 10, 100)  // Giảm giá 10 - 100 nếu là cố định
+      : $this->faker->randomFloat(2, 5, 50);   // 5% - 50% nếu là percentage
+
+    $maxDiscount = $discountType === 'percentage'
+      ? $this->faker->randomFloat(2, 50, 200)  // Nếu là phần trăm, có giới hạn
+      : null;
+
     return [
-      'code' => strtoupper(Str::random(8)),
-      'discount_type' => $this->faker->randomElement(['percentage', 'fixed']),
-      'discount_value' => $this->faker->numberBetween(5, 50),
-      'min_order_value' => $this->faker->numberBetween(50, 500),
-      'max_discount' => $this->faker->numberBetween(10, 100),
-      'usage_limit' => $this->faker->numberBetween(10, 500),
-      'used_count' => 0,
-      'expires_at' => now()->addDays($this->faker->numberBetween(1, 90)),
-      'status' => $this->faker->randomElement(['active', 'inactive']),
+      'code' => strtoupper(Str::random(8)), // Mã voucher ngẫu nhiên
+      'discount_type' => $discountType,
+      'discount_value' => $discountValue,
+      'max_discount' => $maxDiscount,
+      'min_order_value' => $this->faker->optional(0.7)->randomFloat(2, 200, 500), // 70% có min_order_value
+      'start_date' => now(),
+      'end_date' => now()->addDays($this->faker->numberBetween(7, 30)), // Kết thúc trong vòng 1 tháng
+      'applied_count' => 0, // Mặc định chưa có ai sử dụng
+      'usage_limit' => $this->faker->optional()->numberBetween(10, 100),
+      'per_customer_limit' => $this->faker->optional()->numberBetween(1, 5),
+      'is_active' => $this->faker->boolean(80), // 80% là đang hoạt động
     ];
   }
 }

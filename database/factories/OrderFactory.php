@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Order;
-use App\Models\Customer;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Area>
@@ -21,7 +20,6 @@ class OrderFactory extends Factory
   public function definition(): array
   {
     return [
-      'customer_id' => Customer::factory(),
       'branch_id' => Branch::factory(),
       'order_status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'note' => $this->faker->sentence(),

@@ -31,7 +31,8 @@ class Order extends Model
     parent::boot();
 
     static::creating(function ($order) {
-      $order->order_code = self::generateOrderCode($order->branch_id);
+      if (!$order->order_code)
+        $order->order_code = self::generateOrderCode($order->branch_id);
     });
 
     static::updating(function ($order) {

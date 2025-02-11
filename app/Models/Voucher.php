@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Voucher extends Model
 {
@@ -11,8 +12,9 @@ class Voucher extends Model
 
   protected $fillable = [
     'code',
-    'type',
-    'discount_amount',
+    'discount_type',
+    'discount_value',
+    'applied_count',
     'max_discount',
     'min_order_value',
     'start_date',
@@ -41,5 +43,28 @@ class Voucher extends Model
   public function branches()
   {
     return $this->belongsToMany(Branch::class, 'voucher_branches');
+  }
+
+  public function invoices()
+  {
+    return $this->belongsToMany(Invoice::class, 'invoice_vouchers')
+      ->withPivot('invoice_total_before_discount', 'discount_amount')
+      ->withTimestamps();
+  }
+
+  public function restoreUsage($customerId = null)
+  {
+    // Nếu voucher có giới hạn tổng số lần sử dụng, tăng lại 1 lần
+    if ($this->usage_limit !== null) {
+      $this->increment('usage_limit');
+    }
+
+    // Nếu voucher có giới hạn số lần sử dụng trên mỗi khách hàng, tăng lại cho khách hàng đó
+    if ($this->per_customer_limit !== null && $customerId) {
+      DB::table('voucher_usages')->where([
+        'voucher_id' => $this->id,
+        'customer_id' => $customerId,
+      ])->increment('usage_count', 1);
+    }
   }
 }

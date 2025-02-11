@@ -53,15 +53,16 @@ class OrderService
         $this->updateOrderItems($order, $data['items']);
       }
 
-      // Xử lý voucher nếu có
-      $discountAmount = 0;
-      if (!empty($data['voucher_code'])) {
-        $discountAmount = $this->applyVoucher($order, $data['voucher_code']);
-      }
-
       // Cập nhật tổng tiền đơn hàng
       $order->refresh();
-      $order->total_price = $this->calculateOrderTotal($order) - $discountAmount;
+      $order->total_price = $this->calculateOrderTotal($order);
+
+
+      if (!empty($data['voucher_code'])) {
+        $this->applyVoucher($order, $data['voucher_code']);
+        $order->refresh();
+      }
+
 
       $order->save();
 
@@ -101,17 +102,23 @@ class OrderService
   {
     $validToppings = ProductTopping::where('product_id', $productId)->pluck('topping_id')->toArray();
 
-    foreach ($toppings as $toppingId) {
-      if (!in_array($toppingId, $validToppings)) {
-        continue; // Bỏ qua nếu topping không thuộc về sản phẩm
+    foreach ($toppings as $topping) {
+      $toppingId = $topping['topping_id'] ?? null;
+      $quantity = $topping['quantity'] ?? 1; // Mặc định số lượng là 1 nếu không có
+
+      if (!$toppingId || !in_array($toppingId, $validToppings) || $quantity <= 0) {
+        continue; // Bỏ qua nếu topping không hợp lệ hoặc số lượng không hợp lệ
       }
 
-      $toppingPrice = $this->getToppingPrice($toppingId);
+      $unitPrice = $this->getToppingPrice($toppingId);
+      $totalPrice = $unitPrice * $quantity;
 
       OrderTopping::create([
         'order_item_id' => $orderItem->id,
         'topping_id' => $toppingId,
-        'unit_price' => $toppingPrice,
+        'quantity' => $quantity,
+        'unit_price' => $unitPrice,
+        'total_price' => $totalPrice,
       ]);
     }
   }
@@ -131,25 +138,17 @@ class OrderService
       return 0; // Không áp dụng nếu không tìm thấy voucher hợp lệ
     }
 
-    $discountAmount = 0;
-    $total = $this->calculateOrderTotal($order);
+    $voucherService = new VoucherService();
+    $result = $voucherService->applyVoucher($voucher, $order);
 
-    if ($voucher->discount_type === 'fixed') {
-      $discountAmount = min($voucher->discount_value, $total);
-    } elseif ($voucher->discount_type === 'percentage') {
-      $discountAmount = min(($total * ($voucher->discount_value / 100)), $total);
+    if ($result['success']) {
+      // Lưu thông tin voucher vào đơn hàng
+      $order->voucher_id = $voucher->id;
+      $order->voucher_code = $voucher->code;
+      $order->discount_amount = $result['discount'];
+      $order->total_price = $result['final_total'];
     }
-
-    // Giảm số lượng voucher có thể sử dụng
-    $voucher->decrement('remaining_quantity');
-
-    // Lưu thông tin voucher vào đơn hàng
-    $order->voucher_id = $voucher->id;
-    $order->voucher_code = $voucher->code;
-    $order->discount_amount = $discountAmount;
     $order->save();
-
-    return $discountAmount;
   }
 
   /**
@@ -196,7 +195,9 @@ class OrderService
    */
   public function cancelOrder($orderId)
   {
-    return $this->updateOrderStatus($orderId, 'canceled');
+    $order =  $this->updateOrderStatus($orderId, 'cancelled');
+    $voucherService = new VoucherService();
+    $voucherService->refundVoucher($order);
   }
 
   /**

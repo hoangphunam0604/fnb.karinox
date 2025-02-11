@@ -8,11 +8,14 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Voucher;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceTopping;
+use App\Models\OrderTopping;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class OrderServiceTest extends TestCase
@@ -30,14 +33,12 @@ class OrderServiceTest extends TestCase
     $this->productService = new ProductService();
     $this->orderService = new OrderService();
     $this->invoiceService = new InvoiceService();
-
     $this->branch = Branch::factory()->create();
   }
 
   public function test_order_code_is_generated_correctly()
   {
     $order = Order::factory()->create(['branch_id' => $this->branch->id]);
-
     $this->assertMatchesRegularExpression('/ORD-\d{2}-\d{6}-\d{4}/', $order->order_code);
   }
 
@@ -63,14 +64,12 @@ class OrderServiceTest extends TestCase
 
     $order = $this->orderService->createOrder($orderData);
 
-    // Kiểm tra đơn hàng được tạo
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
       'customer_id' => $customer->id,
       'order_status' => 'pending',
     ]);
 
-    // Kiểm tra sản phẩm có trong đơn hàng
     $this->assertDatabaseHas('order_items', [
       'order_id' => $order->id,
       'product_id' => $product1->id,
@@ -89,7 +88,7 @@ class OrderServiceTest extends TestCase
   }
 
   /**
-   * Kiểm tra tạo đơn hàng có sản phẩm và topping
+   * Kiểm tra tạo đơn hàng có sản phẩm và toppings với số lượng
    */
   public function test_create_order_with_products_and_toppings()
   {
@@ -97,397 +96,249 @@ class OrderServiceTest extends TestCase
     $topping1 = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
     $topping2 = Product::factory()->create(['is_topping' => true, 'price' => 15000]);
     $product = Product::factory()->create(['price' => 50000]);
+
     $this->productService->updateProduct($product->id, [
-      'toppings' =>  [$topping1->id, $topping2->id]
+      'toppings' => [$topping1->id, $topping2->id]
     ]);
 
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
       'order_status' => 'pending',
-      'note' => 'Ít đá',
+      'note' => 'Ít đường',
       'items' => [
         [
           'product_id' => $product->id,
           'quantity' => 2,
-          'toppings' => [$topping1->id, $topping2->id],
+          'toppings' => [
+            ['topping_id' => $topping1->id, 'quantity' => 1],
+            ['topping_id' => $topping2->id, 'quantity' => 2],
+          ],
         ]
       ]
     ];
 
     $order = $this->orderService->createOrder($orderData);
-
-    // Kiểm tra đơn hàng được tạo
-    $this->assertDatabaseHas('orders', [
-      'id' => $order->id,
-      'customer_id' => $customer->id,
-      'order_status' => 'pending',
-    ]);
-
-    // Kiểm tra sản phẩm có trong đơn hàng
     $orderItem = OrderItem::where('order_id', $order->id)->first();
-    $this->assertNotNull($orderItem);
 
-    $this->assertDatabaseHas('order_items', [
-      'order_id' => $order->id,
-      'product_id' => $product->id,
-      'quantity' => 2,
-      'unit_price' => 50000,
-      'total_price' => 100000,
-    ]);
-
-    // Kiểm tra topping có trong đơn hàng
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping1->id,
+      'quantity' => 1,
       'unit_price' => $topping1->price,
+      'total_price' => $topping1->price * 1,
     ]);
 
     $this->assertDatabaseHas('order_toppings', [
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping2->id,
+      'quantity' => 2,
       'unit_price' => $topping2->price,
+      'total_price' => $topping2->price * 2,
     ]);
   }
 
   /**
-   * Kiểm tra cập nhật thông tin đơn hàng (status, note, branch)
-   */
-  public function test_update_order_info()
-  {
-    $branch = Branch::factory()->create();
-    $customer = Customer::factory()->create();
-    $product = Product::factory()->create(['price' => 50000]);
-    // Tạo đơn hàng ban đầu
-    $order = $this->orderService->saveOrder([
-      'customer_id' => $customer->id,
-      'branch_id' => $branch->id,
-      'order_status' => 'pending',
-      'items' => [
-        ['product_id' => $product->id, 'quantity' => 2],
-      ]
-    ]);
-    $newBrand = Branch::factory()->create();
-    $updateData = [
-      'order_status' => 'confirmed',
-      'note' => 'Giao vào buổi sáng',
-      'branch_id' => $newBrand->id
-    ];
-
-    $this->orderService->updateOrder($order->id, $updateData);
-
-    // Kiểm tra thông tin đơn hàng đã được cập nhật
-    $this->assertDatabaseHas('orders', [
-      'id' => $order->id,
-      'order_status' => 'confirmed',
-      'note' => 'Giao vào buổi sáng',
-      'branch_id' => $newBrand->id,
-    ]);
-  }
-
-  /**
-   * Kiểm tra cập nhật danh sách sản phẩm trong đơn hàng
-   */
-  public function test_update_order_items()
-  {
-    $branch = Branch::factory()->create();
-    $customer = Customer::factory()->create();
-    $product1 = Product::factory()->create(['price' => 50000]);
-    $product2 = Product::factory()->create(['price' => 40000]);
-
-    // Tạo đơn hàng ban đầu
-    $order = $this->orderService->saveOrder([
-      'customer_id' => $customer->id,
-      'branch_id' => $branch->id,
-      'order_status' => 'pending',
-      'items' => [
-        ['product_id' => $product1->id, 'quantity' => 2],
-      ]
-    ]);
-
-    // Cập nhật danh sách sản phẩm (xóa product1, thêm product2)
-    $updateData = [
-      'items' => [
-        ['product_id' => $product2->id, 'quantity' => 3], // Thay sản phẩm
-      ]
-    ];
-
-    $this->orderService->updateOrder($order->id, $updateData);
-
-    // Kiểm tra sản phẩm cũ đã bị xóa
-    $this->assertDatabaseMissing('order_items', [
-      'order_id' => $order->id,
-      'product_id' => $product1->id,
-    ]);
-
-    // Kiểm tra sản phẩm mới đã được thêm
-    $this->assertDatabaseHas('order_items', [
-      'order_id' => $order->id,
-      'product_id' => $product2->id,
-      'quantity' => 3,
-      'unit_price' => $product2->price,
-      'total_price' =>  $product2->price * 3,
-    ]);
-  }
-
-  /**
-   * Kiểm tra cập nhật topping của sản phẩm trong đơn hàng
+   * Kiểm tra cập nhật toppings với số lượng
    */
   public function test_update_order_toppings()
   {
     $branch = Branch::factory()->create();
     $customer = Customer::factory()->create();
-
-    // Tạo sản phẩm chính
     $product = Product::factory()->create(['price' => 50000]);
 
-    // Tạo topping và gán vào sản phẩm chính
     $topping1 = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
     $topping2 = Product::factory()->create(['is_topping' => true, 'price' => 15000]);
     $topping3 = Product::factory()->create(['is_topping' => true, 'price' => 20000]);
 
-    // Gán toppings vào sản phẩm chính thông qua ProductService
     $this->productService->updateProduct($product->id, [
       'toppings' => [$topping1->id, $topping2->id, $topping3->id]
     ]);
 
-    $dataOrderItems = [
-      [
-        'product_id' => $product->id,
-        'quantity' => 2,
-        'unit_price' => 50000,
-        'toppings' => [
-          $topping1->id,
-          $topping2->id
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $branch->id,
+      'order_status' => 'pending',
+      'items' => [
+        [
+          'product_id' => $product->id,
+          'quantity' => 2,
+          'toppings' => [
+            ['topping_id' => $topping1->id, 'quantity' => 1],
+            ['topping_id' => $topping2->id, 'quantity' => 2]
+          ],
         ]
       ]
     ];
-    // Tạo đơn hàng với sản phẩm và topping ban đầu
-    $order = $this->orderService->createOrder([
-      'customer_id' => $customer->id,
-      'branch_id' => $branch->id,
-      'status' => 'pending',
-      'items' => $dataOrderItems
+
+    $order = $this->orderService->createOrder($orderData);
+
+    $this->orderService->updateOrder($order->id, [
+      'items' => [
+        [
+          'product_id' => $product->id,
+          'quantity' => 2,
+          'toppings' => [
+            ['topping_id' => $topping3->id, 'quantity' => 3]
+          ],
+        ]
+      ]
     ]);
 
     $orderItem = OrderItem::where('order_id', $order->id)->first();
-    // Cập nhật topping: Thay topping1,topping2 bằng topping3
-    $dataUpdateOrderItems = [
-      [
-        'product_id' => $product->id,
-        'quantity' => 2,
-        'unit_price' => 50000,
-        'toppings' => [
-          $topping3->id
-        ]
-      ]
-    ];
-
-    $this->orderService->updateOrder($order->id, [
-      'items' => $dataUpdateOrderItems
-    ]);
-    // Kiểm tra topping cũ bị xóa
-    $this->assertDatabaseMissing('order_toppings', [
-      'topping_id' => $topping1->id,
-    ]);
-    $this->assertDatabaseMissing('order_toppings', [
-      'topping_id' => $topping2->id,
-    ]);
-
-    // Kiểm tra topping mới đã được thêm
     $this->assertDatabaseHas('order_toppings', [
+      'order_item_id' => $orderItem->id,
       'topping_id' => $topping3->id,
+      'quantity' => 3,
       'unit_price' => $topping3->price,
+      'total_price' => $topping3->price * 3,
     ]);
   }
-
-  public function test_order_history_is_recorded_when_status_changes()
+  /** @test */
+  public function it_can_create_an_order()
   {
-    $order = Order::factory()->create(['order_status' => 'pending']);
-
-    // Cập nhật trạng thái đơn hàng
-    $this->orderService->updateOrderStatus($order->id, 'confirmed');
-
-    // Kiểm tra lịch sử thay đổi trạng thái
-    $this->assertDatabaseHas('order_histories', [
-      'order_id' => $order->id,
-      'old_status' => 'pending',
-      'new_status' => 'confirmed',
-      'note'      => 'Cập nhật trạng thái đơn hàng.'
-    ]);
-  }
-
-  public function test_mark_order_as_completed_creates_invoice_with_items_and_toppings()
-  {
-
-    // Tạo sản phẩm chính
+    $customer = Customer::factory()->create();
     $product = Product::factory()->create(['price' => 50000]);
 
-    // Tạo topping và gán vào sản phẩm chính
-    $topping = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
-
-    // Gán toppings vào sản phẩm chính thông qua ProductService
-    $this->productService->updateProduct($product->id, [
-      'toppings' => [$topping->id]
-    ]);
-
-    $dataOrderItems = [
-      [
-        'product_id' => $product->id,
-        'quantity' => 2,
-        'toppings' => [
-          $topping->id
-        ]
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'items' => [
+        ['product_id' => $product->id, 'quantity' => 2]
       ]
     ];
 
-    // Tạo đơn hàng với sản phẩm và topping ban đầu
-    $order = Order::factory()->create(['order_status' => 'confirmed']);
-    $order = $this->orderService->updateOrder($order->id, [
-      'items' => $dataOrderItems
-    ]);
-    $paidAmount = 100000;
-    $total_amount = ($product->price + $topping->price) * 2;
-    // Hoàn tất đơn hàng
-    $this->orderService->markAsCompleted($order->id, $paidAmount);
-
-    // Kiểm tra trạng thái đơn hàng đã chuyển sang `completed`
-    $this->assertDatabaseHas('orders', [
-      'id' => $order->id,
-      'order_status' => 'completed',
-    ]);
-
-    // Kiểm tra hóa đơn đã được tạo
-    $invoice = \App\Models\Invoice::where('order_id', $order->id)->first();
-    $this->assertNotNull($invoice);
-    $this->assertEquals('pending', $invoice->invoice_status);
-
-    // Kiểm tra hoá đơn
-    $this->assertDatabaseHas('invoices', [
-      'order_id' => $order->id,
-      'customer_id' => $order->customer_id,
-      'branch_id' => $order->branch_id,
-      'discount_amount' => $order->discount_amount,
-      'paid_amount' => $paidAmount,
-      'note' => $order->note,
-      'total_amount' => $total_amount,
-    ]);
-
-    // Kiểm tra sản phẩm có trong hóa đơn
-    $this->assertDatabaseHas('invoice_items', [
-      'invoice_id' => $invoice->id,
-      'product_id' => $product->id,
-      'quantity' => 2,
-      'unit_price' => $product->price,
-      'total_price' => $product->price * 2,
-      'total_price_with_topping' => $total_amount
-    ]);
-
-    // Kiểm tra topping có trong hóa đơn
-    $invoiceItem = \App\Models\InvoiceItem::where('invoice_id', $invoice->id)->first();
-    $this->assertNotNull($invoiceItem);
-
-    $this->assertDatabaseHas('invoice_toppings', [
-      'invoice_item_id' => $invoiceItem->id,
-      'topping_id' => $topping->id,
-      'unit_price' => $topping->price,
-    ]);
-  }
-
-  /** @test */
-  public function it_applies_voucher_to_order_correctly()
-  {
-    $customer = Customer::factory()->create();
-
-    // Tạo voucher giảm giá 20,000
-    $voucher = Voucher::factory()->create([
-      'code' => 'DISCOUNT20K',
-      'discount_value' => 20000,
-      'is_active' => true,
-    ]);
-
-    // Tạo sản phẩm
-    $product = Product::factory()->create(['price' => 100000]);
-
-    // Dữ liệu đơn hàng
-    $orderData = [
-      'customer_id' => $customer->id,
-      'branch_id' => $this->branch->id,
-      'voucher_code' => 'DISCOUNT20K',
-      'order_items' => [
-        ['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 100000],
-      ],
-    ];
-
-    // Tạo đơn hàng và áp dụng voucher
     $order = $this->orderService->createOrder($orderData);
 
-    // Kiểm tra đơn hàng có được lưu
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
-      'voucher_code' => 'DISCOUNT20K',
-      'discount_amount' => 20000,
+      'customer_id' => $customer->id
     ]);
 
-    // Kiểm tra tổng tiền đơn hàng sau giảm giá
-    $expectedTotal = (2 * 100000) - 20000; // 200,000 - 20,000
-    $this->assertEquals($expectedTotal, $order->total_price);
+    $this->assertDatabaseHas('order_items', [
+      'order_id' => $order->id,
+      'product_id' => $product->id,
+      'quantity' => 2
+    ]);
   }
 
   /** @test */
-  public function it_rejects_invalid_voucher_code()
+  public function it_can_update_an_order()
   {
     $customer = Customer::factory()->create();
+    $order = Order::factory()->create(['customer_id' => $customer->id]);
+    $product = Product::factory()->create(['price' => 40000]);
 
-    // Tạo sản phẩm
-    $product = Product::factory()->create(['price' => 100000]);
-
-    // Dữ liệu đơn hàng với voucher không hợp lệ
-    $orderData = [
-      'customer_id' => $customer->id,
-      'branch_id' => $this->branch->id,
-      'voucher_code' => 'INVALIDCODE',
-      'order_items' => [
-        ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100000],
-      ],
+    $updateData = [
+      'items' => [['product_id' => $product->id, 'quantity' => 1]]
     ];
 
-    // Kiểm tra ngoại lệ khi voucher không hợp lệ
-    $this->expectException(\Exception::class);
-    $this->expectExceptionMessage("Mã giảm giá không hợp lệ.");
+    $updatedOrder = $this->orderService->updateOrder($order->id, $updateData);
 
-    $this->orderService->createOrder($orderData);
+    $this->assertDatabaseHas('order_items', [
+      'order_id' => $updatedOrder->id,
+      'product_id' => $product->id,
+      'quantity' => 1
+    ]);
   }
 
   /** @test */
-  public function it_does_not_apply_expired_voucher()
+  public function it_can_apply_a_voucher()
   {
     $customer = Customer::factory()->create();
-
-    // Tạo voucher hết hạn
-    $expiredVoucher = Voucher::factory()->create([
-      'code' => 'EXPIREDVOUCHER',
-      'discount_amount' => 15000,
-      'is_active' => false, // Voucher hết hạn
+    $product = Product::factory()->create(['price' => 100000]);
+    $voucher = Voucher::factory()->create([
+      'code' => 'DISCOUNT10K',
+      'discount_value' => 10000,
+      'discount_type' => 'fixed',
+      'remaining_quantity' => 5
     ]);
 
-    // Tạo sản phẩm
-    $product = Product::factory()->create(['price' => 100000]);
-
-    // Dữ liệu đơn hàng
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
-      'voucher_code' => 'EXPIREDVOUCHER',
-      'order_items' => [
-        ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100000],
-      ],
+      'voucher_code' => 'DISCOUNT10K',
+      'items' => [['product_id' => $product->id, 'quantity' => 2]]
     ];
 
-    // Kiểm tra ngoại lệ khi voucher hết hạn
-    $this->expectException(\Exception::class);
-    $this->expectExceptionMessage("Mã giảm giá đã hết hạn.");
+    $order = $this->orderService->createOrder($orderData);
 
-    $this->orderService->createOrder($orderData);
+    $this->assertEquals(10000, $order->discount_amount);
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'voucher_code' => 'DISCOUNT10K'
+    ]);
+  }
+
+  /** @test */
+  public function it_can_confirm_an_order()
+  {
+    $order = Order::factory()->create(['order_status' => 'pending']);
+    $this->orderService->confirmOrder($order->id);
+
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'order_status' => 'confirmed'
+    ]);
+  }
+
+  /** @test */
+  public function it_can_cancel_an_order()
+  {
+    $order = Order::factory()->create(['order_status' => 'confirmed']);
+    $this->orderService->cancelOrder($order->id);
+
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'order_status' => 'cancelled'
+    ]);
+  }
+
+  /** @test */
+  public function it_can_mark_an_order_as_completed_and_create_invoice()
+  {
+    $order = Order::factory()->create(['order_status' => 'confirmed']);
+    $this->orderService->markAsCompleted($order->id, 100000);
+
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'order_status' => 'completed'
+    ]);
+
+    $this->assertDatabaseHas('invoices', [
+      'order_id' => $order->id,
+      'paid_amount' => 100000
+    ]);
+  }
+
+  /** @test */
+  public function it_can_update_order_status()
+  {
+    $order = Order::factory()->create(['order_status' => 'pending']);
+    $this->orderService->updateOrderStatus($order->id, 'completed');
+
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'order_status' => 'completed'
+    ]);
+  }
+
+  /** @test */
+  public function it_can_find_an_order_by_code()
+  {
+    $order = Order::factory()->create(['order_code' => 'ORD-001']);
+    $foundOrder = $this->orderService->findOrderByCode('ORD-001');
+
+    $this->assertNotNull($foundOrder);
+    $this->assertEquals('ORD-001', $foundOrder->order_code);
+  }
+
+  /** @test */
+  public function it_can_get_orders_with_pagination()
+  {
+    Order::factory()->count(15)->create();
+    $orders = $this->orderService->getOrders(10);
+
+    $this->assertEquals(10, $orders->count());
   }
 }

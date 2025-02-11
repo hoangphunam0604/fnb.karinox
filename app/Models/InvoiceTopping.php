@@ -12,7 +12,9 @@ class InvoiceTopping extends Model
   protected $fillable = [
     'invoice_item_id',
     'topping_id',
+    'quantity',
     'unit_price',
+    'total_price',
   ];
 
   /**

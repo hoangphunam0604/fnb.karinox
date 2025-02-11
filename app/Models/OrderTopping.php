@@ -12,7 +12,17 @@ class OrderTopping extends Model
   protected $fillable = [
     'order_item_id',
     'topping_id',
+    'quantity',
     'unit_price',
+    'total_price',
+  ];
+
+  protected $casts = [
+    'order_item_id' => 'integer',
+    'topping_id' => 'integer',
+    'quantity' => 'integer',
+    'unit_price' => 'integer',
+    'total_price' => 'integer',
   ];
 
   /**

@@ -54,4 +54,11 @@ class CustomerService
   {
     return Customer::orderBy('created_at', 'desc')->paginate($perPage);
   }
+
+  public function getCustomerMembershipLevel($customerId)
+  {
+
+    $customer = Customer::findOrFail($customerId);
+    return 1;
+  }
 }
