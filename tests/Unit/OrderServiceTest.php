@@ -6,11 +6,12 @@ use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Services\OrderService;
 use App\Services\ProductService;
+use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class OrderServiceTest extends TestCase
@@ -19,6 +20,7 @@ class OrderServiceTest extends TestCase
 
   protected ProductService $productService;
   protected OrderService $orderService;
+  protected InvoiceService $invoiceService;
   protected Branch $branch;
 
   protected function setUp(): void
@@ -26,6 +28,7 @@ class OrderServiceTest extends TestCase
     parent::setUp();
     $this->productService = new ProductService();
     $this->orderService = new OrderService();
+    $this->invoiceService = new InvoiceService();
 
     $this->branch = Branch::factory()->create();
   }
@@ -90,8 +93,8 @@ class OrderServiceTest extends TestCase
   public function test_create_order_with_products_and_toppings()
   {
     $customer = Customer::factory()->create();
-    $topping1 = Product::factory()->create(['price' => 10000]);
-    $topping2 = Product::factory()->create(['price' => 15000]);
+    $topping1 = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
+    $topping2 = Product::factory()->create(['is_topping' => true, 'price' => 15000]);
     $product = Product::factory()->create(['price' => 50000]);
     $this->productService->updateProduct($product->id, [
       'toppings' =>  [$topping1->id, $topping2->id]
@@ -238,9 +241,9 @@ class OrderServiceTest extends TestCase
     $product = Product::factory()->create(['price' => 50000]);
 
     // Tạo topping và gán vào sản phẩm chính
-    $topping1 = Product::factory()->create(['price' => 10000]);
-    $topping2 = Product::factory()->create(['price' => 15000]);
-    $topping3 = Product::factory()->create(['price' => 20000]);
+    $topping1 = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
+    $topping2 = Product::factory()->create(['is_topping' => true, 'price' => 15000]);
+    $topping3 = Product::factory()->create(['is_topping' => true, 'price' => 20000]);
 
     // Gán toppings vào sản phẩm chính thông qua ProductService
     $this->productService->updateProduct($product->id, [
@@ -320,7 +323,7 @@ class OrderServiceTest extends TestCase
     $product = Product::factory()->create(['price' => 50000]);
 
     // Tạo topping và gán vào sản phẩm chính
-    $topping = Product::factory()->create(['price' => 10000]);
+    $topping = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
 
     // Gán toppings vào sản phẩm chính thông qua ProductService
     $this->productService->updateProduct($product->id, [
@@ -389,6 +392,72 @@ class OrderServiceTest extends TestCase
       'invoice_item_id' => $invoiceItem->id,
       'topping_id' => $topping->id,
       'unit_price' => $topping->price,
+    ]);
+  }
+
+
+
+  /** @test */
+  public function test_update_payment_status_with_valid_statuses()
+  {
+    $order = Order::factory()->create([
+      'status' => 'pending',
+      'payment_status' => 'pending',
+      'total_price' => 100000,
+    ]);
+
+    $validStatuses = ['pending', 'paid', 'partial', 'failed'];
+
+    foreach ($validStatuses as $status) {
+      $this->orderService->updatePaymentStatus($order->id, $status, 'cash');
+
+      $this->assertDatabaseHas('orders', [
+        'id' => $order->id,
+        'payment_status' => $status,
+      ]);
+    }
+  }
+
+  /** @test */
+  public function test_update_payment_status_invalid_status_throws_exception()
+  {
+    $this->expectException(\InvalidArgumentException::class);
+
+    $order = Order::factory()->create([
+      'payment_status' => 'pending',
+      'total_price' => 100000,
+    ]);
+
+    $this->orderService->updatePaymentStatus($order->id, 'invalid_status', 'cash');
+  }
+
+  /** @test */
+  public function test_update_payment_status_paid_creates_invoice_if_order_completed()
+  {
+    DB::spy(); // Theo dõi các truy vấn DB để kiểm tra hóa đơn được tạo
+
+    $order = Order::factory()->create([
+      'status' => 'completed',
+      'payment_status' => 'pending',
+      'total_price' => 200000,
+    ]);
+
+    // Cập nhật trạng thái thanh toán thành "paid"
+    $this->orderService->updatePaymentStatus($order->id, 'paid', 'credit_card');
+
+    // Kiểm tra đơn hàng đã được cập nhật
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'payment_status' => 'paid',
+      'status' => 'completed',
+    ]);
+
+    // Kiểm tra hóa đơn đã được tạo
+    $this->assertDatabaseHas('invoices', [
+      'order_id' => $order->id,
+      'total_amount' => $order->total_price,
+      'payment_method' => 'credit_card',
+      'status' => 'paid',
     ]);
   }
 }

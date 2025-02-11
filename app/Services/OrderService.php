@@ -7,13 +7,14 @@ use App\Models\OrderItem;
 use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
 
   /**
-   *Tạo đơn đặt hàng
+   * Tạo đơn đặt hàng
    */
   public function createOrder($data)
   {
@@ -21,12 +22,13 @@ class OrderService
   }
 
   /**
-   *Cập nhật đơn đặt hàng
+   * Cập nhật đơn đặt hàng
    */
   public function updateOrder($orderId, $data)
   {
     return $this->saveOrder($data, $orderId);
   }
+
   /**
    * Tạo hoặc cập nhật đơn đặt hàng
    */
@@ -36,12 +38,12 @@ class OrderService
       $order = $orderId ? Order::findOrFail($orderId) : new Order();
 
       $order->fill([
-        'code' => $data['code'] ?? $order->code,
         'customer_id' => $data['customer_id'] ?? $order->customer_id,
+        'receiver_id' => $data['receiver_id'] ?? $order->receiver_id,
         'branch_id' => $data['branch_id'] ?? $order->branch_id,
+        'table_id' => $data['table_id'] ?? $order->table_id,
         'status' => $data['status'] ?? 'pending',
         'payment_status' => $data['payment_status'] ?? 'pending',
-        'table_id' => $data['table_id'] ?? $order->table_id,
         'note' => $data['note'] ?? $order->note,
       ]);
 
@@ -52,19 +54,21 @@ class OrderService
         $this->updateOrderItems($order, $data['items']);
       }
 
-      // Làm mới order để lấy danh sách sản phẩm mới cập nhật
-      $order->refresh();
+      // Xử lý voucher nếu có
+      $discountAmount = 0;
+      if (!empty($data['voucher_code'])) {
+        $discountAmount = $this->applyVoucher($order, $data['voucher_code']);
+      }
 
       // Cập nhật tổng tiền đơn hàng
-      $order->total_price = $this->calculateOrderTotal($order);
-
+      $order->refresh();
+      $order->total_price = $this->calculateOrderTotal($order) - $discountAmount;
 
       $order->save();
 
       return $order;
     });
   }
-
 
   /**
    * Cập nhật danh sách sản phẩm trong đơn hàng
@@ -81,7 +85,7 @@ class OrderService
         'product_id' => $item['product_id'],
         'quantity' => $item['quantity'],
         'unit_price' => $unit_price,
-        'total_price' => $unit_price *  $item['quantity']
+        'total_price' => $unit_price * $item['quantity']
       ]);
 
       // Xử lý topping nếu có
@@ -111,6 +115,41 @@ class OrderService
         'unit_price' => $toppingPrice,
       ]);
     }
+  }
+
+  /**
+   * Áp dụng voucher vào đơn hàng
+   */
+  private function applyVoucher(Order $order, $voucherCode)
+  {
+    $voucher = Voucher::where('code', $voucherCode)
+      ->where('start_date', '<=', now())
+      ->where('end_date', '>=', now())
+      ->where('remaining_quantity', '>', 0)
+      ->first();
+
+    if (!$voucher) {
+      return 0; // Không áp dụng nếu không tìm thấy voucher hợp lệ
+    }
+
+    $discountAmount = 0;
+    $total = $this->calculateOrderTotal($order);
+
+    if ($voucher->discount_type === 'fixed') {
+      $discountAmount = min($voucher->discount_value, $total);
+    } elseif ($voucher->discount_type === 'percentage') {
+      $discountAmount = min(($total * ($voucher->discount_value / 100)), $total);
+    }
+
+    // Giảm số lượng voucher có thể sử dụng
+    $voucher->decrement('remaining_quantity');
+
+    // Lưu thông tin voucher vào đơn hàng
+    $order->voucher_code = $voucher->code;
+    $order->discount_amount = $discountAmount;
+    $order->save();
+
+    return $discountAmount;
   }
 
   /**
@@ -191,14 +230,30 @@ class OrderService
   /**
    * Cập nhật trạng thái thanh toán của đơn hàng
    */
-  public function updatePaymentStatus($orderId, $paymentStatus)
+  public function updatePaymentStatus($orderId, $paymentStatus, $paymentMethod = null)
   {
-    $order = Order::findOrFail($orderId);
-    $order->payment_status = $paymentStatus;
-    $order->save();
+    return DB::transaction(function () use ($orderId, $paymentStatus, $paymentMethod) {
+      $order = Order::findOrFail($orderId);
 
-    return $order;
+      // Kiểm tra trạng thái hợp lệ
+      $validStatuses = ['pending', 'paid', 'partial', 'failed'];
+      if (!in_array($paymentStatus, $validStatuses)) {
+        throw new \InvalidArgumentException("Trạng thái thanh toán không hợp lệ: {$paymentStatus}");
+      }
+
+      // Cập nhật trạng thái thanh toán
+      $order->payment_status = $paymentStatus;
+      $order->save();
+
+      // Nếu thanh toán đầy đủ, tự động hoàn tất đơn hàng
+      if ($paymentStatus === 'paid' && $order->status !== 'completed') {
+        $this->markAsCompleted($orderId, $paymentMethod, $order->total_price);
+      }
+
+      return $order;
+    });
   }
+
 
   /**
    * Tìm kiếm đơn đặt hàng theo mã
