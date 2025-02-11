@@ -48,7 +48,14 @@ class ProductServiceTest extends TestCase
 
     $product = $this->productService->createProduct($data);
 
-    $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Cà phê sữa']);
+    $this->assertDatabaseHas('products', [
+      'id' => $product->id,
+      'name' => 'Cà phê sữa',
+      'allows_sale' => 1, // Kiểm tra giá trị mặc định
+      'is_reward_point' => 0, // Kiểm tra giá trị mặc định
+      'is_topping' => 0, // Kiểm tra giá trị mặc định
+      'product_group' => 1, // Giá trị mặc định trong DB
+    ]);
     $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id]);
     $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id]);
     $this->assertDatabaseHas('product_formulas', ['product_id' => $product->id, 'ingredient_id' => $formulaProduct->id]);
@@ -69,6 +76,10 @@ class ProductServiceTest extends TestCase
       'code' => 'PROD001',
       'name' => 'Cà phê đen đá',
       'product_type' => 'processed',
+      'allows_sale' => 0,
+      'is_reward_point' => 1,
+      'is_topping' => 1,
+      'product_group' => 2,
       'branches' => [
         ['branch_id' => $branch->id, 'stock_quantity' => 15],
       ],
@@ -83,11 +94,46 @@ class ProductServiceTest extends TestCase
 
     $updatedProduct = $this->productService->updateProduct($product->id, $updateData);
 
+    $this->assertDatabaseHas('products', [
+      'id' => $product->id,
+      'code' => 'PROD001',
+      'name' => 'Cà phê đen đá',
+      'product_type' => 'processed',
+      'allows_sale' => 0,
+      'is_reward_point' => 1,
+      'is_topping' => 1,
+      'product_group' => 2,
+    ]);
+
     $this->assertEquals('Cà phê đen đá', $updatedProduct->name);
     $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id, 'stock_quantity' => 15]);
     $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id]);
     $this->assertDatabaseHas('product_formulas', ['product_id' => $product->id, 'ingredient_id' => $formulaProduct->id]);
     $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $toppingProduct->id]);
+  }
+
+  /** @test */
+  public function test_only_valid_toppings_are_added()
+  {
+    $product = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
+    $validTopping = Product::factory()->create(['is_topping' => true, 'product_type' => 'goods']);
+    $invalidTopping = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
+
+    $updateData = [
+      'toppings' => [$validTopping->id, $invalidTopping->id],
+    ];
+
+    $this->productService->updateProduct($product->id, $updateData);
+
+    $this->assertDatabaseHas('product_toppings', [
+      'product_id' => $product->id,
+      'topping_id' => $validTopping->id,
+    ]);
+
+    $this->assertDatabaseMissing('product_toppings', [
+      'product_id' => $product->id,
+      'topping_id' => $invalidTopping->id,
+    ]);
   }
 
   /** @test */
@@ -122,29 +168,5 @@ class ProductServiceTest extends TestCase
     $products = $this->productService->getProducts(10);
 
     $this->assertEquals(10, $products->count());
-  }
-
-  /** @test */
-  public function test_only_valid_toppings_are_added()
-  {
-    $product = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
-    $validTopping = Product::factory()->create(['is_topping' => true, 'product_type' => 'goods']);
-    $invalidTopping = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
-
-    $updateData = [
-      'toppings' => [$validTopping->id, $invalidTopping->id],
-    ];
-
-    $this->productService->updateProduct($product->id, $updateData);
-
-    $this->assertDatabaseHas('product_toppings', [
-      'product_id' => $product->id,
-      'topping_id' => $validTopping->id,
-    ]);
-
-    $this->assertDatabaseMissing('product_toppings', [
-      'product_id' => $product->id,
-      'topping_id' => $invalidTopping->id,
-    ]);
   }
 }
