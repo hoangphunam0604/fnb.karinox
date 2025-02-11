@@ -52,7 +52,7 @@ class OrderServiceTest extends TestCase
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
       'note' => 'Giao hàng nhanh',
       'items' => [
         ['product_id' => $product1->id, 'quantity' => 2],
@@ -66,7 +66,7 @@ class OrderServiceTest extends TestCase
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
       'customer_id' => $customer->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
     ]);
 
     // Kiểm tra sản phẩm có trong đơn hàng
@@ -103,7 +103,7 @@ class OrderServiceTest extends TestCase
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
       'note' => 'Ít đá',
       'items' => [
         [
@@ -120,7 +120,7 @@ class OrderServiceTest extends TestCase
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
       'customer_id' => $customer->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
     ]);
 
     // Kiểm tra sản phẩm có trong đơn hàng
@@ -161,14 +161,14 @@ class OrderServiceTest extends TestCase
     $order = $this->orderService->saveOrder([
       'customer_id' => $customer->id,
       'branch_id' => $branch->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
       'items' => [
         ['product_id' => $product->id, 'quantity' => 2],
       ]
     ]);
     $newBrand = Branch::factory()->create();
     $updateData = [
-      'status' => 'confirmed',
+      'order_status' => 'confirmed',
       'note' => 'Giao vào buổi sáng',
       'branch_id' => $newBrand->id
     ];
@@ -178,7 +178,7 @@ class OrderServiceTest extends TestCase
     // Kiểm tra thông tin đơn hàng đã được cập nhật
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
-      'status' => 'confirmed',
+      'order_status' => 'confirmed',
       'note' => 'Giao vào buổi sáng',
       'branch_id' => $newBrand->id,
     ]);
@@ -198,7 +198,7 @@ class OrderServiceTest extends TestCase
     $order = $this->orderService->saveOrder([
       'customer_id' => $customer->id,
       'branch_id' => $branch->id,
-      'status' => 'pending',
+      'order_status' => 'pending',
       'items' => [
         ['product_id' => $product1->id, 'quantity' => 2],
       ]
@@ -302,7 +302,7 @@ class OrderServiceTest extends TestCase
 
   public function test_order_history_is_recorded_when_status_changes()
   {
-    $order = Order::factory()->create(['status' => 'pending']);
+    $order = Order::factory()->create(['order_status' => 'pending']);
 
     // Cập nhật trạng thái đơn hàng
     $this->orderService->updateOrderStatus($order->id, 'confirmed');
@@ -341,20 +341,19 @@ class OrderServiceTest extends TestCase
     ];
 
     // Tạo đơn hàng với sản phẩm và topping ban đầu
-    $order = Order::factory()->create(['status' => 'confirmed']);
+    $order = Order::factory()->create(['order_status' => 'confirmed']);
     $order = $this->orderService->updateOrder($order->id, [
       'items' => $dataOrderItems
     ]);
-    $paymentMethod = 'momo';
     $paidAmount = 100000;
     $total_amount = ($product->price + $topping->price) * 2;
     // Hoàn tất đơn hàng
-    $this->orderService->markAsCompleted($order->id, $paymentMethod, $paidAmount);
+    $this->orderService->markAsCompleted($order->id, $paidAmount);
 
     // Kiểm tra trạng thái đơn hàng đã chuyển sang `completed`
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
-      'status' => 'completed',
+      'order_status' => 'completed',
     ]);
 
     // Kiểm tra hóa đơn đã được tạo
@@ -369,7 +368,6 @@ class OrderServiceTest extends TestCase
       'branch_id' => $order->branch_id,
       'discount_amount' => $order->discount_amount,
       'paid_amount' => $paidAmount,
-      'payment_method'  =>  $paymentMethod,
       'note' => $order->note,
       'total_amount' => $total_amount,
     ]);
@@ -392,72 +390,6 @@ class OrderServiceTest extends TestCase
       'invoice_item_id' => $invoiceItem->id,
       'topping_id' => $topping->id,
       'unit_price' => $topping->price,
-    ]);
-  }
-
-
-
-  /** @test */
-  public function test_update_payment_status_with_valid_statuses()
-  {
-    $order = Order::factory()->create([
-      'status' => 'pending',
-      'payment_status' => 'pending',
-      'total_price' => 100000,
-    ]);
-
-    $validStatuses = ['pending', 'paid', 'partial', 'failed'];
-
-    foreach ($validStatuses as $status) {
-      $this->orderService->updatePaymentStatus($order->id, $status, 'cash');
-
-      $this->assertDatabaseHas('orders', [
-        'id' => $order->id,
-        'payment_status' => $status,
-      ]);
-    }
-  }
-
-  /** @test */
-  public function test_update_payment_status_invalid_status_throws_exception()
-  {
-    $this->expectException(\InvalidArgumentException::class);
-
-    $order = Order::factory()->create([
-      'payment_status' => 'pending',
-      'total_price' => 100000,
-    ]);
-
-    $this->orderService->updatePaymentStatus($order->id, 'invalid_status', 'cash');
-  }
-
-  /** @test */
-  public function test_update_payment_status_paid_creates_invoice_if_order_completed()
-  {
-    DB::spy(); // Theo dõi các truy vấn DB để kiểm tra hóa đơn được tạo
-
-    $order = Order::factory()->create([
-      'status' => 'completed',
-      'payment_status' => 'pending',
-      'total_price' => 200000,
-    ]);
-
-    // Cập nhật trạng thái thanh toán thành "paid"
-    $this->orderService->updatePaymentStatus($order->id, 'paid', 'credit_card');
-
-    // Kiểm tra đơn hàng đã được cập nhật
-    $this->assertDatabaseHas('orders', [
-      'id' => $order->id,
-      'payment_status' => 'paid',
-      'status' => 'completed',
-    ]);
-
-    // Kiểm tra hóa đơn đã được tạo
-    $this->assertDatabaseHas('invoices', [
-      'order_id' => $order->id,
-      'total_amount' => $order->total_price,
-      'payment_method' => 'credit_card',
-      'status' => 'paid',
     ]);
   }
 }

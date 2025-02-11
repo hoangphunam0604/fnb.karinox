@@ -22,9 +22,10 @@ return new class extends Migration
       $table->decimal('change_amount', 15, 2)->default(0); //Tiền thừa trả lại cho khách (mặc định = 0).
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); //Nếu khách hàng dùng mã giảm giá, liên kết với bảng vouchers.
+      $table->string('sales_channel')->default('pos'); //Kênh bán hàng, mặc định pos
       $table->enum('invoice_status', ['pending', 'canceled', 'completed'])->default('pending'); // Trạng thái hóa đơn
       $table->enum('payment_status', ['unpaid', 'partial', 'paid', 'refunded'])->default('unpaid'); // Trạng thái thanh toán
-      $table->string('payment_method'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
+      $table->string('payment_method')->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->text('note')->nullable(); //Ghi chú thêm về hóa đơn.
 
       // Liên kết với khách hàng (có thể null nếu khách vãng lai)

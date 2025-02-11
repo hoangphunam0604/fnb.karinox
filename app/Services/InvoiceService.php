@@ -7,7 +7,6 @@ use App\Models\InvoiceItem;
 use App\Models\InvoiceTopping;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\OrderTopping;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceService
@@ -15,12 +14,12 @@ class InvoiceService
   /**
    * Tạo hóa đơn từ đơn hàng
    */
-  public function createInvoiceFromOrder($orderId, $paymentMethod = 'cash', $paidAmount = 0)
+  public function createInvoiceFromOrder($orderId,  $paidAmount = 0)
   {
-    return DB::transaction(function () use ($orderId, $paymentMethod, $paidAmount) {
+    return DB::transaction(function () use ($orderId,  $paidAmount) {
       $order = Order::findOrFail($orderId);
 
-      if ($order->status !== 'completed') {
+      if ($order->order_status !== 'completed') {
         throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
       }
 
@@ -31,9 +30,8 @@ class InvoiceService
         'branch_id' => $order->branch_id,
         'discount_amount' => $order->discount_amount,
         'paid_amount' => $paidAmount,
-        'status' => 'unpaid',
-        'payment_method'  =>  $paymentMethod,
-        'payment_status' => $paidAmount >= $order->total_price ? 'paid' : 'unpaid',
+        'invoice_status' => $paidAmount > 0 ? ($paidAmount >= $order->total_price ? 'completed' : 'pending') : 'pending',
+        'payment_status' => $paidAmount > 0 ? ($paidAmount >= $order->total_price ? 'paid' : 'partial') : 'unpaid',
         'note' => $order->note,
       ]);
 

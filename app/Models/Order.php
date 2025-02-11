@@ -22,8 +22,7 @@ class Order extends Model
     'discount_amount',
     'voucher_id',
     'voucher_code',
-    'status',
-    'payment_status',
+    'order_status',
     'note',
   ];
 
@@ -36,11 +35,11 @@ class Order extends Model
     });
 
     static::updating(function ($order) {
-      if ($order->isDirty('status')) {
+      if ($order->isDirty('order_status')) {
         OrderHistory::create([
           'order_id'   => $order->id,
-          'old_status' => $order->getOriginal('status'),
-          'new_status' => $order->status,
+          'old_status' => $order->getOriginal('order_status'),
+          'new_status' => $order->order_status,
           'user_id'    => Auth::id(),
           'note'      => 'Cập nhật trạng thái đơn hàng.'
         ]);
@@ -99,22 +98,6 @@ class Order extends Model
    */
   public function isCompleted()
   {
-    return $this->status === 'completed';
-  }
-
-  /**
-   * Kiểm tra đơn hàng đã thanh toán chưa
-   */
-  public function isPaid()
-  {
-    return $this->payment_status === 'paid';
-  }
-
-  /**
-   * Kiểm tra đơn hàng có đang nợ không
-   */
-  public function isUnpaid()
-  {
-    return in_array($this->payment_status, ['unpaid', 'partial']);
+    return $this->order_status === 'completed';
   }
 }

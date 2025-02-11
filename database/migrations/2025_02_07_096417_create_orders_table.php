@@ -32,8 +32,7 @@ return new class extends Migration
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); // Mã giảm giá
       $table->string('voucher_code')->nullable()->unique(); // Mã đơn hàng
-      $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng
-      $table->enum('payment_status', ['pending', 'paid', 'partial', 'failed'])->default('pending'); // Trạng thái thanh toán
+      $table->enum('order_status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng
       $table->text('note')->nullable(); // Ghi chú
     });
   }

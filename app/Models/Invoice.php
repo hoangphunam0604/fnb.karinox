@@ -15,6 +15,7 @@ class Invoice extends Model
     'paid_amount',
     'change_amount',
     'voucher_id',
+    'sales_channel',
     'invoice_status',
     'payment_status',
     'payment_method',

@@ -42,8 +42,7 @@ class OrderService
         'receiver_id' => $data['receiver_id'] ?? $order->receiver_id,
         'branch_id' => $data['branch_id'] ?? $order->branch_id,
         'table_id' => $data['table_id'] ?? $order->table_id,
-        'status' => $data['status'] ?? 'pending',
-        'payment_status' => $data['payment_status'] ?? 'pending',
+        'order_status' => $data['order_status'] ?? 'pending',
         'note' => $data['note'] ?? $order->note,
       ]);
 
@@ -145,6 +144,7 @@ class OrderService
     $voucher->decrement('remaining_quantity');
 
     // Lưu thông tin voucher vào đơn hàng
+    $order->voucher_id = $voucher->id;
     $order->voucher_code = $voucher->code;
     $order->discount_amount = $discountAmount;
     $order->save();
@@ -202,14 +202,14 @@ class OrderService
   /**
    * Hoàn tất đơn hàng
    */
-  public function markAsCompleted($orderId, $paymentMethod = 'cash', $paidAmount = 0)
+  public function markAsCompleted($orderId, $paidAmount = 0)
   {
-    return DB::transaction(function () use ($orderId, $paymentMethod, $paidAmount) {
+    return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = $this->updateOrderStatus($orderId, 'completed');
 
       // Gọi `InvoiceService` để tạo hóa đơn
       $invoiceService = new InvoiceService();
-      $invoiceService->createInvoiceFromOrder($orderId, $paymentMethod, $paidAmount);
+      $invoiceService->createInvoiceFromOrder($orderId, $paidAmount);
 
       return $order;
     });
@@ -221,46 +221,18 @@ class OrderService
   public function updateOrderStatus($orderId, $status)
   {
     $order = Order::findOrFail($orderId);
-    $order->status = $status;
+    $order->order_status = $status;
     $order->save();
 
     return $order;
   }
 
   /**
-   * Cập nhật trạng thái thanh toán của đơn hàng
-   */
-  public function updatePaymentStatus($orderId, $paymentStatus, $paymentMethod = null)
-  {
-    return DB::transaction(function () use ($orderId, $paymentStatus, $paymentMethod) {
-      $order = Order::findOrFail($orderId);
-
-      // Kiểm tra trạng thái hợp lệ
-      $validStatuses = ['pending', 'paid', 'partial', 'failed'];
-      if (!in_array($paymentStatus, $validStatuses)) {
-        throw new \InvalidArgumentException("Trạng thái thanh toán không hợp lệ: {$paymentStatus}");
-      }
-
-      // Cập nhật trạng thái thanh toán
-      $order->payment_status = $paymentStatus;
-      $order->save();
-
-      // Nếu thanh toán đầy đủ, tự động hoàn tất đơn hàng
-      if ($paymentStatus === 'paid' && $order->status !== 'completed') {
-        $this->markAsCompleted($orderId, $paymentMethod, $order->total_price);
-      }
-
-      return $order;
-    });
-  }
-
-
-  /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
   public function findOrderByCode($code)
   {
-    return Order::where('code', strtoupper($code))->first();
+    return Order::where('order_code', strtoupper($code))->first();
   }
 
   /**

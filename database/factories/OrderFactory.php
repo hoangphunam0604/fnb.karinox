@@ -23,7 +23,7 @@ class OrderFactory extends Factory
     return [
       'customer_id' => Customer::factory(),
       'branch_id' => Branch::factory(),
-      'status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
+      'order_status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'note' => $this->faker->sentence(),
     ];
   }
