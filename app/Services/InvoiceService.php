@@ -33,6 +33,7 @@ class InvoiceService
         'paid_amount' => $paidAmount,
         'status' => 'unpaid',
         'payment_method'  =>  $paymentMethod,
+        'payment_status' => $paidAmount >= $order->total_price ? 'paid' : 'unpaid',
         'note' => $order->note,
       ]);
 
