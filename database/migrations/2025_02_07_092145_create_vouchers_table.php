@@ -8,18 +8,25 @@ return new class extends Migration {
   public function up()
   {
     Schema::create('vouchers', function (Blueprint $table) {
-      $table->id(); // ID tự động tăng
-      $table->timestamps(); // Thời gian tạo & cập nhật
-
-      $table->string('code')->unique(); // Mã voucher (duy nhất)
-      $table->enum('discount_type', ['percentage', 'fixed'])->default('fixed'); // Loại giảm giá
-      $table->decimal('discount_value', 10, 2); // Giá trị giảm giá (số tiền hoặc %)
-      $table->decimal('min_order_value', 10, 2)->nullable(); // Giá trị đơn hàng tối thiểu
-      $table->decimal('max_discount', 10, 2)->nullable(); // Số tiền giảm tối đa (nếu là phần trăm)
-      $table->integer('usage_limit')->default(1); // Giới hạn số lần sử dụng
-      $table->integer('used_count')->default(0); // Số lần đã sử dụng
-      $table->timestamp('expires_at')->nullable(); // Ngày hết hạn
-      $table->enum('status', ['active', 'inactive'])->default('active'); // Trạng thái voucher
+      $table->id();
+      $table->string('code')->unique();
+      $table->enum('type', ['fixed', 'percentage']);
+      $table->decimal('discount_amount', 10, 2);
+      $table->decimal('max_discount', 10, 2)->nullable();
+      $table->decimal('min_order_value', 10, 2)->nullable();
+      $table->dateTime('start_date');
+      $table->dateTime('end_date');
+      $table->integer('usage_limit')->nullable();
+      $table->integer('per_customer_limit')->nullable();
+      $table->boolean('is_active')->default(true);
+      $table->json('applicable_membership_levels')->nullable(); // Hỗ trợ nhiều hạng thành viên
+      $table->json('valid_days_of_week')->nullable();
+      $table->json('valid_weeks_of_month')->nullable();
+      $table->json('valid_months')->nullable();
+      $table->json('valid_time_ranges')->nullable();
+      $table->json('excluded_dates')->nullable();
+      $table->boolean('warn_if_used')->default(false);
+      $table->timestamps();
     });
   }
 

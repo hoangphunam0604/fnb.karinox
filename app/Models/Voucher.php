@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Voucher extends Model
 {
@@ -12,61 +11,35 @@ class Voucher extends Model
 
   protected $fillable = [
     'code',
-    'discount_type',
-    'discount_value',
-    'min_order_value',
+    'type',
+    'discount_amount',
     'max_discount',
+    'min_order_value',
+    'start_date',
+    'end_date',
     'usage_limit',
-    'used_count',
-    'expires_at',
-    'status',
+    'per_customer_limit',
+    'is_active',
+    'applicable_membership_levels',
+    'valid_days_of_week',
+    'valid_weeks_of_month',
+    'valid_months',
+    'valid_time_ranges',
+    'excluded_dates',
+    'warn_if_used',
   ];
 
   protected $casts = [
-    'discount_value' => 'decimal:2',
-    'min_order_value' => 'decimal:2',
-    'max_discount' => 'decimal:2',
-    'usage_limit' => 'integer',
-    'used_count' => 'integer',
-    'expires_at' => 'datetime',
+    'applicable_membership_levels' => 'array',
+    'valid_days_of_week' => 'array',
+    'valid_weeks_of_month' => 'array',
+    'valid_months' => 'array',
+    'valid_time_ranges' => 'array',
+    'excluded_dates' => 'array',
   ];
 
-  /**
-   * Tự động tạo mã giảm giá nếu không có.
-   */
-  protected static function boot()
+  public function branches()
   {
-    parent::boot();
-
-    static::creating(function ($voucher) {
-      if (empty($voucher->code)) {
-        $voucher->code = strtoupper(Str::random(8));
-      }
-    });
-  }
-  /**
-   * Scope tìm kiếm voucher theo mã code.
-   */
-  public function scopeFindByCode($query, $code)
-  {
-    return $query->where('code', strtoupper($code))->first();
-  }
-
-  /**
-   * Kiểm tra voucher còn hiệu lực hay không.
-   */
-  public function isValid()
-  {
-    return $this->status === 'active'
-      && ($this->expires_at === null || $this->expires_at->isFuture())
-      && ($this->usage_limit === null || $this->used_count < $this->usage_limit);
-  }
-
-  /**
-   * Tăng số lần sử dụng voucher.
-   */
-  public function incrementUsage()
-  {
-    $this->increment('used_count');
+    return $this->belongsToMany(Branch::class, 'voucher_branches');
   }
 }
