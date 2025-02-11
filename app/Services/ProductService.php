@@ -30,7 +30,7 @@ class ProductService
   }
 
   /**
-   * Tạo hoặc cập nhật sản phẩm (hỗ trợ chi nhánh, thuộc tính, thành phần, topping)
+   * Tạo hoặc cập nhật sản phẩm
    */
   public function saveProduct(array $data, $productId = null)
   {
@@ -43,16 +43,20 @@ class ProductService
         'code' => $data['code'] ?? $product->code,
         'name' => $data['name'] ?? $product->name,
         'category_id' => $data['category_id'] ?? $product->category_id,
-        'product_type' => $data['product_type'] ?? $product->product_type,
-        'allows_sale' => $data['allows_sale'] ?? $product->allows_sale,
-        'is_reward_point' => $data['is_reward_point'] ?? $product->is_reward_point,
-        'product_group' => $data['product_group'] ?? $product->product_group,
+        'product_type' => $data['product_type'] ?? $product->product_type ?? 'goods',
+        'allows_sale' => $data['allows_sale'] ?? $product->allows_sale ?? true,
+        'is_reward_point' => $data['is_reward_point'] ?? $product->is_reward_point ?? false,
+        'is_topping' => $data['is_topping'] ?? $product->is_topping ?? false,
+        'product_group' => $data['product_group'] ?? $product->product_group ?? 1,
       ]);
 
       $product->save();
 
-      // Đồng bộ chi nhánh, thuộc tính, thành phần, topping
-      $this->syncProductRelations($product->id, $data);
+      // Đồng bộ dữ liệu liên quan
+      $this->syncBranches($product->id, $data['branches'] ?? []);
+      $this->syncAttributes($product->id, $data['attributes'] ?? []);
+      $this->syncFormulas($product->id, $data['formulas'] ?? []);
+      $this->syncToppings($product->id, $data['toppings'] ?? []);
 
       return $product;
     });
@@ -85,51 +89,81 @@ class ProductService
   }
 
   /**
-   * Đồng bộ các dữ liệu liên quan của sản phẩm (Chi nhánh, Thuộc tính, Thành phần, Topping)
+   * Đồng bộ chi nhánh sản phẩm
    */
-  private function syncProductRelations($productId, array $data)
+  private function syncBranches($productId, array $branches)
   {
-    // Cập nhật chi nhánh sản phẩm
-    if (isset($data['branches'])) {
-      ProductBranch::where('product_id', $productId)->delete();
-      $branches = array_map(fn($branch) => [
+    ProductBranch::where('product_id', $productId)->delete();
+
+    if (!empty($branches)) {
+      $branchData = array_map(fn($branch) => [
         'product_id' => $productId,
         'branch_id' => $branch['branch_id'],
         'stock_quantity' => $branch['stock_quantity'] ?? 0,
-      ], $data['branches']);
-      ProductBranch::insert($branches);
-    }
+      ], $branches);
 
-    // Cập nhật thuộc tính sản phẩm
-    if (isset($data['attributes'])) {
-      ProductAttribute::where('product_id', $productId)->delete();
-      $attributes = array_map(fn($attr) => [
+      ProductBranch::insert($branchData);
+    }
+  }
+
+  /**
+   * Đồng bộ thuộc tính sản phẩm
+   */
+  private function syncAttributes($productId, array $attributes)
+  {
+    ProductAttribute::where('product_id', $productId)->delete();
+
+    if (!empty($attributes)) {
+      $attributeData = array_map(fn($attr) => [
         'product_id' => $productId,
         'attribute_id' => $attr['attribute_id'],
         'value' => $attr['value'] ?? null,
-      ], $data['attributes']);
-      ProductAttribute::insert($attributes);
-    }
+      ], $attributes);
 
-    // Cập nhật công thức (thành phần) sản phẩm
-    if (isset($data['formulas'])) {
-      ProductFormula::where('product_id', $productId)->delete();
-      $formulas = array_map(fn($formula) => [
+      ProductAttribute::insert($attributeData);
+    }
+  }
+
+  /**
+   * Đồng bộ công thức (thành phần) sản phẩm
+   */
+  private function syncFormulas($productId, array $formulas)
+  {
+    ProductFormula::where('product_id', $productId)->delete();
+
+    if (!empty($formulas)) {
+      $formulaData = array_map(fn($formula) => [
         'product_id' => $productId,
         'ingredient_id' => $formula['ingredient_id'],
         'quantity' => $formula['quantity'],
-      ], $data['formulas']);
-      ProductFormula::insert($formulas);
-    }
+      ], $formulas);
 
-    // Cập nhật topping sản phẩm
-    if (isset($data['toppings'])) {
-      ProductTopping::where('product_id', $productId)->delete();
-      $toppings = array_map(fn($toppingId) => [
-        'product_id' => $productId,
-        'topping_id' => $toppingId
-      ], $data['toppings']);
-      ProductTopping::insert($toppings);
+      ProductFormula::insert($formulaData);
+    }
+  }
+
+  /**
+   * Đồng bộ topping sản phẩm (chỉ nhận các sản phẩm có is_topping = true)
+   */
+  private function syncToppings($productId, array $toppingIds)
+  {
+    ProductTopping::where('product_id', $productId)->delete();
+
+    if (!empty($toppingIds)) {
+      // Chỉ lấy những sản phẩm có is_topping = true
+      $validToppings = Product::whereIn('id', $toppingIds)
+        ->where('is_topping', true)
+        ->pluck('id')
+        ->toArray();
+
+      if (!empty($validToppings)) {
+        $toppingData = array_map(fn($toppingId) => [
+          'product_id' => $productId,
+          'topping_id' => $toppingId,
+        ], $validToppings);
+
+        ProductTopping::insert($toppingData);
+      }
     }
   }
 }

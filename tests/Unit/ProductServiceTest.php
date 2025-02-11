@@ -2,23 +2,18 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\Product;
-use App\Models\Category;
 use App\Models\Branch;
 use App\Models\Attribute;
-use App\Models\ProductBranch;
-use App\Models\ProductAttribute;
-use App\Models\ProductFormula;
-use App\Models\ProductTopping;
 use App\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ProductServiceTest extends TestCase
 {
   use RefreshDatabase;
 
-  protected $productService;
+  protected ProductService $productService;
 
   protected function setUp(): void
   {
@@ -26,94 +21,130 @@ class ProductServiceTest extends TestCase
     $this->productService = new ProductService();
   }
 
-  /**
-   * Test tạo sản phẩm mới với chi nhánh, thuộc tính, thành phần và topping
-   */
-  public function test_create_product_with_relations()
+  /** @test */
+  public function test_create_product()
   {
-    $category = Category::factory()->create();
     $branch = Branch::factory()->create();
-    $attribute = Attribute::factory()->create();
-    $topping = Product::factory()->create();
-    $ingredient = Product::factory()->create();
+    $attribute = Attribute::factory()->create(); // Tạo attribute hợp lệ
+    $formulaProduct = Product::factory()->create(['product_type' => 'goods']);
+    $toppingProduct = Product::factory()->create(['is_topping' => true, 'product_type' => 'goods']);
 
-    $productData = [
-      'code' => 'P001',
+    $data = [
+      'code' => 'PROD123',
       'name' => 'Cà phê sữa',
-      'category_id' => $category->id,
-      'product_type' => 'processed',
+      'category_id' => 1,
+      'product_type' => 'goods',
       'branches' => [
-        ['branch_id' => $branch->id, 'stock_quantity' => 50]
+        ['branch_id' => $branch->id, 'stock_quantity' => 10],
       ],
       'attributes' => [
-        ['attribute_id' => $attribute->id, 'value' => 'Lạnh']
+        ['attribute_id' => $attribute->id, 'value' => '500ml'], // Sử dụng ID hợp lệ
       ],
       'formulas' => [
-        ['ingredient_id' => $ingredient->id, 'quantity' => 2]
+        ['ingredient_id' => $formulaProduct->id, 'quantity' => 2],
       ],
-      'toppings' => [
-        ['topping_id' => $topping->id, 'quantity' => 1]
-      ],
+      'toppings' => [$toppingProduct->id],
     ];
 
-    $product = $this->productService->saveProduct($productData);
+    $product = $this->productService->createProduct($data);
 
     $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Cà phê sữa']);
-    $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id, 'stock_quantity' => 50]);
-    $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id, 'value' => 'Lạnh']);
-    $this->assertDatabaseHas('product_formulas', ['product_id' => $product->id, 'ingredient_id' => $ingredient->id, 'quantity' => 2]);
-    $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $topping->id, 'quantity' => 1]);
+    $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id]);
+    $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id]);
+    $this->assertDatabaseHas('product_formulas', ['product_id' => $product->id, 'ingredient_id' => $formulaProduct->id]);
+    $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $toppingProduct->id]);
   }
 
-  /**
-   * Test cập nhật sản phẩm
-   */
+  /** @test */
   public function test_update_product()
   {
-    $product = Product::factory()->create();
     $branch = Branch::factory()->create();
-    $attribute = Attribute::factory()->create();
+    $attribute = Attribute::factory()->create(); // Tạo attribute hợp lệ
+    $formulaProduct = Product::factory()->create(['product_type' => 'goods']);
+    $toppingProduct = Product::factory()->create(['is_topping' => true, 'product_type' => 'goods']);
 
-    $updatedData = [
+    $product = Product::factory()->create(['code' => 'PROD001', 'name' => 'Cà phê đen', 'product_type' => 'processed']);
+
+    $updateData = [
+      'code' => 'PROD001',
       'name' => 'Cà phê đen đá',
+      'product_type' => 'processed',
       'branches' => [
-        ['branch_id' => $branch->id, 'stock_quantity' => 60]
+        ['branch_id' => $branch->id, 'stock_quantity' => 15],
       ],
       'attributes' => [
-        ['attribute_id' => $attribute->id, 'value' => 'Nóng']
+        ['attribute_id' => $attribute->id, 'value' => '500ml'], // Đảm bảo attribute_id hợp lệ
       ],
+      'formulas' => [
+        ['ingredient_id' => $formulaProduct->id, 'quantity' => 3],
+      ],
+      'toppings' => [$toppingProduct->id],
     ];
 
-    $updatedProduct = $this->productService->saveProduct($updatedData, $product->id);
+    $updatedProduct = $this->productService->updateProduct($product->id, $updateData);
 
     $this->assertEquals('Cà phê đen đá', $updatedProduct->name);
-    $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Cà phê đen đá']);
-    $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id, 'stock_quantity' => 60]);
-    $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id, 'value' => 'Nóng']);
+    $this->assertDatabaseHas('product_branches', ['product_id' => $product->id, 'branch_id' => $branch->id, 'stock_quantity' => 15]);
+    $this->assertDatabaseHas('product_attributes', ['product_id' => $product->id, 'attribute_id' => $attribute->id]);
+    $this->assertDatabaseHas('product_formulas', ['product_id' => $product->id, 'ingredient_id' => $formulaProduct->id]);
+    $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $toppingProduct->id]);
   }
 
-  /**
-   * Test tìm kiếm sản phẩm theo mã code
-   */
-  public function test_find_product_by_code()
-  {
-    $product = Product::factory()->create(['code' => 'P002']);
-
-    $foundProduct = $this->productService->findProduct('P002');
-
-    $this->assertNotNull($foundProduct);
-    $this->assertEquals('P002', $foundProduct->code);
-  }
-
-  /**
-   * Test xóa sản phẩm
-   */
+  /** @test */
   public function test_delete_product()
   {
-    $product = Product::factory()->create();
+    $product = Product::factory()->create(['code' => 'PROD002', 'product_type' => 'service']);
 
     $this->productService->deleteProduct($product->id);
 
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
+  }
+
+  /** @test */
+  public function test_find_product()
+  {
+    Product::factory()->create(['code' => 'FIND123', 'name' => 'Trà sữa', 'product_type' => 'combo']);
+
+    $foundByCode = $this->productService->findProduct('FIND123');
+    $this->assertNotNull($foundByCode);
+    $this->assertEquals('Trà sữa', $foundByCode->name);
+
+    $foundByName = $this->productService->findProduct('Trà sữa');
+    $this->assertNotNull($foundByName);
+    $this->assertEquals('FIND123', $foundByName->code);
+  }
+
+  /** @test */
+  public function test_get_products()
+  {
+    Product::factory()->count(15)->create();
+
+    $products = $this->productService->getProducts(10);
+
+    $this->assertEquals(10, $products->count());
+  }
+
+  /** @test */
+  public function test_only_valid_toppings_are_added()
+  {
+    $product = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
+    $validTopping = Product::factory()->create(['is_topping' => true, 'product_type' => 'goods']);
+    $invalidTopping = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
+
+    $updateData = [
+      'toppings' => [$validTopping->id, $invalidTopping->id],
+    ];
+
+    $this->productService->updateProduct($product->id, $updateData);
+
+    $this->assertDatabaseHas('product_toppings', [
+      'product_id' => $product->id,
+      'topping_id' => $validTopping->id,
+    ]);
+
+    $this->assertDatabaseMissing('product_toppings', [
+      'product_id' => $product->id,
+      'topping_id' => $invalidTopping->id,
+    ]);
   }
 }

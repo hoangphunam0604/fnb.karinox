@@ -20,6 +20,7 @@ class ProductFactory extends Factory
       'product_type' => $this->faker->randomElement(['goods', 'processed', 'service', 'combo']), // Loại sản phẩm
       'allows_sale' => $this->faker->boolean(90), // 90% sản phẩm có thể bán
       'is_reward_point' => $this->faker->boolean(50), // 50% sản phẩm tích điểm
+      'is_topping' => $this->faker->boolean(10), // 10% sản phẩm có thể là topping
       'product_group' => $this->faker->randomDigit, // Nhóm sản phẩm (0-9)
     ];
   }

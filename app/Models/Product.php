@@ -22,9 +22,15 @@ class Product extends Model
     'unit',
     'allows_sale',
     'is_reward_point',
-    'has_toppings',
+    'is_topping',
     'images',
     'status',
+  ];
+
+  protected $casts = [
+    'allows_sale' => 'boolean',
+    'is_reward_point' => 'boolean',
+    'is_topping' => 'boolean',
   ];
 
   public function categories()

@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->unsignedTinyInteger('product_group')->default(1);
-      $table->enum('product_type', ['goods', 'processed', 'service', 'combo']);
+      $table->enum('product_type', ['goods', 'processed', 'service', 'combo'])->default('goods');
       $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
       $table->string('code');
       $table->string('barcode')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
       $table->string('unit', 50)->nullable();
       $table->boolean('allows_sale')->default(true);
       $table->boolean('is_reward_point')->default(true);
-      $table->boolean('has_toppings')->default(false);
+      $table->boolean('is_topping')->default(false);
       $table->json('images')->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
     });
