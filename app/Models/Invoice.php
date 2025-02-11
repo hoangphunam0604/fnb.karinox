@@ -32,7 +32,8 @@ class Invoice extends Model
     parent::boot();
 
     static::creating(function ($invoice) {
-      $invoice->code = self::generateInvoiceCode($invoice->branch_id);
+      if (!$invoice->code)
+        $invoice->code = self::generateInvoiceCode($invoice->branch_id);
     });
   }
 
