@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Voucher;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\InvoiceService;
@@ -391,5 +392,102 @@ class OrderServiceTest extends TestCase
       'topping_id' => $topping->id,
       'unit_price' => $topping->price,
     ]);
+  }
+
+  /** @test */
+  public function it_applies_voucher_to_order_correctly()
+  {
+    $customer = Customer::factory()->create();
+
+    // Tạo voucher giảm giá 20,000
+    $voucher = Voucher::factory()->create([
+      'code' => 'DISCOUNT20K',
+      'discount_value' => 20000,
+      'is_active' => true,
+    ]);
+
+    // Tạo sản phẩm
+    $product = Product::factory()->create(['price' => 100000]);
+
+    // Dữ liệu đơn hàng
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'voucher_code' => 'DISCOUNT20K',
+      'order_items' => [
+        ['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 100000],
+      ],
+    ];
+
+    // Tạo đơn hàng và áp dụng voucher
+    $order = $this->orderService->createOrder($orderData);
+
+    // Kiểm tra đơn hàng có được lưu
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'voucher_code' => 'DISCOUNT20K',
+      'discount_amount' => 20000,
+    ]);
+
+    // Kiểm tra tổng tiền đơn hàng sau giảm giá
+    $expectedTotal = (2 * 100000) - 20000; // 200,000 - 20,000
+    $this->assertEquals($expectedTotal, $order->total_price);
+  }
+
+  /** @test */
+  public function it_rejects_invalid_voucher_code()
+  {
+    $customer = Customer::factory()->create();
+
+    // Tạo sản phẩm
+    $product = Product::factory()->create(['price' => 100000]);
+
+    // Dữ liệu đơn hàng với voucher không hợp lệ
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'voucher_code' => 'INVALIDCODE',
+      'order_items' => [
+        ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100000],
+      ],
+    ];
+
+    // Kiểm tra ngoại lệ khi voucher không hợp lệ
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage("Mã giảm giá không hợp lệ.");
+
+    $this->orderService->createOrder($orderData);
+  }
+
+  /** @test */
+  public function it_does_not_apply_expired_voucher()
+  {
+    $customer = Customer::factory()->create();
+
+    // Tạo voucher hết hạn
+    $expiredVoucher = Voucher::factory()->create([
+      'code' => 'EXPIREDVOUCHER',
+      'discount_amount' => 15000,
+      'is_active' => false, // Voucher hết hạn
+    ]);
+
+    // Tạo sản phẩm
+    $product = Product::factory()->create(['price' => 100000]);
+
+    // Dữ liệu đơn hàng
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'voucher_code' => 'EXPIREDVOUCHER',
+      'order_items' => [
+        ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100000],
+      ],
+    ];
+
+    // Kiểm tra ngoại lệ khi voucher hết hạn
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage("Mã giảm giá đã hết hạn.");
+
+    $this->orderService->createOrder($orderData);
   }
 }

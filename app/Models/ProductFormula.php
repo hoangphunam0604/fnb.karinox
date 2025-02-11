@@ -9,9 +9,14 @@ class ProductFormula extends Model
 {
   use HasFactory;
 
+  public $incrementing = false; // Không sử dụng id tự tăng
+  protected $primaryKey = ['product_id', 'ingredient_id']; // Định nghĩa khóa chính là 2 cột
+  public $timestamps = false; // Giữ timestamps nếu cần theo dõi thời gian cập nhật
+
+
   protected $fillable = [
     'product_id', // Sản phẩm chính (combo)
-    'ingredient_product_id', // Sản phẩm thành phần
+    'ingredient_id', // Sản phẩm thành phần
     'quantity', // Số lượng của thành phần trong combo
   ];
 
@@ -23,6 +28,6 @@ class ProductFormula extends Model
 
   public function ingredientProduct()
   {
-    return $this->belongsTo(Product::class, 'ingredient_product_id');
+    return $this->belongsTo(Product::class, 'ingredient_id');
   }
 }
