@@ -12,7 +12,7 @@ return new class extends Migration {
     Schema::create('voucher_usages', function (Blueprint $table) {
       $table->foreignId('voucher_id')->constrained('vouchers')->onDelete('cascade');
       $table->foreignId('order_id')->constrained('orders')->onDelete('cascade'); // Lưu voucher sử dụng khi đặt hàng
-      $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('cascade'); // Giả sử khách hàng lưu trong bảng `users`
+      $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade'); // Giả sử khách hàng lưu trong bảng `users`
       $table->foreignId('invoice_id')->nullable()->constrained('invoices')->onDelete('cascade'); // Lưu voucher vào hóa đơn khi hoàn tất đơn hàng
       $table->timestamp('used_at')->useCurrent(); // Thời điểm sử dụng
       $table->decimal('discount_amount', 10, 2); // Số tiền giảm giá thực tế
