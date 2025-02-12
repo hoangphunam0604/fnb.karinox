@@ -18,8 +18,8 @@ return new class extends Migration
 
       $table->foreignId('membership_level_id')->nullable()->constrained('membership_levels')->nullOnDelete(); // Xếp hạng thành viên
       $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
-      $table->integer('loyalty_points')->default(0)->after('membership_level_id'); // Điểm tích lũy
-      $table->integer('reward_points')->default(0)->after('loyalty_points'); // Điểm thưởng
+      $table->integer('loyalty_points')->default(0); // Điểm tích lũy
+      $table->integer('reward_points')->default(0); // Điểm thưởng
       $table->integer('used_reward_points')->default(0); // Điểm thưởng đã sử dụng
       $table->decimal('total_spent', 15, 2)->default(0.00); // Tổng tiền khách đã chi tiêu
 
