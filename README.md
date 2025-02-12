@@ -8,6 +8,9 @@
 
 ```sh
 php artisan migrate:fresh --env=testing
+
+php artisan test --filter=OrderServiceTest
+php artisan test --filter=VoucherServiceTest
 ```
 
 ## Phân tích hệ thống

@@ -57,8 +57,20 @@ class CustomerService
 
   public function getCustomerMembershipLevel($customerId)
   {
+    $customer = Customer::findOrFail($customerId);
+    return $customer->membership_level_id;
+  }
+
+  public function updatePoint($customerId, $point)
+  {
 
     $customer = Customer::findOrFail($customerId);
-    return 1;
+
+    $customer->loyalty_points += $point;
+    $customer->reward_points += $point;
+    $customer->save();
+
+    // Cập nhật cấp độ thành viên
+    $customer->updateMembershipLevel();
   }
 }

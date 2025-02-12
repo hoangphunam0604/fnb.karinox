@@ -90,9 +90,6 @@ class VoucherService
   /**
    * Kiểm tra voucher hợp lệ
    */
-  /**
-   * Kiểm tra voucher hợp lệ
-   */
   public function isValid(Voucher $voucher, $totalOrder, $customerId = null): bool
   {
     $now = Carbon::now();

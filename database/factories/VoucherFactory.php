@@ -36,7 +36,6 @@ class VoucherFactory extends Factory
       'discount_type' => $discountType,
       'discount_value' => $discountValue,
       'max_discount' => $maxDiscount,
-      'min_order_value' => $this->faker->optional(0.7)->randomFloat(2, 200, 500), // 70% có min_order_value
       'start_date' => now(),
       'end_date' => now()->addDays($this->faker->numberBetween(7, 30)), // Kết thúc trong vòng 1 tháng
       'applied_count' => 0, // Mặc định chưa có ai sử dụng
