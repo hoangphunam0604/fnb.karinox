@@ -251,7 +251,8 @@ class OrderServiceTest extends TestCase
       'code' => 'DISCOUNT10K',
       'discount_value' => 10000,
       'discount_type' => 'fixed',
-      'remaining_quantity' => 5
+      'usage_limit' => 5,
+      'applied_count' => 0
     ]);
 
     $orderData = [
@@ -264,11 +265,19 @@ class OrderServiceTest extends TestCase
     $order = $this->orderService->createOrder($orderData);
 
     $this->assertEquals(10000, $order->discount_amount);
+    $this->assertEquals(199000, $order->total_amount);
     $this->assertDatabaseHas('orders', [
       'id' => $order->id,
       'voucher_code' => 'DISCOUNT10K'
     ]);
+
+    // Kiểm tra voucher đã được sử dụng một lần
+    $this->assertDatabaseHas('vouchers', [
+      'id' => $voucher->id,
+      'applied_count' => 1
+    ]);
   }
+
 
   /** @test */
   public function it_can_confirm_an_order()
