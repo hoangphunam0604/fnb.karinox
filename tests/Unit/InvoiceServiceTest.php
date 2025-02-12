@@ -17,7 +17,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class InvoiceServiceTest extends TestCase
 {
-  use RefreshDatabase;
 
   protected InvoiceService $invoiceService;
 
@@ -54,6 +53,7 @@ class InvoiceServiceTest extends TestCase
       'product_id' => $product->id,
       'quantity' => 1,
       'unit_price' => 50000,
+      'total_price_with_topping' => 70000,
     ]);
 
     // Tạo topping cho sản phẩm trong đơn hàng
@@ -61,6 +61,8 @@ class InvoiceServiceTest extends TestCase
       'order_item_id' => $orderItem->id,
       'topping_id' => $topping->id,
       'unit_price' => 10000,
+      'quantity' => 2,
+      'total_price' => 20000,
     ]);
 
     // Tạo hóa đơn từ đơn hàng
@@ -70,8 +72,8 @@ class InvoiceServiceTest extends TestCase
     $this->assertDatabaseHas('invoices', [
       'id' => $invoice->id,
       'order_id' => $order->id,
-      'payment_status' => 'paid',
-      'invoice_status' => 'completed',
+      'invoice_status' => 'pending',
+      'payment_status' => 'unpaid',
     ]);
 
     // Kiểm tra sản phẩm trong hóa đơn
@@ -80,13 +82,17 @@ class InvoiceServiceTest extends TestCase
       'product_id' => $product->id,
       'unit_price' => 50000,
       'total_price' => 50000,
+      'quantity' => 1,
+      'total_price_with_topping' => 70000,
     ]);
 
     // Kiểm tra topping trong hóa đơn
     $this->assertDatabaseHas('invoice_toppings', [
       'invoice_item_id' => $invoice->items()->first()->id,
       'topping_id' => $topping->id,
-      'unit_price' => 10000,
+      'unit_price' => $orderTopping->unit_price,
+      'quantity' => $orderTopping->quantity,
+      'total_price' => $orderTopping->total_price,
     ]);
   }
 
@@ -99,6 +105,20 @@ class InvoiceServiceTest extends TestCase
     $this->expectExceptionMessage("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
 
     $this->invoiceService->createInvoiceFromOrder($order->id);
+  }
+
+  /** @test */
+  public function it_updates_invoice_payment_method_correctly()
+  {
+    $invoice = Invoice::factory()->create(['payment_method' => 'cash']);
+
+    $updatedInvoice = $this->invoiceService->updatePaymentMethod($invoice->id, 'visa');
+
+    $this->assertEquals('visa', $updatedInvoice->payment_method);
+    $this->assertDatabaseHas('invoices', [
+      'id' => $invoice->id,
+      'payment_method' => 'visa',
+    ]);
   }
 
   /** @test */

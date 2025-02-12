@@ -16,9 +16,6 @@ class InvoiceFactory extends Factory
   public function definition()
   {
     return [
-      'code' => strtoupper(Str::random(8)), // Mã sản phẩm ngẫu nhiên (VD: AB12CD34)
-      'order_id' => Order::factory(),
-      'customer_id' => Customer::factory(),
       'branch_id' => Branch::factory(),
       'discount_amount' => $this->faker->randomElement([0, 5000, 10000, 20000]),
       'paid_amount' => $this->faker->randomElement([0, 50000, 100000, 200000]),

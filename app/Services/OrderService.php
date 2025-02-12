@@ -80,12 +80,14 @@ class OrderService
 
     foreach ($items as $item) {
       $unit_price = $this->getProductPrice($item['product_id']);
+      $total_price = $unit_price * $item['quantity'];
       $orderItem = OrderItem::create([
         'order_id' => $order->id,
         'product_id' => $item['product_id'],
         'quantity' => $item['quantity'],
         'unit_price' => $unit_price,
-        'total_price' => $unit_price * $item['quantity']
+        'total_price' => $total_price,
+        'total_price_with_topping'  =>  $total_price,
       ]);
 
       // Xử lý topping nếu có
@@ -120,6 +122,8 @@ class OrderService
         'unit_price' => $unitPrice,
         'total_price' => $totalPrice,
       ]);
+      $orderItem->total_price_with_topping = $orderItem->total_price + $totalPrice;
+      $orderItem->save();
     }
   }
 
@@ -157,7 +161,7 @@ class OrderService
     }
 
     return $order->items->sum(function ($item) {
-      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price) : 0;
+      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price * $t->quantity) : 0;
       return ($item->unit_price * $item->quantity) + $toppingTotal;
     });
   }

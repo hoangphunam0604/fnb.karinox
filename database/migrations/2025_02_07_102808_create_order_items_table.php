@@ -15,6 +15,7 @@ return new class extends Migration {
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('unit_price', 15, 2); // Giá mỗi sản phẩm
       $table->decimal('total_price', 15, 2); // Tổng giá
+      $table->decimal('total_price_with_topping', 15, 2)->default(0);
     });
   }
 

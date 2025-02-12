@@ -30,8 +30,8 @@ class InvoiceService
         'branch_id' => $order->branch_id,
         'discount_amount' => $order->discount_amount,
         'paid_amount' => $paidAmount,
-        'invoice_status' => $paidAmount > 0 ? ($paidAmount >= $order->total_price ? 'completed' : 'pending') : 'pending',
-        'payment_status' => $paidAmount > 0 ? ($paidAmount >= $order->total_price ? 'paid' : 'partial') : 'unpaid',
+        'invoice_status' => 'pending',
+        'payment_status' => 'unpaid',
         'note' => $order->note,
       ]);
 
@@ -53,12 +53,14 @@ class InvoiceService
   private function copyOrderItemsToInvoice(Order $order, Invoice $invoice)
   {
     foreach ($order->items as $orderItem) {
+
       $invoiceItem = InvoiceItem::create([
         'invoice_id' => $invoice->id,
         'product_id' => $orderItem->product_id,
         'quantity' => $orderItem->quantity,
         'unit_price' => $orderItem->unit_price,
-        'total_price' => $orderItem->unit_price * $orderItem->quantity,
+        'total_price' => $orderItem->total_price,
+        'total_price_with_topping' => $orderItem->total_price_with_topping,
       ]);
 
       $this->copyOrderToppingsToInvoice($orderItem, $invoiceItem);
@@ -71,7 +73,9 @@ class InvoiceService
       InvoiceTopping::create([
         'invoice_item_id' => $invoiceItem->id,
         'topping_id' => $orderTopping->topping_id,
+        'quantity' => $orderTopping->quantity,
         'unit_price' => $orderTopping->unit_price,
+        'total_price' => $orderTopping->total_price,
       ]);
     }
   }
@@ -87,7 +91,7 @@ class InvoiceService
       $productTotal = $invoiceItem->unit_price * $invoiceItem->quantity;
 
       // Tổng tiền topping
-      $toppingTotal = $invoiceItem->toppings?->sum(fn($t) => $t->unit_price * $invoiceItem->quantity) ?? 0;
+      $toppingTotal = $invoiceItem->toppings?->sum(fn($t) => $t->unit_price * $t->quantity) ?? 0;
 
       $total += ($productTotal + $toppingTotal);
       $invoiceItem->total_price_with_topping = ($productTotal + $toppingTotal);
@@ -98,7 +102,16 @@ class InvoiceService
     $invoice->total_amount = max($total - $invoice->discount_amount, 0);
     $invoice->save();
   }
-
+  /**
+   * Cập nhật phương thức thanh toán của hóa đơn
+   */
+  public function updatePaymentMethod($invoiceId, $method)
+  {
+    $invoice = Invoice::findOrFail($invoiceId);
+    $invoice->payment_method = $method;
+    $invoice->save();
+    return $invoice;
+  }
 
   /**
    * Cập nhật trạng thái thanh toán của hóa đơn
