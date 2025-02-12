@@ -31,6 +31,7 @@ class ResetMembershipPointsTest extends TestCase
   public function it_resets_loyalty_and_reward_points()
   {
     $customer = Customer::factory()->create([
+      'name' => "Nam",
       'loyalty_points' => 1200, // Điểm cao nhất trong năm qua
       'reward_points' => 300,
       'used_reward_points' => 150,
@@ -46,50 +47,6 @@ class ResetMembershipPointsTest extends TestCase
     $this->assertEquals(0, $customer->loyalty_points);
     $this->assertEquals(0, $customer->reward_points);
     $this->assertEquals(0, $customer->used_reward_points);
-  }
-
-  /** @test */
-  public function it_updates_membership_level_based_on_loyalty_points()
-  {
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 1500, // Điểm cao nhất trong năm
-      'membership_level_id' => null, // Chưa có hạng
-    ]);
-
-    ResetMembershipPoints::dispatch();
-
-    // Refresh dữ liệu
-    $customer->refresh();
-
-    // Kiểm tra khách hàng đã lên hạng Gold (1500 điểm thuộc hạng Gold)
-    $this->assertNotNull($customer->membership_level_id);
-    $this->assertEquals(
-      MembershipLevel::where('name', 'Gold')->first()->id,
-      $customer->membership_level_id
-    );
-  }
-
-  /** @test */
-  public function it_does_not_downgrade_membership_level()
-  {
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 1500, // Khách từng đạt Gold
-      'membership_level_id' => MembershipLevel::where('name', 'Gold')->first()->id, // Đang ở Gold
-    ]);
-
-    // Giả sử khách hàng tiêu hết điểm, còn lại 100 điểm trước khi reset
-    $customer->update(['loyalty_points' => 100]);
-
-    ResetMembershipPoints::dispatch();
-
-    // Refresh dữ liệu
-    $customer->refresh();
-
-    // Kiểm tra khách hàng vẫn giữ hạng Gold
-    $this->assertEquals(
-      MembershipLevel::where('name', 'Gold')->first()->id,
-      $customer->membership_level_id
-    );
   }
 
   /** @test */

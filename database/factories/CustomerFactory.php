@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-
 use App\Models\Customer;
+use App\Models\MembershipLevel;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
@@ -13,20 +13,16 @@ class CustomerFactory extends Factory
 {
   protected $model = Customer::class;
 
-  /**
-   * Define the model's default state.
-   *
-   * @return array<string, mixed>
-   */
   public function definition(): array
   {
     return [
+      'membership_level_id' => MembershipLevel::factory(),
+      'loyalty_card_number' => $this->faker->unique()->numerify('CARD#####'),
+      'last_purchase_at' => $this->faker->dateTimeThisYear(),
+      'status' => $this->faker->randomElement(['active', 'inactive', 'banned']),
       'name' => $this->faker->name,
       'email' => $this->faker->unique()->safeEmail,
       'phone' => $this->faker->unique()->phoneNumber,
-      'address' => $this->faker->address,
-      'dob' => $this->faker->date(),
-      'points' => $this->faker->numberBetween(0, 100),
     ];
   }
 }

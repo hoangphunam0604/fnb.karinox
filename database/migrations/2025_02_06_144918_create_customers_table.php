@@ -22,6 +22,7 @@ return new class extends Migration
       $table->integer('reward_points')->default(0); // Điểm thưởng
       $table->integer('used_reward_points')->default(0); // Điểm thưởng đã sử dụng
       $table->decimal('total_spent', 15, 2)->default(0.00); // Tổng tiền khách đã chi tiêu
+      $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
       $table->string('name'); // Tên khách hàng
@@ -31,7 +32,6 @@ return new class extends Migration
       $table->date('dob')->nullable(); // Ngày sinh khách hàng
       $table->enum('gender', ['male', 'female', 'other'])->nullable(); // Giới tính khách hàng
 
-      $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
       $table->string('referral_code')->nullable(); // Mã giới thiệu khách hàng
       $table->string('avatar')->nullable(); // Ảnh đại diện khách hàng
       $table->string('company_name')->nullable(); // Tên công ty (nếu là khách hàng doanh nghiệp)

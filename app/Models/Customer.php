@@ -16,14 +16,16 @@ class Customer extends Model
     'reward_points',
     'used_reward_points',
     'total_spent',
+    'last_purchase_at',
     'status',
+
     'name',
     'email',
     'phone',
     'address',
     'dob',
     'gender',
-    'last_purchase_at',
+
     'referral_code',
     'avatar',
     'company_name',
@@ -32,6 +34,13 @@ class Customer extends Model
     'zalo_id',
     'signup_source',
     'note',
+  ];
+
+  protected $casts = [
+    'loyalty_points' => 'integer',
+    'reward_points' => 'integer',
+    'used_reward_points' => 'integer',
+    'total_spent' => 'integer',
   ];
 
   public function membershipLevel()
