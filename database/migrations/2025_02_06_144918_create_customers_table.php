@@ -23,13 +23,14 @@ return new class extends Migration
       $table->integer('used_reward_points')->default(0); // Điểm thưởng đã sử dụng
       $table->decimal('total_spent', 15, 2)->default(0.00); // Tổng tiền khách đã chi tiêu
       $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
+      $table->date('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
       $table->string('name'); // Tên khách hàng
       $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
       $table->string('address')->nullable(); // Địa chỉ khách hàng
-      $table->date('dob')->nullable(); // Ngày sinh khách hàng
+      $table->date('birthday')->nullable(); // Ngày sinh khách hàng
       $table->enum('gender', ['male', 'female', 'other'])->nullable(); // Giới tính khách hàng
 
       $table->string('referral_code')->nullable(); // Mã giới thiệu khách hàng

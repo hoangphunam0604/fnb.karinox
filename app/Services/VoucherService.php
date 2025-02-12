@@ -143,7 +143,8 @@ class VoucherService
 
       $customerService = new CustomerService();
       $customerMembership = $customerService->getCustomerMembershipLevel($customerId); // Giả sử có hàm lấy hạng thành viên
-      if (!in_array($customerMembership, json_decode($voucher->applicable_membership_levels, true))) {
+      $customerMembershipId = $customerMembership->id;
+      if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
         return false;
       }
     }

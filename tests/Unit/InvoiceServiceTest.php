@@ -17,6 +17,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class InvoiceServiceTest extends TestCase
 {
+  use RefreshDatabase;
 
   protected InvoiceService $invoiceService;
 

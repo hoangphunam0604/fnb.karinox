@@ -12,6 +12,7 @@ php artisan migrate:fresh --env=testing
 php artisan test --filter=OrderServiceTest
 php artisan test --filter=VoucherServiceTest
 php artisan test --filter=InvoiceServiceTest
+php artisan test --filter=SystemSettingServiceTest
 ```
 
 ## Phân tích hệ thống

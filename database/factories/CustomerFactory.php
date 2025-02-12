@@ -17,7 +17,7 @@ class CustomerFactory extends Factory
   {
     return [
       'membership_level_id' => MembershipLevel::factory(),
-      'loyalty_card_number' => $this->faker->unique()->numerify('CARD#####'),
+      'loyalty_card_number' => $this->faker->unique()->numerify('CARD########'),
       'last_purchase_at' => $this->faker->dateTimeThisYear(),
       'status' => $this->faker->randomElement(['active', 'inactive', 'banned']),
       'name' => $this->faker->name,

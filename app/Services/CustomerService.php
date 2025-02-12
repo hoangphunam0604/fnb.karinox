@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\SystemSetting;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -58,19 +60,64 @@ class CustomerService
   public function getCustomerMembershipLevel($customerId)
   {
     $customer = Customer::findOrFail($customerId);
-    return $customer->membership_level_id;
+    return $customer->membershipLevel;
   }
 
-  public function updatePoint($customerId, $point)
+  /**
+   * Cộng điểm từ hóa đơn hoàn thành
+   */
+  public function addPointsFromInvoice($customerId, $invoice)
   {
 
     $customer = Customer::findOrFail($customerId);
 
-    $customer->loyalty_points += $point;
-    $customer->reward_points += $point;
+    // Lấy tỷ lệ quy đổi điểm từ database
+    $conversionRate = SystemSetting::where('key', 'point_conversion_rate')->value('value');
+
+    // Nếu không tìm thấy, dùng mặc định 25,000 VNĐ = 1 điểm
+    $conversionRate = $conversionRate ? floatval($conversionRate) : 25000;
+
+    $pointsEarned = floor($invoice->total_amount / $conversionRate);
+
+    // Cộng điểm tích lũy (loyalty_points)
+    $customer->loyalty_points += $pointsEarned;
+
+    // Mặc định không có hệ số nhân
+    $multiplier = 1;
+
+    // Kiểm tra nếu là ngày sinh nhật và có hệ số nhân từ membership_levels
+    if ($customer->isEligibleForBirthdayBonus() && $customer->membershipLevel) {
+      $multiplier = $customer->membershipLevel->reward_multiplier ?? 1;
+      $customer->last_birthday_bonus_date = Carbon::now();
+    }
+
+    // Cộng điểm thưởng (reward_points) với hệ số nhân
+    $customer->reward_points += $pointsEarned * $multiplier;
+
+    // Cập nhật tổng số tiền đã chi tiêu
+    $customer->total_spent += $invoice->total_amount;
+
+    // Lưu lại thông tin cập nhật
     $customer->save();
 
     // Cập nhật cấp độ thành viên
     $customer->updateMembershipLevel();
+  }
+
+  public function updateLoyaltyPoints($customerId, $point)
+  {
+    $customer = Customer::findOrFail($customerId);
+    $customer->loyalty_points += $point;
+    $customer->save();
+
+    // Cập nhật cấp độ thành viên
+    $customer->updateMembershipLevel();
+  }
+
+  public function updateRewardPoints($customerId, $point)
+  {
+    $customer = Customer::findOrFail($customerId);
+    $customer->reward_points += $point;
+    $customer->save();
   }
 }
