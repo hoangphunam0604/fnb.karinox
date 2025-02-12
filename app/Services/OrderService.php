@@ -143,8 +143,8 @@ class OrderService
       $order->voucher_code = $voucher->code;
       $order->discount_amount = $result['discount'];
       $order->total_price = $result['final_total'];
+      $order->save();
     }
-    $order->save();
   }
 
   /**

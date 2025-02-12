@@ -243,43 +243,6 @@ class OrderServiceTest extends TestCase
   }
 
   /** @test */
-  public function it_can_apply_a_voucher()
-  {
-    $customer = Customer::factory()->create();
-    $product = Product::factory()->create(['price' => 100000]);
-    $voucher = Voucher::factory()->create([
-      'code' => 'DISCOUNT10K',
-      'discount_value' => 10000,
-      'discount_type' => 'fixed',
-      'usage_limit' => 5,
-      'applied_count' => 0
-    ]);
-
-    $orderData = [
-      'customer_id' => $customer->id,
-      'branch_id' => $this->branch->id,
-      'voucher_code' => 'DISCOUNT10K',
-      'items' => [['product_id' => $product->id, 'quantity' => 2]]
-    ];
-
-    $order = $this->orderService->createOrder($orderData);
-
-    $this->assertEquals(10000, $order->discount_amount);
-    $this->assertEquals(199000, $order->total_amount);
-    $this->assertDatabaseHas('orders', [
-      'id' => $order->id,
-      'voucher_code' => 'DISCOUNT10K'
-    ]);
-
-    // Kiểm tra voucher đã được sử dụng một lần
-    $this->assertDatabaseHas('vouchers', [
-      'id' => $voucher->id,
-      'applied_count' => 1
-    ]);
-  }
-
-
-  /** @test */
   public function it_can_confirm_an_order()
   {
     $order = Order::factory()->create(['order_status' => 'pending']);
@@ -349,5 +312,73 @@ class OrderServiceTest extends TestCase
     $orders = $this->orderService->getOrders(10);
 
     $this->assertEquals(10, $orders->count());
+  }
+
+
+
+  /** @test */
+  public function it_can_apply_a_voucher()
+  {
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->create(['price' => 100000]);
+    $voucher = Voucher::factory()->create([
+      'code' => 'DISCOUNT10K',
+      'discount_value' => 10000,
+      'discount_type' => 'fixed',
+      'usage_limit' => 5,
+      'applied_count' => 0,
+      'min_order_value' =>  0
+    ]);
+
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'voucher_code' => 'DISCOUNT10K',
+      'items' => [['product_id' => $product->id, 'quantity' => 2]]
+    ];
+
+    $order = $this->orderService->createOrder($orderData);
+
+    $this->assertEquals(10000, $order->discount_amount);
+    $this->assertEquals(190000, $order->total_price);
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'voucher_code' => 'DISCOUNT10K'
+    ]);
+
+    // Kiểm tra voucher đã được sử dụng một lần
+    $this->assertDatabaseHas('vouchers', [
+      'id' => $voucher->id,
+      'applied_count' => 1
+    ]);
+  }
+
+  /** @test */
+  public function it_cannot_apply_an_invalid_voucher()
+  {
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->create(['price' => 100000]);
+    $voucher = Voucher::factory()->create([
+      'code' => 'INVALID',
+      'discount_value' => 10000,
+      'discount_type' => 'fixed',
+      'is_active' => false // Voucher không hoạt động
+    ]);
+
+    $orderData = [
+      'customer_id' => $customer->id,
+      'branch_id' => $this->branch->id,
+      'voucher_code' => 'INVALID',
+      'items' => [['product_id' => $product->id, 'quantity' => 2]]
+    ];
+
+    $order = $this->orderService->createOrder($orderData);
+
+    $this->assertEquals(0, $order->discount_amount);
+    $this->assertEquals(200000, $order->total_price); // Giá không thay đổi
+    $this->assertDatabaseHas('orders', [
+      'id' => $order->id,
+      'voucher_code' => null // Không áp dụng voucher
+    ]);
   }
 }

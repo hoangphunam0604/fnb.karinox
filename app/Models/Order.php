@@ -26,6 +26,11 @@ class Order extends Model
     'note',
   ];
 
+  protected $casts = [
+    'total_price' => 'integer',
+    'discount_amount' => 'integer',
+  ];
+
   protected static function boot()
   {
     parent::boot();
