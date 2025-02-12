@@ -51,7 +51,7 @@ class VoucherService
   }
 
   /**
-   * Lấy danh sách voucher có thể sử dụng theo ngày/giờ hiện tại
+   * Lấy danh sách voucher có thể sử dụng
    */
   public function getValidVouchers()
   {
@@ -83,6 +83,13 @@ class VoucherService
       ->where(function ($query) use ($now) {
         $query->whereNull('excluded_dates')
           ->orWhereRaw("NOT JSON_CONTAINS(excluded_dates, '\"{$now->toDateString()}\"')");
+      })
+      ->where(function ($query) {
+        $query->whereNull('usage_limit')
+          ->orWhereColumn('applied_count', '<', 'usage_limit');
+      })
+      ->where(function ($query) {
+        $query->whereNull('per_customer_limit');
       })
       ->get();
   }

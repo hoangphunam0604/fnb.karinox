@@ -128,11 +128,7 @@ class OrderService
    */
   private function applyVoucher(Order $order, $voucherCode)
   {
-    $voucher = Voucher::where('code', $voucherCode)
-      ->where('start_date', '<=', now())
-      ->where('end_date', '>=', now())
-      ->where('remaining_quantity', '>', 0)
-      ->first();
+    $voucher = Voucher::where('code', $voucherCode)->first();
 
     if (!$voucher) {
       return 0; // Không áp dụng nếu không tìm thấy voucher hợp lệ
