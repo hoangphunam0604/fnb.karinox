@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\Customer;
+use App\Models\MembershipLevel;
 use App\Models\Order;
 use App\Models\Voucher;
 use App\Services\OrderService;
@@ -181,19 +182,24 @@ class VoucherServiceTest extends TestCase
   /** @test */
   public function it_checks_voucher_valid_for_membership_level()
   {
+    $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
+    $customer = Customer::factory()->create(['membership_level_id' => $membershipLevel->id]);
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
       'end_date' => now()->addDays(10),
-      'applicable_membership_levels' => json_encode([1, 2]),
+      'applicable_membership_levels' => json_encode([$membershipLevel->id, 2]),
     ]);
-    $result = $this->voucherService->isValid($voucher, 200, 1);
+    $result = $this->voucherService->isValid($voucher, 200, $customer->id);
     $this->assertTrue($result); // Không kiểm tra hạng thành viên
   }
 
   /** @test */
   public function it_fails_if_membership_level_not_allowed()
   {
+    $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
+    $customer = Customer::factory()->create(['membership_level_id' => $membershipLevel->id]);
+
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
@@ -202,7 +208,7 @@ class VoucherServiceTest extends TestCase
     ]);
 
     // Khách hàng không thuộc hạng thành viên hợp lệ
-    $result = $this->voucherService->isValid($voucher, 200, 1);
+    $result = $this->voucherService->isValid($voucher, 200,  $customer->id);
     $this->assertFalse($result);
   }
 
@@ -222,17 +228,20 @@ class VoucherServiceTest extends TestCase
   /** @test */
   public function it_fails_if_voucher_not_valid_today()
   {
+
+    $currentDayOfWeek = now()->dayOfWeek;
+    $valid_days_of_week = [0, 1, 2, 3, 4, 5, 6];
+
+    // Loại bỏ ngày hiện tại khỏi danh sách hợp lệ
+    $filtered_days = array_values(array_diff($valid_days_of_week, [$currentDayOfWeek]));
+
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
       'end_date' => now()->addDays(10),
-      'valid_days_of_week' => json_encode([1, 3, 5]), // Chỉ hợp lệ vào T2, T4, T6
+      'valid_days_of_week' => json_encode($filtered_days), // Chỉ hợp lệ vào các ngày trong tuần, trừ ngày đang test
     ]);
-
-    $today = now()->dayOfWeek;
-    if (!in_array($today, [1, 3, 5])) {
-      $this->assertFalse($this->voucherService->isValid($voucher, 200));
-    }
+    $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
 
   /** @test */
@@ -279,27 +288,31 @@ class VoucherServiceTest extends TestCase
   /** @test */
   public function it_fails_if_voucher_not_valid_this_month()
   {
+    $currentMonth = now()->format('m');
+    $prevMonth = date('m', strtotime($currentMonth . ' -1 months'));
+    $nextMonth = date('m', strtotime($currentMonth . ' +1 months'));
+
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
       'end_date' => now()->addDays(10),
-      'valid_months' => json_encode([1, 2]), // Chỉ hợp lệ vào tháng 1 hoặc 2
+      'valid_months' => json_encode([$prevMonth, $nextMonth]), // Chỉ hợp lệ vào tháng trước và tháng sau, không bao gồm tháng đang test
     ]);
 
-    if (!in_array(now()->month, [1, 2])) {
-      $this->assertFalse($this->voucherService->isValid($voucher, 200));
-    }
+    $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
 
   /** @test */
   public function it_checks_voucher_valid_for_current_time_range()
   {
     $currentTime = now()->format('H:i');
+    $invalidTimeRange = date('H:i', strtotime($currentTime . ' -2 hours')) . '-' . date('H:i', strtotime($currentTime . ' +3 hours'));
+
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
       'end_date' => now()->addDays(10),
-      'valid_time_ranges' => json_encode([["06:00-23:59"]]), // Hợp lệ suốt ngày
+      'valid_time_ranges' => json_encode([$invalidTimeRange]), // Hợp lệ trong khoảng thời gian -2h -> +3h của hiện tại
     ]);
 
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
@@ -308,17 +321,16 @@ class VoucherServiceTest extends TestCase
   /** @test */
   public function it_fails_if_voucher_not_valid_for_current_time()
   {
+    $currentTime = now()->format('H:i');
+    $invalidTimeRange = date('H:i', strtotime($currentTime . ' +2 hours')) . '-' . date('H:i', strtotime($currentTime . ' +3 hours'));
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'start_date' => now()->subDay(),
       'end_date' => now()->addDays(10),
-      'valid_time_ranges' => json_encode([["08:00-10:00"]]), // Chỉ hợp lệ từ 08:00-10:00
+      'valid_time_ranges' => json_encode([$invalidTimeRange]), // Chỉ hợp lệ từ +2h đến +3h từ hiện tại
     ]);
 
-    $currentTime = now()->format('H:i');
-    if ($currentTime < "08:00" || $currentTime > "10:00") {
-      $this->assertFalse($this->voucherService->isValid($voucher, 200));
-    }
+    $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
 
   /** @test */
