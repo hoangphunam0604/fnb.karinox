@@ -16,9 +16,10 @@ return new class extends Migration {
       $table->decimal('min_order_value', 10, 2)->nullable();
       $table->dateTime('start_date');
       $table->dateTime('end_date');
-      $table->integer('applied_count')->default(0);
-      $table->integer('usage_limit')->nullable();
-      $table->integer('per_customer_limit')->nullable();
+      $table->unsignedInteger('applied_count')->default(0);
+      $table->unsignedInteger('usage_limit')->nullable();
+      $table->unsignedInteger('per_customer_limit')->nullable();
+      $table->unsignedInteger('per_customer_daily_limit')->nullable(); // Giới hạn số lần dùng voucher trong ngày cho từng khách hàng
       $table->boolean('is_active')->default(true);
       $table->json('applicable_membership_levels')->nullable(); // Hỗ trợ nhiều hạng thành viên
       $table->json('valid_days_of_week')->nullable();

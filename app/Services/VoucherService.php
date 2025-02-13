@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
@@ -53,7 +54,7 @@ class VoucherService
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
-  public function getValidVouchers()
+  public function getValidVouchers($customerId = null)
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
@@ -88,8 +89,32 @@ class VoucherService
         $query->whereNull('usage_limit')
           ->orWhereColumn('applied_count', '<', 'usage_limit');
       })
-      ->where(function ($query) {
-        $query->whereNull('per_customer_limit');
+      ->where(function ($query) use ($customerId, $now) {
+        if ($customerId) {
+          $query->whereNull('per_customer_limit')
+            ->orWhereRaw("(SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id 
+                              AND voucher_usages.customer_id = ?) < vouchers.per_customer_limit", [$customerId]);
+
+          $query->whereNull('per_customer_daily_limit')
+            ->orWhereRaw(
+              "(SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id 
+                              AND voucher_usages.customer_id = ? 
+                              AND DATE(voucher_usages.used_at) = ?) < vouchers.per_customer_daily_limit",
+              [$customerId, $now->toDateString()]
+            );
+          $customer = Customer::findOrFail($customerId);
+          $customerMembershipLevel = $customer->membership_level_id;
+          // Kiểm tra hạng thành viên hợp lệ
+          $query->where(function ($subQuery) use ($customerMembershipLevel) {
+            $subQuery->whereNull('applicable_membership_levels')
+              ->orWhereRaw("JSON_CONTAINS(applicable_membership_levels, ?)", [json_encode($customerMembershipLevel)]);
+          });
+        } else {
+          // Nếu không có customerId nhưng voucher có giới hạn số lần sử dụng => Voucher không hợp lệ
+          $query->whereNull('per_customer_limit')
+            ->whereNull('per_customer_daily_limit')
+            ->whereNull('applicable_membership_levels');
+        }
       })
       ->get();
   }
@@ -105,72 +130,79 @@ class VoucherService
     $month = $now->month;
     $currentTime = $now->format('H:i');
 
-    // Kiểm tra trạng thái hoạt động
-    if (!$voucher->is_active) {
+    if (!$voucher->is_active || $voucher->start_date > $now || $voucher->end_date < $now) {
       return false;
     }
 
-    // Kiểm tra thời gian hiệu lực
-    if ($voucher->start_date > $now || $voucher->end_date < $now) {
-      return false;
-    }
 
     // Kiểm tra giá trị tối thiểu của order
     if ($voucher->min_order_value && $totalOrder < $voucher->min_order_value) {
       return false;
     }
 
+
     // Kiểm tra giới hạn số lần sử dụng
     if ($voucher->usage_limit !== null && $voucher->applied_count >= $voucher->usage_limit) {
       return false;
     }
 
-    // Kiểm tra giới hạn số lần sử dụng theo khách hàng
-    if ($customerId && $voucher->per_customer_limit !== null) {
+
+    if ($customerId) {
+
       $usedCount = DB::table('voucher_usages')
         ->where('voucher_id', $voucher->id)
         ->where('customer_id', $customerId)
         ->count();
 
-      if ($usedCount >= $voucher->per_customer_limit)
+      if ($voucher->per_customer_limit !== null && $usedCount >= $voucher->per_customer_limit) {
         return false;
-    }
+      }
 
-    // Kiểm tra hạng thành viên hợp lệ
-    if (!empty($voucher->applicable_membership_levels)) {
-      if (!$customerId)
+
+
+      $dailyUsedCount = DB::table('voucher_usages')
+        ->where('voucher_id', $voucher->id)
+        ->where('customer_id', $customerId)
+        ->whereDate('used_at', $now->toDateString())
+        ->count();
+
+      if ($voucher->per_customer_daily_limit !== null && $dailyUsedCount >= $voucher->per_customer_daily_limit) {
         return false;
+      }
 
-      $customerService = new CustomerService();
-      $customerMembership = $customerService->getCustomerMembershipLevel($customerId); // Giả sử có hàm lấy hạng thành viên
-      $customerMembershipId = $customerMembership->id;
-      if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
+
+
+      // Kiểm tra hạng thành viên hợp lệ
+      if (!empty($voucher->applicable_membership_levels)) {
+        $customerService = new CustomerService();
+        $customerMembership = $customerService->getCustomerMembershipLevel($customerId);
+        $customerMembershipId = $customerMembership->id;
+
+        if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
+          return false;
+        }
+      }
+    } else {
+
+      if ($voucher->per_customer_daily_limit !== null || $voucher->per_customer_limit !== null || $voucher->applicable_membership_levels !== null) {
         return false;
       }
     }
+
 
     // Kiểm tra ngày trong tuần hợp lệ
-    if (!empty($voucher->valid_days_of_week)) {
-      $validDays = json_decode($voucher->valid_days_of_week, true);
-      if (!in_array($dayOfWeek, $validDays)) {
-        return false;
-      }
+    if (!empty($voucher->valid_days_of_week) && !in_array($dayOfWeek, json_decode($voucher->valid_days_of_week, true))) {
+      return false;
     }
 
     // Kiểm tra tuần trong tháng hợp lệ
-    if (!empty($voucher->valid_weeks_of_month)) {
-      $validWeeks = json_decode($voucher->valid_weeks_of_month, true);
-      if (!in_array($weekOfMonth, $validWeeks)) {
-        return false;
-      }
+    if (!empty($voucher->valid_weeks_of_month) && !in_array($weekOfMonth, json_decode($voucher->valid_weeks_of_month, true))) {
+      return false;
     }
 
     // Kiểm tra tháng hợp lệ
-    if (!empty($voucher->valid_months)) {
-      $validMonths = json_decode($voucher->valid_months, true);
-      if (!in_array($month, $validMonths)) {
-        return false;
-      }
+    if (!empty($voucher->valid_months) && !in_array($month, json_decode($voucher->valid_months, true))) {
+      return false;
     }
 
     // Kiểm tra khung giờ hợp lệ
@@ -192,15 +224,13 @@ class VoucherService
     }
 
     // Kiểm tra ngày bị loại trừ
-    if (!empty($voucher->excluded_dates)) {
-      $excludedDates = json_decode($voucher->excluded_dates, true);
-      if (in_array($now->toDateString(), $excludedDates)) {
-        return false;
-      }
+    if (!empty($voucher->excluded_dates) && in_array($now->toDateString(), json_decode($voucher->excluded_dates, true))) {
+      return false;
     }
 
     return true;
   }
+
 
 
   /**

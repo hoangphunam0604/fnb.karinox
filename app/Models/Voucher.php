@@ -21,6 +21,7 @@ class Voucher extends Model
     'end_date',
     'usage_limit',
     'per_customer_limit',
+    'per_customer_daily_limit',
     'is_active',
     'applicable_membership_levels',
     'valid_days_of_week',

@@ -16,7 +16,7 @@ return new class extends Migration
       $table->timestamps();
       $table->index('updated_at'); //Index để tối ưu truy vấn lấy danh sách khách hàng cần cập nhật điểm
 
-      $table->foreignId('membership_level_id')->nullable()->constrained('membership_levels')->nullOnDelete(); // Xếp hạng thành viên
+      $table->foreignId('membership_level_id')->nullable()->constrained()->nullOnDelete(); // Xếp hạng thành viên
       $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
       $table->integer('loyalty_points')->default(0); // Điểm tích lũy
       $table->integer('reward_points')->default(0); // Điểm thưởng

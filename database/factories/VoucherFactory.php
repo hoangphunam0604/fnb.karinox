@@ -40,7 +40,6 @@ class VoucherFactory extends Factory
       'end_date' => now()->addDays($this->faker->numberBetween(7, 30)), // Kết thúc trong vòng 1 tháng
       'applied_count' => 0, // Mặc định chưa có ai sử dụng
       'usage_limit' => $this->faker->optional()->numberBetween(10, 100),
-      'per_customer_limit' => $this->faker->optional()->numberBetween(1, 5),
       'is_active' => $this->faker->boolean(80), // 80% là đang hoạt động
     ];
   }

@@ -9,10 +9,10 @@
 ```sh
 php artisan migrate:fresh --env=testing
 
-php artisan test --filter=OrderServiceTest
-php artisan test --filter=VoucherServiceTest
-php artisan test --filter=InvoiceServiceTest
-php artisan test --filter=SystemSettingServiceTest
+php artisan test --filter=OrderServiceTest --testdox
+php artisan test --filter=VoucherServiceTest --testdox
+php artisan test --filter=InvoiceServiceTest --testdox
+php artisan test --filter=SystemSettingServiceTest --testdox
 ```
 
 ## Phân tích hệ thống
