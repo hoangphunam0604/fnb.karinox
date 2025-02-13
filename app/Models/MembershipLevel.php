@@ -13,7 +13,6 @@ class MembershipLevel extends Model
     'name',
     'min_spent',
     'max_spent',
-    'discount_percent',
     'reward_multiplier',
   ];
 }
