@@ -144,7 +144,6 @@ class VoucherService
         ->whereNull('applicable_membership_levels');
     }
 
-    echo $query->toSql();
     // Lấy danh sách voucher hợp lệ
     $validVouchers = $query->get();
 
