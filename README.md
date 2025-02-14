@@ -14,11 +14,7 @@ php artisan test --filter=VoucherServiceTest --testdox
 php artisan test --filter=InvoiceServiceTest --testdox
 php artisan test --filter=SystemSettingServiceTest --testdox
 ```
-```sql
-select * from `vouchers` where `is_active` = ? and `start_date` <= ? and `end_date` >= ? and (`valid_days_of_week` is null or json_contains(`valid_days_of_week`, ?)) 
-and (`valid_weeks_of_month` is null or json_contains(`valid_weeks_of_month`, ?)) and (`valid_months` is null or json_contains(`valid_months`, ?)) and (`valid_time_ranges` is null or JSON_CONTAINS(valid_time_ranges, '"05:28"')) and (`excluded_dates` is null or NOT JSON_CONTAINS(excluded_dates, '"2025-02-14"')) and (`usage_limit` is null or `applied_count` < `usage_limit`) and (`per_customer_limit` is null or (SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id \n  
-                              AND voucher_usages.customer_id = ?) < vouchers.per_customer_limit and ((`id` = ? and ? < per_customer_daily_limit)) and `applicable_membership_levels` is null or JSON_CONTAINS(applicable_membership_levels, ?))
-```
+
 ## Phân tích hệ thống
 
 ### **Tổng hợp các bảng dữ liệu quan trọng của hệ thống bán hàng quán cà phê**

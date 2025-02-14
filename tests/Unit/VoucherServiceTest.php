@@ -597,23 +597,27 @@ class VoucherServiceTest extends TestCase
       'is_active' => true,
       'per_customer_daily_limit' => 2,
     ]);
+    $validVoucher2 = Voucher::factory()->create([
+      'code' => 'VALID2',
+      'is_active' => true,
+    ]);
 
     $exceededDailyLimitVoucher = Voucher::factory()->create([
       'code' => 'DAILY_EXCEEDED',
       'is_active' => true,
-      'per_customer_daily_limit' => 32,
+      'per_customer_daily_limit' => 5,
     ]);
 
     // Khách hàng đã dùng "DAILY_EXCEEDED" 2 lần, đạt giới hạn
-    VoucherUsage::factory()->count(32)->create([
+    VoucherUsage::factory()->count(5)->create([
       'voucher_id' => $exceededDailyLimitVoucher->id,
       'customer_id' => $customer->id,
       'used_at' => Carbon::now(),
     ]);
 
     $validVouchers = $this->voucherService->getValidVouchers($customer->id);
-    dd($validVouchers->pluck('code')->toArray()); // Kiểm tra danh sách voucher hợp lệ
     $this->assertTrue($validVouchers->contains($validVoucher));
-    // $this->assertFalse($validVouchers->contains($exceededDailyLimitVoucher));
+    $this->assertTrue($validVouchers->contains($validVoucher2));
+    $this->assertFalse($validVouchers->contains($exceededDailyLimitVoucher));
   }
 }

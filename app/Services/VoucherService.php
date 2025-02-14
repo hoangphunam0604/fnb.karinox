@@ -105,18 +105,28 @@ class VoucherService
         ->whereDate('used_at', $now->toDateString())
         ->groupBy('voucher_id')
         ->pluck('used_today', 'voucher_id');
-
       $query->where(function ($dailyLimitQuery) use ($dailyUsageCounts) {
-        $dailyLimitQuery->whereNull('per_customer_daily_limit');
-
-        foreach ($dailyUsageCounts as $voucherId => $usedToday) {
-          echo "voucerId: {$voucherId} đã dùng {$usedToday}\n";
-          $dailyLimitQuery->orWhere(function ($q) use ($voucherId, $usedToday) {
-            $q->where('id', '!=', $voucherId)
-              ->whereRaw("? < per_customer_daily_limit", [$usedToday]);
+        $dailyLimitQuery->whereNull('per_customer_daily_limit')
+          ->orWhere(function ($q) use ($dailyUsageCounts) {
+            foreach ($dailyUsageCounts as $voucherId => $usedToday) {
+              $q->orWhere(function ($subQ) use ($voucherId, $usedToday) {
+                $subQ->where('id', $voucherId)
+                  ->whereRaw("? < per_customer_daily_limit", [$usedToday]);
+              });
+            }
+          })
+          ->orWhere(function ($q) {
+            // Kiểm tra các voucher có `per_customer_daily_limit` nhưng chưa có lượt sử dụng
+            $q->whereNotNull('per_customer_daily_limit')
+              ->whereNotExists(function ($existsQuery) {
+                $existsQuery->select(DB::raw(1))
+                  ->from('voucher_usages')
+                  ->whereRaw('voucher_usages.voucher_id = vouchers.id')
+                  ->whereRaw('DATE(voucher_usages.used_at) = CURDATE()');
+              });
           });
-        }
       });
+
 
       // Lấy thông tin hạng thành viên của khách hàng
       $customer = Customer::findOrFail($customerId);
