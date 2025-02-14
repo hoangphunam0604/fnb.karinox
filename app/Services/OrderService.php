@@ -52,19 +52,13 @@ class OrderService
       if (!empty($data['items'])) {
         $this->updateOrderItems($order, $data['items']);
       }
-
-      // Cập nhật tổng tiền đơn hàng
-      $order->refresh();
-      $order->total_price = $this->calculateOrderTotal($order);
-
+      $this->updateTotalPrice($order);
 
       if (!empty($data['voucher_code'])) {
         $this->applyVoucher($order, $data['voucher_code']);
-        $order->refresh();
       }
 
-      $order->save();
-
+      $order->refresh();
       return $order;
     });
   }
@@ -132,9 +126,8 @@ class OrderService
   private function applyVoucher(Order $order, $voucherCode)
   {
     $voucher = Voucher::where('code', $voucherCode)->first();
-
     if (!$voucher) {
-      return 0; // Không áp dụng nếu không tìm thấy voucher hợp lệ
+      return; // Không áp dụng nếu không tìm thấy voucher hợp lệ
     }
 
     $voucherService = new VoucherService();
@@ -142,12 +135,23 @@ class OrderService
 
     if ($result['success']) {
       // Lưu thông tin voucher vào đơn hàng
+      $order->refresh();
       $order->voucher_id = $voucher->id;
       $order->voucher_code = $voucher->code;
       $order->discount_amount = $result['discount'];
       $order->total_price = $result['final_total'];
       $order->save();
     }
+  }
+  /**
+   * Cập nhật tổng tiền đơn hàng
+   */
+  public function updateTotalPrice(Order $order)
+  {
+    $order->refresh();
+    // Cập nhật tổng tiền đơn hàng
+    $order->total_price = $this->calculateOrderTotal($order);
+    $order->save();
   }
 
   /**
@@ -159,10 +163,11 @@ class OrderService
       return 0;
     }
 
-    return $order->items->sum(function ($item) {
+    $totalPrice = $order->items->sum(function ($item) {
       $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price * $t->quantity) : 0;
       return ($item->unit_price * $item->quantity) + $toppingTotal;
     });
+    return $totalPrice;
   }
 
   /**

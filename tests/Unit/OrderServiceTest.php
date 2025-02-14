@@ -368,10 +368,9 @@ class OrderServiceTest extends TestCase
     $orderData = [
       'customer_id' => $customer->id,
       'branch_id' => $this->branch->id,
-      'voucher_code' => 'INVALID',
+      'voucher_code' => $voucher->code,
       'items' => [['product_id' => $product->id, 'quantity' => 2]]
     ];
-
     $order = $this->orderService->createOrder($orderData);
 
     $this->assertEquals(0, $order->discount_amount);
