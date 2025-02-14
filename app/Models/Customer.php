@@ -50,6 +50,13 @@ class Customer extends Model
     return $this->belongsTo(MembershipLevel::class, 'membership_level_id');
   }
 
+
+  public function pointHistories()
+  {
+    return $this->hasMany(PointHistory::class);
+  }
+
+
   /**
    * Logic cấp độ thành viên
    */
