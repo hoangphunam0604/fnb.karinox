@@ -8,7 +8,6 @@ use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
 use App\Models\Voucher;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -62,11 +61,7 @@ class OrderService
       if (!empty($data['voucher_code'])) {
         $this->applyVoucher($order, $data['voucher_code']);
         $order->refresh();
-      } else {
-        // Nếu không có voucher, tính giảm giá theo hạng thành viên
-        $this->applyMembershipDiscount($order);
       }
-
 
       $order->save();
 
@@ -155,52 +150,6 @@ class OrderService
     }
   }
 
-  /**
-   * Áp dụng giảm giá theo hạng thành viên nếu không dùng voucher
-   */
-  protected function applyMembershipDiscount(Order $order)
-  {
-    $customer = $order->customer;
-
-    if (!$customer || !$customer->membershipLevel) {
-      return;
-    }
-
-    $discountPercent = $customer->membershipLevel->discount_percent ?? 0;
-    $birthdayDiscount = $customer->membershipLevel->birthday_discount ?? 0;
-    $birthdayDiscountLimit = $customer->membershipLevel->birthday_discount_limit ?? 0;
-
-    $now = Carbon::now();
-    $isBirthday = $customer->birthday && $now->format('m-d') === Carbon::parse($customer->birthday)->format('m-d');
-
-    // Nếu là sinh nhật, kiểm tra số lượng đơn hàng đã được giảm giá trong ngày
-    if ($isBirthday && $birthdayDiscount > 0) {
-      $recentOrdersCount = Order::where('customer_id', $customer->id)
-        ->whereDate('created_at', $now->toDateString())
-        ->whereNotNull('birthday_discount_applied')
-        ->count();
-
-      if ($recentOrdersCount < $birthdayDiscountLimit) {
-        // Kiểm tra xem có đơn hàng nào trong vòng 30 phút trước không
-        $lastOrder = Order::where('customer_id', $customer->id)
-          ->where('created_at', '>=', $now->subMinutes(30))
-          ->latest()
-          ->first();
-
-        if (!$lastOrder) {
-          // Áp dụng giảm giá sinh nhật nếu chưa vượt quá giới hạn
-          $order->discount_amount = ($order->total_price * $birthdayDiscount) / 100;
-          $order->birthday_discount_applied = true;
-          return;
-        }
-      }
-    }
-
-    // Nếu không phải sinh nhật hoặc đã vượt quá giới hạn giảm giá sinh nhật, áp dụng giảm giá theo hạng thành viên
-    if ($discountPercent > 0) {
-      $order->discount_amount = ($order->total_price * $discountPercent) / 100;
-    }
-  }
   /**
    * Tính tổng tiền đơn hàng
    */
