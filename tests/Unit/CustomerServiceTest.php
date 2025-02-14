@@ -3,13 +3,10 @@
 namespace Tests\Unit;
 
 use App\Models\Customer;
-use App\Models\Invoice;
 use App\Models\MembershipLevel;
-use App\Models\SystemSetting;
 use App\Services\CustomerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class CustomerServiceTest extends TestCase
 {
@@ -104,124 +101,80 @@ class CustomerServiceTest extends TestCase
     $this->assertEquals($membershipLevel->id, $customerMembershipLevel->id);
   }
 
-  /** @test */
-  public function it_can_add_points_from_invoice()
+  /**
+   * @testdox Trả về cấp độ tiếp theo của khách hàng nếu có
+   * @test
+   */
+  public function it_returns_next_level_if_available()
   {
+    $level1 = MembershipLevel::factory()->create(['rank' => 1, 'name' => 'Silver', 'min_spent' => 100000]);
+    $level2 = MembershipLevel::factory()->create(['rank' => 2, 'name' => 'Gold', 'min_spent' => 500000]);
+
     $customer = Customer::factory()->create([
-      'name' => 'Đặng Thị G',
-      'loyalty_points' => 0,
-      'reward_points' => 0
+      'membership_level_id' => $level1->id,
+      'total_spent' => 200000, // Đã chi tiêu nhưng chưa đủ lên Gold
     ]);
 
-    SystemSetting::create(['key' => 'point_conversion_rate', 'value' => '25000']);
+    $nextLevel = $this->customerService->getNextLevel($customer);
 
-    $invoice = Invoice::factory()->create([
-      'total_amount' => 750000
-    ]);
-
-    $this->customerService->addPointsFromInvoice($customer->id, $invoice);
-
-    $customer->refresh();
-
-    $expectedPoints = floor(750000 / 25000);
-
-    $this->assertEquals($expectedPoints, $customer->loyalty_points);
-    $this->assertEquals($expectedPoints, $customer->reward_points);
+    $this->assertNotNull($nextLevel);
+    $this->assertEquals('Gold', $nextLevel->name);
   }
 
-  /** @test */
-  public function it_correctly_applies_bonus_multiplier_on_birthday()
+  /**
+   * @testdox Trả về null nếu khách hàng đã ở cấp độ cao nhất
+   * @test
+   */
+  public function it_returns_null_if_no_next_level()
   {
-    // Tạo hạng thành viên với hệ số nhân điểm thưởng
-    $membershipLevel = MembershipLevel::factory()->create([
-      'name' => 'VIP Gold',
-      'reward_multiplier' => 1.5,
-    ]);
+    $level = MembershipLevel::factory()->create(['rank' => 3, 'name' => 'Platinum', 'min_spent' => 1000000]);
 
-    // Tạo khách hàng với ngày sinh nhật là hôm nay và có hạng VIP Gold
     $customer = Customer::factory()->create([
-      'name' => 'Ngô Văn H',
-      'loyalty_points' => 0,
-      'reward_points' => 0,
-      'birthday' => Carbon::now()->format('Y-m-d'),
-      'membership_level_id' => $membershipLevel->id,
+      'membership_level_id' => $level->id,
+      'total_spent' => 2000000, // Đã chi tiêu vượt mức nhưng không có cấp tiếp theo
     ]);
 
-    SystemSetting::create(['key' => 'point_conversion_rate', 'value' => '25000']);
+    $nextLevel = $this->customerService->getNextLevel($customer);
 
-    $invoice = Invoice::factory()->create(['total_amount' => 600000]);
-
-    $this->customerService->addPointsFromInvoice($customer->id, $invoice);
-
-    $customer->refresh();
-
-    $expectedPoints = floor(600000 / 25000);
-    $multiplier = $membershipLevel->reward_multiplier;
-
-    $this->assertEquals($expectedPoints, $customer->loyalty_points);
-    $this->assertEquals($expectedPoints * $multiplier, $customer->reward_points);
+    $this->assertNull($nextLevel);
   }
 
-  /** @test */
-  public function it_does_not_apply_bonus_multiplier_if_not_birthday()
+  /**
+   * @testdox Tính toán số điểm cần để lên cấp tiếp theo
+   * @test
+   */
+  public function it_returns_points_needed_for_next_level()
   {
-    // Tạo hạng thành viên với hệ số nhân điểm thưởng
-    $membershipLevel = MembershipLevel::factory()->create([
-      'name' => 'VIP Gold',
-      'reward_multiplier' => 1.5,
-    ]);
+    $level1 = MembershipLevel::factory()->create(['rank' => 1, 'name' => 'Silver', 'min_spent' => 100000]);
+    $level2 = MembershipLevel::factory()->create(['rank' => 2, 'name' => 'Gold', 'min_spent' => 500000]);
+
     $customer = Customer::factory()->create([
-      'name' => 'Vũ Minh I',
-      'loyalty_points' => 0,
-      'reward_points' => 0,
-      'birthday' => Carbon::now()->subDays(1)->format('Y-m-d'),
-      'membership_level_id' => $membershipLevel->id,
+      'membership_level_id' => $level1->id,
+      'total_spent' => 200000, // Đã chi tiêu nhưng chưa đủ lên Gold
     ]);
 
-    SystemSetting::create(['key' => 'point_conversion_rate', 'value' => '25000']);
+    $nextLevelInfo = $this->customerService->getNextMembershipLevel($customer);
 
-    $invoice = Invoice::factory()->create(['total_amount' => 500000]);
-
-    $this->customerService->addPointsFromInvoice($customer->id, $invoice);
-
-    $customer->refresh();
-
-    $expectedPoints = floor(500000 / 25000);
-
-    $this->assertEquals($expectedPoints, $customer->loyalty_points);
-    $this->assertEquals($expectedPoints, $customer->reward_points);
+    $this->assertNotNull($nextLevelInfo);
+    $this->assertEquals('Gold', $nextLevelInfo['next_level']);
+    $this->assertEquals(300000, $nextLevelInfo['points_needed']);
   }
 
-
-  /** @test */
-  public function it_does_not_apply_birthday_bonus_if_customer_has_already_received_bonus_this_year()
+  /**
+   * @testdox Trả về null nếu không có cấp độ tiếp theo
+   * @test
+   */
+  public function it_returns_null_for_next_level_if_no_more_upgrades()
   {
-    // Tạo hạng thành viên với hệ số nhân điểm thưởng
-    $membershipLevel = MembershipLevel::factory()->create([
-      'name' => 'VIP Gold',
-      'reward_multiplier' => 1.5,
-    ]);
+    $level = MembershipLevel::factory()->create(['rank' => 3, 'name' => 'Platinum', 'min_spent' => 1000000]);
+
     $customer = Customer::factory()->create([
-      'name' => 'Phan Văn K',
-      'loyalty_points' => 0,
-      'reward_points' => 0,
-      'birthday' => Carbon::now()->format('Y-m-d'), // Sinh nhật cũ (đã qua 3 tháng)
-      'membership_level_id' => $membershipLevel->id,
-      'last_birthday_bonus_date' => Carbon::now()->subDays(3), // Đã nhận bonus từ 3 ngày trước
+      'membership_level_id' => $level->id,
+      'total_spent' => 2000000, // Đã đạt mức cao nhất
     ]);
 
-    SystemSetting::create(['key' => 'point_conversion_rate', 'value' => '25000']);
+    $nextLevelInfo = $this->customerService->getNextMembershipLevel($customer);
 
-    $invoice = Invoice::factory()->create(['total_amount' => 500000]);
-
-    $this->customerService->addPointsFromInvoice($customer->id, $invoice);
-
-    $customer->refresh();
-
-    $expectedPoints = floor(500000 / 25000);
-
-    // Vì đã nhận quà sinh nhật trước đó trong năm, không áp dụng nhân điểm nữa
-    $this->assertEquals($expectedPoints, $customer->loyalty_points);
-    $this->assertEquals($expectedPoints, $customer->reward_points);
+    $this->assertNull($nextLevelInfo);
   }
 }

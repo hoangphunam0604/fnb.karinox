@@ -122,38 +122,4 @@ class Customer extends Model
 
     return true;
   }
-  /**
-   * Lấy hạng tiếp theo có thể nâng
-   */
-  public function getNextLevel()
-  {
-    return self::where('rank', '>', $this->rank)
-      ->orderBy('rank')
-      ->first();
-  }
-
-  /**
-   * Lấy thông tin hạng tiếp theo có thể thăng và số điểm cần để thăng hạng
-   */
-  public function getNextMembershipLevel()
-  {
-    $currentLevel = $this->membershipLevel;
-
-    if (!$currentLevel) {
-      return null;
-    }
-
-    $nextLevel = $currentLevel->getNextLevel();
-
-    if (!$nextLevel) {
-      return null; // Đã ở hạng cao nhất
-    }
-
-    $pointsNeeded = max(0, $nextLevel->min_spent - $this->total_spent);
-
-    return [
-      'next_level' => $nextLevel->name,
-      'points_needed' => $pointsNeeded
-    ];
-  }
 }
