@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Customer;
 use App\Models\Branch;
+use App\Models\Voucher;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -15,15 +16,29 @@ class InvoiceFactory extends Factory
 
   public function definition()
   {
+    $totalAmount = $this->faker->randomFloat(2, 50000, 500000);
+    $paidAmount = $totalAmount; // Giả sử khách hàng thanh toán đủ
+    $changeAmount = 0; // Mặc định không có tiền thừa
+
     return [
+      'code'  =>  $this->faker->unique()->numerify('ORD##########'),
       'branch_id' => Branch::factory(),
-      'discount_amount' => $this->faker->randomElement([0, 5000, 10000, 20000]),
-      'paid_amount' => $this->faker->randomElement([0, 50000, 100000, 200000]),
-      'invoice_status' => $this->faker->randomElement(['pending', 'completed']),
+      'order_id' => Order::factory(),
+      'total_amount' => $totalAmount,
+      'paid_amount' => $paidAmount,
+      'change_amount' => $changeAmount,
+      'voucher_id' => $this->faker->boolean(50) ? Voucher::factory() : null,
+      'sales_channel' => $this->faker->randomElement(['online', 'offline']),
+      'invoice_status' => $this->faker->randomElement(['pending', 'completed', 'canceled']),
       'payment_status' => $this->faker->randomElement(['unpaid', 'partial', 'paid', 'refunded']),
-      'note' => $this->faker->sentence(),
-      'created_at' => now(),
-      'updated_at' => now(),
+      'payment_method' => $this->faker->randomElement(['cash', 'credit_card', 'bank_transfer', 'e_wallet']),
+      'note' => $this->faker->optional()->sentence(),
+      'customer_id' => $this->faker->boolean(70) ? Customer::factory() : null, // 70% có khách hàng
+      'loyalty_card_number' => $this->faker->boolean(50) ? $this->faker->unique()->numerify('LC######') : null,
+      'customer_name' => $this->faker->name,
+      'customer_phone' => $this->faker->phoneNumber,
+      'customer_email' => $this->faker->optional()->safeEmail(),
+      'customer_address' => $this->faker->optional()->address(),
     ];
   }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\InvoiceCompleted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,6 +35,11 @@ class Invoice extends Model
     static::creating(function ($invoice) {
       if (!$invoice->code)
         $invoice->code = self::generateInvoiceCode($invoice->branch_id);
+    });
+    static::updated(function ($invoice) {
+      if ($invoice->status === 'completed' && $invoice->getOriginal('status') !== 'completed') {
+        event(new InvoiceCompleted($invoice));
+      }
     });
   }
 

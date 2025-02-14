@@ -21,6 +21,7 @@ class OrderFactory extends Factory
   {
     return [
       'branch_id' => Branch::factory(),
+      'order_code'  =>  $this->faker->unique()->numerify('ORD##########'),
       'order_status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'note' => $this->faker->sentence(),
     ];
