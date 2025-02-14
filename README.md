@@ -13,6 +13,8 @@ php artisan test --filter=OrderServiceTest --testdox
 php artisan test --filter=VoucherServiceTest --testdox
 php artisan test --filter=InvoiceServiceTest --testdox
 php artisan test --filter=SystemSettingServiceTest --testdox
+php artisan test --filter=MembershipUpgradeServiceTest
+
 ```
 
 ## Phân tích hệ thống

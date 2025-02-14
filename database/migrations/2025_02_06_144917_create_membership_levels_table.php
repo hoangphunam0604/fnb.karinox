@@ -19,6 +19,7 @@ return new class extends Migration
       $table->decimal('min_spent', 10, 2); //Tổng tiền chi tiêu tối thiểu để đạt hạng này.
       $table->decimal('max_spent', 10, 2)->nullable(); //Tổng tiền chi tiêu tối đa cho hạng này (nếu có).
       $table->decimal('reward_multiplier', 5, 2)->nullable(); //Hệ số nhân điểm thưởng.
+      $table->text('upgrade_reward_content')->nullable(); //Nội dung thưởng thăng hạng này
     });
   }
 

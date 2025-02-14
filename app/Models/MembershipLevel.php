@@ -14,5 +14,6 @@ class MembershipLevel extends Model
     'min_spent',
     'max_spent',
     'reward_multiplier',
+    'upgrade_reward_content'
   ];
 }
