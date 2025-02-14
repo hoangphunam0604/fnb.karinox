@@ -62,62 +62,86 @@ class VoucherService
     $month = $now->month;
     $time = $now->format('H:i');
 
-    return Voucher::where('is_active', true)
+    $query = Voucher::where('is_active', true)
       ->where('start_date', '<=', $now)
       ->where('end_date', '>=', $now)
-      ->where(function ($query) use ($dayOfWeek) {
-        $query->whereNull('valid_days_of_week')
+      ->where(function ($q) use ($dayOfWeek) {
+        $q->whereNull('valid_days_of_week')
           ->orWhereJsonContains('valid_days_of_week', $dayOfWeek);
       })
-      ->where(function ($query) use ($weekOfMonth) {
-        $query->whereNull('valid_weeks_of_month')
+      ->where(function ($q) use ($weekOfMonth) {
+        $q->whereNull('valid_weeks_of_month')
           ->orWhereJsonContains('valid_weeks_of_month', $weekOfMonth);
       })
-      ->where(function ($query) use ($month) {
-        $query->whereNull('valid_months')
+      ->where(function ($q) use ($month) {
+        $q->whereNull('valid_months')
           ->orWhereJsonContains('valid_months', $month);
       })
-      ->where(function ($query) use ($time) {
-        $query->whereNull('valid_time_ranges')
+      ->where(function ($q) use ($time) {
+        $q->whereNull('valid_time_ranges')
           ->orWhereRaw("JSON_CONTAINS(valid_time_ranges, '\"$time\"')");
       })
-      ->where(function ($query) use ($now) {
-        $query->whereNull('excluded_dates')
+      ->where(function ($q) use ($now) {
+        $q->whereNull('excluded_dates')
           ->orWhereRaw("NOT JSON_CONTAINS(excluded_dates, '\"{$now->toDateString()}\"')");
       })
-      ->where(function ($query) {
-        $query->whereNull('usage_limit')
+      ->where(function ($q) {
+        $q->whereNull('usage_limit')
           ->orWhereColumn('applied_count', '<', 'usage_limit');
-      })
-      ->where(function ($query) use ($customerId, $now) {
-        if ($customerId) {
-          $query->whereNull('per_customer_limit')
-            ->orWhereRaw("(SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id 
-                              AND voucher_usages.customer_id = ?) < vouchers.per_customer_limit", [$customerId]);
+      });
 
-          $query->whereNull('per_customer_daily_limit')
-            ->orWhereRaw(
-              "(SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id 
-                              AND voucher_usages.customer_id = ? 
-                              AND DATE(voucher_usages.used_at) = ?) < vouchers.per_customer_daily_limit",
-              [$customerId, $now->toDateString()]
-            );
-          $customer = Customer::findOrFail($customerId);
-          $customerMembershipLevel = $customer->membership_level_id;
-          // Kiểm tra hạng thành viên hợp lệ
-          $query->where(function ($subQuery) use ($customerMembershipLevel) {
-            $subQuery->whereNull('applicable_membership_levels')
-              ->orWhereRaw("JSON_CONTAINS(applicable_membership_levels, ?)", [json_encode($customerMembershipLevel)]);
+    if ($customerId) {
+      $query->where(function ($q) use ($customerId) {
+        // Kiểm tra giới hạn số lần sử dụng 
+        $q->whereNull('per_customer_limit')
+          ->orWhereRaw("(SELECT COUNT(*) FROM voucher_usages WHERE voucher_usages.voucher_id = vouchers.id 
+                          AND voucher_usages.customer_id = ?) < vouchers.per_customer_limit", [$customerId]);
+      });
+
+      // Truy vấn số danh sách voucher và số lần đã sử dụng trong ngày hôm nay
+      $dailyUsageCounts = DB::table('voucher_usages')
+        ->selectRaw('voucher_id, COUNT(*) as used_today')
+        ->where('customer_id', $customerId)
+        ->whereDate('used_at', $now->toDateString())
+        ->groupBy('voucher_id')
+        ->pluck('used_today', 'voucher_id');
+
+      $query->where(function ($dailyLimitQuery) use ($dailyUsageCounts) {
+        $dailyLimitQuery->whereNull('per_customer_daily_limit');
+
+        foreach ($dailyUsageCounts as $voucherId => $usedToday) {
+          echo "voucerId: {$voucherId} đã dùng {$usedToday}\n";
+          $dailyLimitQuery->orWhere(function ($q) use ($voucherId, $usedToday) {
+            $q->where('id', '!=', $voucherId)
+              ->whereRaw("? < per_customer_daily_limit", [$usedToday]);
           });
-        } else {
-          // Nếu không có customerId nhưng voucher có giới hạn số lần sử dụng => Voucher không hợp lệ
-          $query->whereNull('per_customer_limit')
-            ->whereNull('per_customer_daily_limit')
-            ->whereNull('applicable_membership_levels');
         }
-      })
-      ->get();
+      });
+
+      // Lấy thông tin hạng thành viên của khách hàng
+      $customer = Customer::findOrFail($customerId);
+      $customerMembershipLevel = $customer->membership_level_id;
+      // Kiểm tra hạng thành viên hợp lệ
+
+      $query->where(function ($q) use ($customerMembershipLevel) {
+        $q->whereNull('applicable_membership_levels')
+          ->orWhereRaw("JSON_CONTAINS(applicable_membership_levels, ?)", [json_encode($customerMembershipLevel)]);
+      });
+    } else {
+      // Nếu không có customerId nhưng voucher có giới hạn số lần sử dụng => Voucher không hợp lệ
+      $query->whereNull('per_customer_limit')
+        ->whereNull('per_customer_daily_limit')
+        ->whereNull('applicable_membership_levels');
+    }
+
+    echo $query->toSql();
+    // Lấy danh sách voucher hợp lệ
+    $validVouchers = $query->get();
+
+
+    return $validVouchers;
   }
+
 
   /**
    * Kiểm tra voucher hợp lệ
