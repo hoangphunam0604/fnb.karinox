@@ -3,7 +3,7 @@
 namespace Tests\Unit\Listeners;
 
 use App\Events\InvoiceCompleted;
-use App\Listeners\ProcessInvoicePoints;
+use App\Listeners\InvoicePointsProcess;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\MembershipLevel;
@@ -16,7 +16,7 @@ use Tests\TestCase;
 /**
  * @testdox Xử lý tích điểm khi hóa đơn hoàn thành
  */
-class ProcessInvoicePointsTest extends TestCase
+class InvoicePointsProcessTest extends TestCase
 {
   use RefreshDatabase;
 
@@ -48,7 +48,7 @@ class ProcessInvoicePointsTest extends TestCase
     ]);
 
 
-    $listener = new ProcessInvoicePoints($this->pointService);
+    $listener = new InvoicePointsProcess($this->pointService);
     $listener->handle(new InvoiceCompleted($invoice));
 
     $customer->refresh();
@@ -77,7 +77,7 @@ class ProcessInvoicePointsTest extends TestCase
       'invoice_status' => 'completed',
     ]);
 
-    $listener = new ProcessInvoicePoints($this->pointService);
+    $listener = new InvoicePointsProcess($this->pointService);
     $listener->handle(new InvoiceCompleted($invoice));
 
     $this->assertDatabaseMissing('point_histories', [
@@ -110,7 +110,7 @@ class ProcessInvoicePointsTest extends TestCase
       'invoice_status' => 'completed',
     ]);
 
-    $listener = new ProcessInvoicePoints($this->pointService);
+    $listener = new InvoicePointsProcess($this->pointService);
     $listener->handle(new InvoiceCompleted($invoice));
 
     $customer->refresh();
@@ -145,7 +145,7 @@ class ProcessInvoicePointsTest extends TestCase
       'invoice_status' => 'completed',
     ]);
 
-    $listener = new ProcessInvoicePoints($this->pointService);
+    $listener = new InvoicePointsProcess($this->pointService);
     $listener->handle(new InvoiceCompleted($invoice));
 
     $customer->refresh();
@@ -181,7 +181,7 @@ class ProcessInvoicePointsTest extends TestCase
       'invoice_status' => 'completed',
     ]);
 
-    $listener = new ProcessInvoicePoints($this->pointService);
+    $listener = new InvoicePointsProcess($this->pointService);
     $listener->handle(new InvoiceCompleted($invoice));
 
     $customer->refresh();
