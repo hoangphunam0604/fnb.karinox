@@ -12,9 +12,13 @@ class Invoice extends Model
   protected $fillable = [
     'branch_id',
     'order_id',
+
     'total_amount',
     'paid_amount',
     'change_amount',
+    'used_reward_points',
+    'reward_points_value',
+
     'voucher_id',
     'sales_channel',
     'invoice_status',

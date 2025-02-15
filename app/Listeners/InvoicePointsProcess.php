@@ -3,18 +3,23 @@
 namespace App\Listeners;
 
 use App\Events\InvoiceCompleted;
-use App\Models\SystemSetting;
+use App\Services\CustomerService;
 use App\Services\PointService;
-use Carbon\Carbon;
+use App\Services\SystemSettingService;
 
 class InvoicePointsProcess
 {
   protected PointService $pointService;
+  protected CustomerService $customerService;
+  protected SystemSettingService $systemSettingService;
 
-  public function __construct(PointService $pointService)
+  public function __construct(PointService $pointService, CustomerService $customerService, SystemSettingService $systemSettingService)
   {
     $this->pointService = $pointService;
+    $this->customerService = $customerService;
+    $this->systemSettingService = $systemSettingService;
   }
+
 
   public function handle(InvoiceCompleted $event)
   {
@@ -25,42 +30,41 @@ class InvoicePointsProcess
       return;
     }
 
-    // Lấy tỷ lệ quy đổi điểm từ database
-    $conversionRate = SystemSetting::where('key', 'point_conversion_rate')->value('value');
+    // Lấy tỷ lệ quy đổi điểm từ SystemSettingService
+    $conversionRate = $this->systemSettingService->getPointConversionRate();
 
-    // Nếu không tìm thấy, dùng mặc định 25,000 VNĐ = 1 điểm
-    $conversionRate = $conversionRate ? floatval($conversionRate) : 25000;
-
-    $pointsEarned = floor($invoice->total_amount / $conversionRate);
-
-    // Cộng điểm tích lũy (loyalty_points)
-    $loyaltyPoints = $pointsEarned;
-
-    // Mặc định không có hệ số nhân
-    $multiplier = 1;
-
-    // Kiểm tra nếu là ngày sinh nhật và có hệ số nhân từ membership_levels
-    if ($customer->isEligibleForBirthdayBonus() && $customer->membershipLevel) {
-      $multiplier = $customer->membershipLevel->reward_multiplier ?? 1;
-      $customer->last_birthday_bonus_date = Carbon::now();
+    // Nếu tổng tiền = 0 hoặc nhỏ hơn tỷ lệ quy đổi thì không cộng điểm
+    if ($invoice->total_amount <= 0 || $invoice->total_amount < $conversionRate) {
+      return;
     }
 
-    // Cộng điểm thưởng (reward_points) với hệ số nhân
-    $rewardPoints = $pointsEarned * $multiplier;
+    // Tính toán điểm thưởng
+    $pointsEarned = floor($invoice->total_amount / $conversionRate);
+    $loyaltyPoints = $pointsEarned;
+    $rewardPoints = $this->calculateRewardPoints($customer, $pointsEarned);
 
     // Cập nhật tổng số tiền đã chi tiêu
     $customer->total_spent += $invoice->total_amount;
-    $this->pointService->addPoints($customer, $loyaltyPoints, $rewardPoints, 'invoice', $invoice->id);
+
+    $note = "Cộng điểm từ đơn hàng: {$invoice->code}";
+    $this->pointService->addPoints($customer, $loyaltyPoints, $rewardPoints, 'invoice', $invoice->id, $note);
 
     // Lưu lại thông tin cập nhật
     $customer->save();
-
     // Cập nhật cấp độ thành viên
-    $customer->updateMembershipLevel();
+    $this->customerService->updateMembershipLevel($customer);
+  }
 
-    $conversionRate = config('loyalty.point_conversion_rate', 25000);
-    $loyaltyPoints = floor($invoice->total_amount / $conversionRate);
-    $rewardPoints = floor($loyaltyPoints * 0.5); // Ví dụ: 50% điểm tích lũy được chuyển thành điểm thưởng
+  /**
+   * Tính điểm thưởng có hệ số nhân dựa vào ngày sinh nhật.
+   * Hệ số nhỏ nhất là 1
+   */
+  private function calculateRewardPoints($customer, $pointsEarned): int
+  {
+    $multiplier = max(1, ($customer->isBirthdayToday() && $customer->membershipLevel)
+      ? $customer->membershipLevel->reward_multiplier ?? 1
+      : 1);
 
+    return $pointsEarned * $multiplier;
   }
 }

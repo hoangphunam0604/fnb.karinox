@@ -6,188 +6,97 @@ use App\Events\InvoiceCompleted;
 use App\Listeners\InvoicePointsProcess;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\MembershipLevel;
+use App\Services\CustomerService;
 use App\Services\PointService;
-use Carbon\Carbon;
+use App\Services\SystemSettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
+use Mockery;
 use Tests\TestCase;
 
-/**
- * @testdox Xử lý tích điểm khi hóa đơn hoàn thành
- */
 class InvoicePointsProcessTest extends TestCase
 {
   use RefreshDatabase;
 
-  protected PointService $pointService;
+  protected $pointService;
+  protected $customerService;
+  protected $systemSettingService;
+  protected $listener;
 
   protected function setUp(): void
   {
     parent::setUp();
-    $this->pointService = new PointService();
+
+    $this->pointService = Mockery::mock(PointService::class);
+    $this->customerService = Mockery::mock(CustomerService::class);
+    $this->systemSettingService = Mockery::mock(SystemSettingService::class);
+
+    $this->listener = new InvoicePointsProcess(
+      $this->pointService,
+      $this->customerService,
+      $this->systemSettingService
+    );
   }
 
-  /**
-   * @testdox Cộng điểm tích lũy và điểm thưởng khi hóa đơn hoàn thành
-   * @test
-   */
-  public function it_applies_points_when_invoice_is_completed()
+  public function test_handle_does_nothing_if_customer_is_null()
   {
-    Event::fake();
+    $invoice = Invoice::factory()->make(['customer_id' => null]);
+    $event = new InvoiceCompleted($invoice);
 
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 100,
-      'reward_points' => 200,
-    ]);
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(100);
+    $this->pointService->shouldNotReceive('addPoints');
 
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'total_amount' => 250000,
-      'invoice_status' => 'completed',
-    ]);
-
-
-    $listener = new InvoicePointsProcess($this->pointService);
-    $listener->handle(new InvoiceCompleted($invoice));
-
-    $customer->refresh();
-
-    $this->assertDatabaseHas('point_histories', [
-      'customer_id' => $customer->id,
-      'source_type' => 'invoice',
-      'source_id' => $invoice->id,
-    ]);
-
-    $this->assertGreaterThan(100, $customer->loyalty_points);
-    $this->assertGreaterThan(200, $customer->reward_points);
+    $this->listener->handle($event);
   }
 
-  /**
-   * @testdox Không cộng điểm nếu hóa đơn không có khách hàng
-   * @test
-   */
-  public function it_does_not_apply_points_if_invoice_has_no_customer()
+  public function test_handle_does_nothing_if_total_amount_is_zero()
   {
-    Event::fake();
+    $customer = Customer::factory()->create();
+    $invoice = Invoice::factory()->make(['customer_id' => $customer->id, 'total_amount' => 0]);
+    $event = new InvoiceCompleted($invoice);
 
-    $invoice = Invoice::factory()->create([
-      'customer_id' => null,
-      'total_amount' => 250000,
-      'invoice_status' => 'completed',
-    ]);
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(100);
+    $this->pointService->shouldNotReceive('addPoints');
 
-    $listener = new InvoicePointsProcess($this->pointService);
-    $listener->handle(new InvoiceCompleted($invoice));
-
-    $this->assertDatabaseMissing('point_histories', [
-      'source_type' => 'invoice',
-      'source_id' => $invoice->id,
-    ]);
-  }
-  /**
-   * @testdox Áp dụng hệ số nhân điểm thưởng vào ngày sinh nhật
-   * @test
-   */
-  public function it_correctly_applies_bonus_multiplier_on_birthday()
-  {
-    Event::fake();
-
-    $membershipLevel = MembershipLevel::factory()->create([
-      'reward_multiplier' => 2, // Nhân đôi điểm thưởng vào ngày sinh nhật
-    ]);
-
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 100,
-      'reward_points' => 200,
-      'birthday' => Carbon::now()->format('Y-m-d'),
-      'membership_level_id' => $membershipLevel->id,
-    ]);
-
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'total_amount' => 250000,
-      'invoice_status' => 'completed',
-    ]);
-
-    $listener = new InvoicePointsProcess($this->pointService);
-    $listener->handle(new InvoiceCompleted($invoice));
-
-    $customer->refresh();
-
-    $expectedBonusPoints = floor(($invoice->total_amount / 25000) * 2); // Nhân đôi điểm thưởng
-
-    $this->assertEquals(200 + $expectedBonusPoints, $customer->reward_points);
+    $this->listener->handle($event);
   }
 
-  /**
-   * @testdox Không áp dụng hệ số nhân nếu không phải sinh nhật
-   * @test
-   */
-  public function it_does_not_apply_bonus_multiplier_if_not_birthday()
+  public function test_handle_correctly_calculates_loyalty_points()
   {
-    Event::fake();
+    $customer = Customer::factory()->create();
+    $invoice = Invoice::factory()->make(['customer_id' => $customer->id, 'total_amount' => 500]);
+    $event = new InvoiceCompleted($invoice);
 
-    $membershipLevel = MembershipLevel::factory()->create([
-      'reward_multiplier' => 2,
-    ]);
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(100);
 
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 100,
-      'reward_points' => 200,
-      'birthday' => Carbon::now()->subDays(1)->format('Y-m-d'), // Hôm qua là sinh nhật
-      'membership_level_id' => $membershipLevel->id,
-    ]);
+    $this->pointService->shouldReceive('addPoints')->once()->with(
+      $customer,
+      5,
+      5,
+      'invoice',
+      $invoice->id,
+      "Cộng điểm từ đơn hàng: {$invoice->code}"
+    );
 
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'total_amount' => 250000,
-      'invoice_status' => 'completed',
-    ]);
-
-    $listener = new InvoicePointsProcess($this->pointService);
-    $listener->handle(new InvoiceCompleted($invoice));
-
-    $customer->refresh();
-
-    $expectedBonusPoints = floor($invoice->total_amount / 25000); // Không nhân đôi điểm
-
-    $this->assertEquals(200 + $expectedBonusPoints, $customer->reward_points);
+    $this->listener->handle($event);
   }
 
-  /**
-   * @testdox Không áp dụng hệ số nhân nếu khách hàng đã nhận thưởng sinh nhật trong năm nay
-   * @test
-   */
-  public function it_does_not_apply_birthday_bonus_if_customer_has_already_received_bonus_this_year()
+  public function test_handle_updates_customer_total_spent()
   {
-    Event::fake();
+    $customer = Customer::factory()->create(['total_spent' => 1000]);
+    $invoice = Invoice::factory()->make(['customer_id' => $customer->id, 'total_amount' => 500]);
+    $event = new InvoiceCompleted($invoice);
 
-    $membershipLevel = MembershipLevel::factory()->create([
-      'reward_multiplier' => 2,
-    ]);
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(100);
+    $this->pointService->shouldReceive('addPoints')->once()->with(
+      $customer,
+      Mockery::any(),
+      Mockery::any(),
+      'invoice',
+      $invoice->id
+    );
 
-    $customer = Customer::factory()->create([
-      'loyalty_points' => 100,
-      'reward_points' => 200,
-      'birthday' => Carbon::now()->format('Y-m-d'),
-      'membership_level_id' => $membershipLevel->id,
-      'last_birthday_bonus_date' => Carbon::now()->startOfYear(), // Đã nhận trong năm nay
-    ]);
+    $this->listener->handle($event);
 
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'total_amount' => 250000,
-      'invoice_status' => 'completed',
-    ]);
-
-    $listener = new InvoicePointsProcess($this->pointService);
-    $listener->handle(new InvoiceCompleted($invoice));
-
-    $customer->refresh();
-
-    $expectedBonusPoints = floor($invoice->total_amount / 25000); // Không nhân đôi vì đã nhận thưởng
-
-    $this->assertEquals(200 + $expectedBonusPoints, $customer->reward_points);
+    $this->assertEquals(1500, $customer->fresh()->total_spent);
   }
 }

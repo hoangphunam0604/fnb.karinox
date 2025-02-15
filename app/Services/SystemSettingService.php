@@ -15,4 +15,9 @@ class SystemSettingService
   {
     return SystemSetting::updateOrCreate(['key' => $key], ['value' => $value]);
   }
+  // Lấy tỷ lệ quy đổi điểm từ SystemSetting mặc định là 25.000 một điểm
+  public function getPointConversionRate(): float
+  {
+    return floatval(SystemSetting::where('key', 'point_conversion_rate')->value('value') ?? 25000);
+  }
 }

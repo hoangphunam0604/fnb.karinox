@@ -1,0 +1,48 @@
+📌 1. Các Test Case Cần Kiểm Tra
+✅ Nhóm 1: Kiểm tra xử lý điểm khi hóa đơn hoàn tất
+Hóa đơn có khách hàng hợp lệ → Kiểm tra điểm được cộng chính xác.
+
+- Sau khi xử lý xong, tổng số tiền khách đã chi tiêu (total_spent) phải được cập nhật.
+- Sau khi xử lý xong, điểm loyalty_points và reward_points phải được cập nhật.
+- Sau khi xử lý xong, updateMembershipLevel() phải được gọi để cập nhật hạng thành viên.
+Hóa đơn không có khách hàng ($invoice->customer == null) → Listener không làm gì.
+Hóa đơn có tổng tiền = 0 → Không cộng điểm.
+Hóa đơn có giá trị nhỏ hơn point_conversion_rate → Không cộng điểm.
+Hóa đơn có giá trị lẻ (VD: 55,000) → Điểm phải được floor() đúng.
+
+✅ Nhóm 5: Kiểm tra hệ số nhân trong ngày sinh nhật
+Khách hàng có hệ số nhân là 0 (reward_multiplier = 0) → Không cộng điểm thưởng.
+Khách hàng có hệ số nhân nhưng không phải sinh nhật hôm nay → Không nhân điểm thưởng.
+Khách hàng không có membershipLevel nhưng là sinh nhật → Không nhân điểm thưởng.
+✅ Nhóm 6: Kiểm tra cập nhật dữ liệu
+Hóa đơn có tổng giá trị rất lớn (VD: 10,000,000) → Đảm bảo hệ thống không bị lỗi khi cộng nhiều điểm.
+✅ Nhóm 7: Kiểm tra xử lý lỗi
+Hệ số nhân ngày sinh nhật có giá trị âm (reward_multiplier = -1) → Hệ thống xử lý hợp lý (không cho điểm âm).
+Tỷ lệ quy đổi (point_conversion_rate) có giá trị âm hoặc bằng 0 → Xử lý lỗi, không chia cho 0.
+Dữ liệu bị lỗi (customer_id hợp lệ nhưng không tìm thấy Customer) → Xử lý hợp lý mà không gây crash.
+Hóa đơn đã được xử lý trước đó (VD: đã ghi log điểm trước đó) → Không cộng điểm trùng lặp.
+✅ Nhóm 8: Kiểm tra ảnh hưởng của nhiều hóa đơn
+Khách hàng có nhiều hóa đơn hoàn tất → Kiểm tra điểm được cộng đúng qua nhiều lần.
+Hóa đơn của khách hàng hoàn tất nhưng tổng chi tiêu không đủ để lên hạng thành viên → Không cập nhật membership.
+Hóa đơn của khách hàng hoàn tất và đủ điều kiện lên hạng → Cập nhật hạng thành viên chính xác.
+Hóa đơn lớn hơn 1 triệu → Kiểm tra nếu hệ thống vẫn xử lý đúng số lượng điểm.
+✅ Nhóm 9: Kiểm tra khi hóa đơn bị chỉnh sửa
+Hóa đơn bị chỉnh sửa (thay đổi total_amount) sau khi đã cộng điểm → Kiểm tra điểm có được cập nhật lại không.
+Hóa đơn bị hủy sau khi đã cộng điểm → Điểm tích lũy có bị trừ đúng không?
+Khách hàng đã dùng điểm để thanh toán hóa đơn → Đảm bảo hệ thống không cộng điểm cho số tiền đã thanh toán bằng điểm.
+✅ Nhóm 10: Kiểm tra xử lý với nhiều khách hàng khác nhau
+Khách hàng mới tạo, chưa có điểm tích lũy → Kiểm tra điểm được cộng đúng.
+Khách hàng VIP (có membership gold, platinum, ...) → Kiểm tra hệ số nhân điểm có áp dụng chính xác.
+Khách hàng có nhiều đơn hàng trong cùng một ngày → Đảm bảo hệ thống xử lý từng hóa đơn đúng.
+Khách hàng có đơn hàng được thanh toán bằng nhiều phương thức (tiền mặt, điểm, ví điện tử) → Chỉ cộng điểm cho phần thanh toán tiền mặt.
+✅ Nhóm 11: Kiểm tra khi có lỗi trong quá trình xử lý
+Hệ thống bị lỗi khi cộng điểm → Kiểm tra có rollback dữ liệu không?
+Kết nối database bị mất khi đang xử lý → Kiểm tra lỗi và đảm bảo không lưu dữ liệu sai lệch.
+Customer bị xóa giữa quá trình xử lý hóa đơn → Kiểm tra hệ thống không crash.
+Hóa đơn bị xóa giữa quá trình xử lý → Kiểm tra hệ thống không crash và không cộng điểm trùng lặp.
+✅ Nhóm 12: Kiểm tra tương tác với các service
+Kiểm tra PointService::addPoints() có được gọi đúng không?
+Kiểm tra CustomerService::updateMembershipLevel() có được gọi đúng không?
+Kiểm tra SystemSettingService::getPointConversionRate() có trả về đúng dữ liệu không?
+Nếu PointService::addPoints() thất bại → Hệ thống có rollback dữ liệu không?
+Nếu CustomerService::updateMembershipLevel() thất bại → Hệ thống có rollback dữ liệu không?

@@ -13,6 +13,10 @@ class PointService
    */
   public function addPoints(Customer $customer, int $loyaltyPoints, int $rewardPoints, string $sourceType = null, int $sourceId = null, string $note = null)
   {
+    /*   echo "addPoints\n";
+    echo "\n";
+    echo "===============================\n\n\n";
+   */
     return DB::transaction(function () use ($customer, $loyaltyPoints, $rewardPoints, $sourceType, $sourceId, $note) {
       $previousLoyaltyPoints = $customer->loyalty_points;
       $previousRewardPoints = $customer->reward_points;
@@ -75,6 +79,10 @@ class PointService
     });
   }
 
+  private function logPointHistory($customer, $loyaltyPoints, $rewardPoints, $sourceType, $sourceId)
+  {
+    // Ghi log lịch sử điểm nếu cần
+  }
   /**
    * Lấy lịch sử điểm của khách hàng
    */

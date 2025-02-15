@@ -91,6 +91,7 @@ class CustomerService
    */
   public function updateMembershipLevel($customer)
   {
+    echo "updateMembershipLevel\n===============\n\n";
     $points = $customer->loyalty_points;
 
     // Tìm hạng cao nhất mà khách hàng có thể đạt được
