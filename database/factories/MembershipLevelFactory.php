@@ -18,7 +18,6 @@ class MembershipLevelFactory extends Factory
       'rank' => $this->faker->unique()->numberBetween(1, 10),
       'name' => $this->faker->unique()->word,
       'min_spent' => $this->faker->numberBetween(0, 50000),
-      'max_spent' => $this->faker->optional()->numberBetween(50001, 100000),
       'reward_multiplier' => $this->faker->optional()->randomFloat(2, 1, 5),
     ];
   }

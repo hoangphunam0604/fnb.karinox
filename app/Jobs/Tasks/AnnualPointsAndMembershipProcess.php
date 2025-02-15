@@ -27,12 +27,12 @@ class AnnualPointsAndMembershipProcess implements ShouldQueue
     //$updates = [];
 
     foreach ($customers as $customer) {
-      $highestPoints = max($customer->loyalty_points, $customer->reward_points + $customer->used_reward_points);
 
-      $newLevel = MembershipLevel::where('min_spent', '<=', $highestPoints)
-        ->where(function ($query) use ($highestPoints) {
+      $loyaltyPoints = max($customer->loyalty_points, 0);
+      $newLevel = MembershipLevel::where('min_spent', '<=', $loyaltyPoints)
+        ->where(function ($query) use ($loyaltyPoints) {
           $query->whereNull('max_spent')
-            ->orWhere('max_spent', '>=', $highestPoints);
+            ->orWhere('max_spent', '>=', $loyaltyPoints);
         })
         ->orderBy('rank', 'desc')
         ->first();

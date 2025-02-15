@@ -106,7 +106,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
   public function it_upgrades_membership_if_loyalty_points_are_sufficient()
   {
     // Tạo cấp độ thành viên
-    $silver = MembershipLevel::factory()->create(['name' => 'Silver', 'min_spent' => 100000, 'rank' => 1]);
+    $silver = MembershipLevel::factory()->create(['name' => 'Silver', 'min_spent' => 100000, 'max_spent' => 499999, 'rank' => 1]);
     $gold = MembershipLevel::factory()->create(['name' => 'Gold', 'min_spent' => 500000, 'rank' => 2]);
 
     // Tạo khách hàng đang ở hạng Silver nhưng có đủ điểm để lên Gold
@@ -123,6 +123,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
 
     // Kiểm tra khách hàng được nâng hạng lên Gold
     $customer->refresh();
+
     $this->assertEquals($gold->id, $customer->membership_level_id);
   }
 
@@ -159,7 +160,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
   public function it_processes_multiple_customers_in_one_job()
   {
     // Tạo cấp độ thành viên
-    $silver = MembershipLevel::factory()->create(['name' => 'Silver', 'min_spent' => 100000, 'rank' => 1]);
+    $silver = MembershipLevel::factory()->create(['name' => 'Silver', 'min_spent' => 100000, 'max_spent' => 499999, 'rank' => 1]);
     $gold = MembershipLevel::factory()->create(['name' => 'Gold', 'min_spent' => 500000, 'rank' => 2]);
 
     // Tạo 3 khách hàng
