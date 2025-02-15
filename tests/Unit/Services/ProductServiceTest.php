@@ -32,7 +32,6 @@ class ProductServiceTest extends TestCase
     $data = [
       'code' => 'PROD123',
       'name' => 'Cà phê sữa',
-      'category_id' => 1,
       'product_type' => 'goods',
       'branches' => [
         ['branch_id' => $branch->id, 'stock_quantity' => 10],
