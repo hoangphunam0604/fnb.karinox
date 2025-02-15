@@ -85,4 +85,29 @@ class CustomerService
       'points_needed' => max(0, $nextLevel->min_spent - $customer->total_spent),
     ];
   }
+
+  /**
+   * Logic cấp độ thành viên
+   */
+  public function updateMembershipLevel($customer)
+  {
+    $points = $customer->loyalty_points;
+
+    // Tìm hạng cao nhất mà khách hàng có thể đạt được
+    $newLevel = MembershipLevel::where('min_spent', '<=', $points)
+      ->where(function ($query) use ($points) {
+        $query->whereNull('max_spent')
+          ->orWhere('max_spent', '>=', $points);
+      })
+      ->orderBy('rank', 'desc')
+      ->first();
+
+    if ($newLevel && (!$customer->membership_level_id || $customer->membershipLevel->rank < $newLevel->rank)) {
+      // Chỉ cập nhật nếu có thay đổi về hạng
+      if ($customer->membership_level_id !== $newLevel->id) {
+        $customer->membership_level_id = $newLevel->id;
+        $customer->save();
+      }
+    }
+  }
 }

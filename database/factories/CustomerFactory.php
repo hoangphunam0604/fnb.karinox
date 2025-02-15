@@ -17,10 +17,10 @@ class CustomerFactory extends Factory
   {
     return [
       'membership_level_id' => MembershipLevel::factory(),
-      'loyalty_card_number' => $this->faker->unique()->numerify('CARD########'),
+      'loyalty_card_number' => $this->faker->unique()->numerify('CARD##########'),
       'last_purchase_at' => $this->faker->dateTimeThisYear(),
       'status' => $this->faker->randomElement(['active', 'inactive', 'banned']),
-      'name' => $this->faker->name,
+      'fullname' => $this->faker->name,
       'email' => $this->faker->unique()->safeEmail,
       'phone' => $this->faker->unique()->phoneNumber,
       'loyalty_points' => $this->faker->numberBetween(0, 10000), // Điểm tích lũy dùng để xét hạng

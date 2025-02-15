@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Tasks;
 
 use App\Models\Customer;
-use App\Models\MembershipLevel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ResetMembershipPoints implements ShouldQueue
+class AnnualPointsAndMembershipReset implements ShouldQueue
 {
   use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
   public function handle()
   {
-    Customer::chunk(500, function ($customers) {
-      dispatch(new ProcessResetMembership($customers->pluck('id')->toArray()));
+    Customer::chunk(100, function ($customers) {
+      dispatch(new AnnualPointsAndMembershipProcess($customers->pluck('id')->toArray()))->onQueue('low-priority');
     });
   }
 }

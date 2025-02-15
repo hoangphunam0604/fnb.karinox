@@ -18,7 +18,7 @@ class EventServiceProvider extends ServiceProvider
       SendEmailVerificationNotification::class,
     ],
     \App\Events\InvoiceCompleted::class => [
-      \App\Listeners\ProcessInvoicePoints::class,
+      \App\Listeners\InvoicePointsProcess::class,
     ],
   ];
 

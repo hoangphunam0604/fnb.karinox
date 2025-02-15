@@ -26,7 +26,7 @@ return new class extends Migration
       $table->date('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
-      $table->string('name'); // Tên khách hàng
+      $table->string('fullname')->nullable(); // Tên khách hàng
       $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
       $table->string('address')->nullable(); // Địa chỉ khách hàng

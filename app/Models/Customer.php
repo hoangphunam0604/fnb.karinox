@@ -11,6 +11,7 @@ class Customer extends Model
   use HasFactory;
 
   protected $fillable = [
+    'id',
     'membership_level_id',
     'loyalty_card_number',
     'loyalty_points',
@@ -21,7 +22,7 @@ class Customer extends Model
     'last_birthday_bonus_date',
 
     'status',
-    'name',
+    'fullname',
     'email',
     'phone',
     'address',
@@ -56,31 +57,6 @@ class Customer extends Model
     return $this->hasMany(PointHistory::class);
   }
 
-
-  /**
-   * Logic cấp độ thành viên
-   */
-  public function updateMembershipLevel()
-  {
-    $points = $this->loyalty_points;
-
-    // Tìm hạng cao nhất mà khách hàng có thể đạt được
-    $newLevel = MembershipLevel::where('min_spent', '<=', $points)
-      ->where(function ($query) use ($points) {
-        $query->whereNull('max_spent')
-          ->orWhere('max_spent', '>=', $points);
-      })
-      ->orderBy('rank', 'desc')
-      ->first();
-
-    if ($newLevel && (!$this->membership_level_id || $this->membershipLevel->rank < $newLevel->rank)) {
-      // Chỉ cập nhật nếu có thay đổi về hạng
-      if ($this->membership_level_id !== $newLevel->id) {
-        $this->membership_level_id = $newLevel->id;
-        $this->save();
-      }
-    }
-  }
 
   /**
    * Kiểm tra hôm nay có phải là ngày sinh nhật của khách hàng hay không.
