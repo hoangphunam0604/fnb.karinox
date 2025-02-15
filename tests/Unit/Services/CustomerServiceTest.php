@@ -24,7 +24,7 @@ class CustomerServiceTest extends TestCase
   public function it_can_create_a_customer()
   {
     $data = [
-      'name' => 'Nguyễn Văn A',
+      'fullname' => 'Nguyễn Văn A',
       'phone' => '0905123456',
       'email' => 'nguyenvana@example.com',
       'loyalty_card_number' => 'VIP001'
@@ -40,23 +40,23 @@ class CustomerServiceTest extends TestCase
   public function it_can_update_a_customer()
   {
     $customer = Customer::factory()->create([
-      'name' => 'Trần Thị B',
+      'fullname' => 'Trần Thị B',
       'phone' => '0911123456'
     ]);
 
-    $updatedData = ['name' => 'Trần Thị C'];
+    $updatedData = ['fullname' => 'Trần Thị C'];
 
     $updatedCustomer = $this->customerService->updateCustomer($customer->id, $updatedData);
 
-    $this->assertEquals('Trần Thị C', $updatedCustomer->name);
-    $this->assertDatabaseHas('customers', ['id' => $customer->id, 'name' => 'Trần Thị C']);
+    $this->assertEquals('Trần Thị C', $updatedCustomer->fullname);
+    $this->assertDatabaseHas('customers', ['id' => $customer->id, 'fullname' => 'Trần Thị C']);
   }
 
   /** @test */
   public function it_can_delete_a_customer()
   {
     $customer = Customer::factory()->create([
-      'name' => 'Lê Văn D'
+      'fullname' => 'Lê Văn D'
     ]);
 
     $this->customerService->deleteCustomer($customer->id);
@@ -68,7 +68,7 @@ class CustomerServiceTest extends TestCase
   public function it_can_find_customer_by_phone_or_email_or_loyalty_card()
   {
     $customer = Customer::factory()->create([
-      'name' => 'Phạm Minh E',
+      'fullname' => 'Phạm Minh E',
       'phone' => '0987654321',
       'email' => 'phamminhe@example.com',
       'loyalty_card_number' => 'VIP999'
@@ -92,7 +92,7 @@ class CustomerServiceTest extends TestCase
       'reward_multiplier' => 1.5,
     ]);
     $customer = Customer::factory()->create([
-      'name' => 'Hoàng Quốc F',
+      'fullname' => 'Hoàng Quốc F',
       'membership_level_id' => $membershipLevel->id
     ]);
 
