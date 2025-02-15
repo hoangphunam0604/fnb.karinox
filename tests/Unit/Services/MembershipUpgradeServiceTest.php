@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Customer;
-use App\Models\MembershipLevel;
-use App\Models\MembershipUpgradeHistory;
-use App\Services\MembershipUpgradeService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+use App\Models\MembershipLevel;
+use App\Models\Customer;
+use App\Services\MembershipUpgradeService;
 
 class MembershipUpgradeServiceTest extends TestCase
 {

@@ -2,7 +2,7 @@
 
 namespace App\Console;
 
-use App\Jobs\ResetMembershipPoints;
+use App\Jobs\Tasks\AnnualPointsAndMembershipReset;
 use App\Jobs\UpdateMembershipLevelsJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -14,8 +14,10 @@ class Kernel extends ConsoleKernel
    */
   protected function schedule(Schedule $schedule): void
   {
-    // Lên lịch chạy reset điểm vào ngày 1/1 mỗi năm lúc 00:00
-    $schedule->job(new ResetMembershipPoints())->yearlyOn(1, 1, '00:00');
+    // Lên lịch chạy reset điểm vào ngày 1/3 mỗi năm lúc 00:05
+    $schedule->job(new AnnualPointsAndMembershipReset())->yearlyOn(3, 1, '00:05');
+
+    //Lên lịch cập nhật hạng thành viên mỗi 5 phút
     $schedule->job(new UpdateMembershipLevelsJob())->everyFiveMinutes();
   }
 
