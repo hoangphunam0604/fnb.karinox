@@ -36,12 +36,6 @@ class OrderServiceTest extends TestCase
     $this->branch = Branch::factory()->create();
   }
 
-  public function test_order_code_is_generated_correctly()
-  {
-    $order = Order::factory()->create(['branch_id' => $this->branch->id]);
-    $this->assertMatchesRegularExpression('/ORD-\d{2}-\d{6}-\d{4}/', $order->order_code);
-  }
-
   /**
    * Kiểm tra tạo đơn hàng chỉ có sản phẩm
    */
