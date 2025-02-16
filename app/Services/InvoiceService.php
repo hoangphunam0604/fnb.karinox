@@ -2,28 +2,26 @@
 
 namespace App\Services;
 
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
+use App\Services\Contracts\InvoiceServiceInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\InvoiceTopping;
-use App\Models\Order;
+use App\Models\InvoiceItem;
+use App\Models\Invoice;
 use App\Models\OrderItem;
+use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 
-class InvoiceService
+class InvoiceService implements InvoiceServiceInterface
 {
-  /**
-   * Tạo hóa đơn từ đơn hàng
-   */
-  public function createInvoiceFromOrder($orderId,  $paidAmount = 0)
+  public function createInvoiceFromOrder(int $orderId, float $paidAmount = 0): Invoice
   {
-    return DB::transaction(function () use ($orderId,  $paidAmount) {
+    return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = Order::findOrFail($orderId);
 
       if ($order->order_status !== 'completed') {
         throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
       }
 
-      // Tạo hóa đơn
       $invoice = Invoice::create([
         'order_id' => $order->id,
         'customer_id' => $order->customer_id,
@@ -35,25 +33,18 @@ class InvoiceService
         'note' => $order->note,
       ]);
 
-      //Tải items và toppings
       $order->loadMissing(['items', 'items.toppings']);
-
-      // Sao chép sản phẩm từ đơn hàng
       $this->copyOrderItemsToInvoice($order, $invoice);
-
       $invoice->refresh();
-
-      // Cập nhật tổng tiền hóa đơn
       $this->updateInvoiceTotal($invoice);
 
       return $invoice;
     });
   }
 
-  private function copyOrderItemsToInvoice(Order $order, Invoice $invoice)
+  private function copyOrderItemsToInvoice(Order $order, Invoice $invoice): void
   {
     foreach ($order->items as $orderItem) {
-
       $invoiceItem = InvoiceItem::create([
         'invoice_id' => $invoice->id,
         'product_id' => $orderItem->product_id,
@@ -62,12 +53,11 @@ class InvoiceService
         'total_price' => $orderItem->total_price,
         'total_price_with_topping' => $orderItem->total_price_with_topping,
       ]);
-
       $this->copyOrderToppingsToInvoice($orderItem, $invoiceItem);
     }
   }
 
-  private function copyOrderToppingsToInvoice(OrderItem $orderItem, InvoiceItem $invoiceItem)
+  private function copyOrderToppingsToInvoice(OrderItem $orderItem, InvoiceItem $invoiceItem): void
   {
     foreach ($orderItem->toppings as $orderTopping) {
       InvoiceTopping::create([
@@ -80,32 +70,14 @@ class InvoiceService
     }
   }
 
-  /**
-   * Cập nhật tổng tiền hóa đơn
-   */
-  private function updateInvoiceTotal(Invoice $invoice)
+  private function updateInvoiceTotal(Invoice $invoice): void
   {
-    $total = 0;
-    foreach ($invoice->items as $invoiceItem) {
-      // Tổng tiền sản phẩm
-      $productTotal = $invoiceItem->unit_price * $invoiceItem->quantity;
-
-      // Tổng tiền topping
-      $toppingTotal = $invoiceItem->toppings?->sum(fn($t) => $t->unit_price * $t->quantity) ?? 0;
-
-      $total += ($productTotal + $toppingTotal);
-      $invoiceItem->total_price_with_topping = ($productTotal + $toppingTotal);
-      $invoiceItem->save();
-    }
-
-    // Trừ giảm giá nếu có
+    $total = $invoice->items->sum(fn($item) => $item->total_price_with_topping);
     $invoice->total_amount = max($total - $invoice->discount_amount, 0);
     $invoice->save();
   }
-  /**
-   * Cập nhật phương thức thanh toán của hóa đơn
-   */
-  public function updatePaymentMethod($invoiceId, $method)
+
+  public function updatePaymentMethod(int $invoiceId, string $method): Invoice
   {
     $invoice = Invoice::findOrFail($invoiceId);
     $invoice->payment_method = $method;
@@ -113,56 +85,35 @@ class InvoiceService
     return $invoice;
   }
 
-  /**
-   * Cập nhật trạng thái thanh toán của hóa đơn
-   */
-  public function updatePaymentStatus($invoiceId, $status)
+  public function updatePaymentStatus(int $invoiceId, string $status): Invoice
   {
     return DB::transaction(function () use ($invoiceId, $status) {
       $invoice = Invoice::findOrFail($invoiceId);
-
       if (!in_array($status, ['unpaid', 'partial', 'paid', 'refunded'])) {
         throw new \Exception("Trạng thái thanh toán không hợp lệ.");
       }
-
       $invoice->payment_status = $status;
       $invoice->save();
 
-      // Nếu hóa đơn được thanh toán đầy đủ, tự động đánh dấu là hoàn tất
       if ($invoice->isPaid()) {
         $invoice->markAsCompleted();
       }
-
       return $invoice;
     });
   }
 
-
-
-  /**
-   * Tìm kiếm hóa đơn theo mã
-   */
-  public function findInvoiceByCode($code)
+  public function findInvoiceByCode(string $code): ?Invoice
   {
     return Invoice::where('code', strtoupper($code))->first();
   }
 
-  /**
-   * Lấy danh sách hóa đơn (phân trang)
-   */
-  public function getInvoices($perPage = 10)
+  public function getInvoices(int $perPage = 10): LengthAwarePaginator
   {
     return Invoice::orderBy('created_at', 'desc')->paginate($perPage);
   }
 
-  /**
-   * Kiểm tra hoá đơn có được phép hoàn không
-   */
-  public function canBeRefunded($invoice): bool
+  public function canBeRefunded(Invoice $invoice): bool
   {
-    if (!$invoice->customer)
-      return true;
-
-    return true;
+    return (bool) $invoice->customer;
   }
 }

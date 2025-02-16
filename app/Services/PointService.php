@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
-use App\Models\Order;
-use App\Models\Invoice;
-use App\Models\PointHistory;
-use App\Services\Interfaces\PointServiceInterface;
-use Exception;
+use App\Services\Contracts\PointServiceInterface;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+use App\Models\PointHistory;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\Order;
+use Exception;
 
 class PointService implements PointServiceInterface
 {

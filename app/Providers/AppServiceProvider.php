@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CustomerService;
+use App\Services\InvoiceService;
 use App\Services\PointService;
 use App\Services\SystemSettingService;
 use App\Services\VoucherService;
@@ -15,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
    */
   public function register(): void
   {
+    $this->app->singleton(InvoiceService::class);
     $this->app->singleton(PointService::class);
     $this->app->singleton(CustomerService::class);
     $this->app->singleton(SystemSettingService::class);

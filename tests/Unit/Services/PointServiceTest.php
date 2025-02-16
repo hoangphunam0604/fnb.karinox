@@ -23,7 +23,7 @@ class PointServiceTest extends TestCase
   {
     parent::setUp();
 
-    /** @var SystemSettingService $this->systemSettingService */
+    /** @var SystemSettingService $systemSettingService */
     $this->systemSettingService = Mockery::mock(SystemSettingService::class)->shouldIgnoreMissing();
 
     $this->pointService = new PointService($this->systemSettingService);
