@@ -19,7 +19,10 @@ class SystemSettingServiceTest extends TestCase
     $this->systemSettingService = new SystemSettingService();
   }
 
-  /** @test */
+  /**
+   * @testdox Lấy giá trị của một cài đặt hệ thống nếu tồn tại
+   * @test
+   */
   public function it_can_get_a_setting_value()
   {
     SystemSetting::create([
@@ -30,13 +33,19 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals('Karinox Coffee', $this->systemSettingService->get('site_name'));
   }
 
-  /** @test */
+  /**
+   * @testdox Trả về giá trị mặc định nếu cài đặt hệ thống không tồn tại
+   * @test
+   */
   public function it_returns_default_value_if_setting_not_found()
   {
     $this->assertEquals('default_value', $this->systemSettingService->get('non_existing_key', 'default_value'));
   }
 
-  /** @test */
+  /**
+   * @testdox Tạo một cài đặt hệ thống mới nếu chưa tồn tại
+   * @test
+   */
   public function it_can_set_a_new_system_setting()
   {
     $this->systemSettingService->set('currency', 'VND');
@@ -47,7 +56,10 @@ class SystemSettingServiceTest extends TestCase
     ]);
   }
 
-  /** @test */
+  /**
+   * @testdox Cập nhật một cài đặt hệ thống hiện có
+   * @test
+   */
   public function it_can_update_an_existing_system_setting()
   {
     SystemSetting::create([
@@ -63,7 +75,10 @@ class SystemSettingServiceTest extends TestCase
     ]);
   }
 
-  /** @test */
+  /**
+   * @testdox Tạo mới hoặc cập nhật một cài đặt hệ thống
+   * @test
+   */
   public function it_can_create_or_update_system_setting()
   {
     $this->systemSettingService->set('tax_rate', '10%');
@@ -79,5 +94,61 @@ class SystemSettingServiceTest extends TestCase
       'key' => 'tax_rate',
       'value' => '12%'
     ]);
+  }
+
+  /**
+   * @testdox Trả về tỷ lệ quy đổi điểm mặc định (25,000) khi không có giá trị trong hệ thống
+   * @test
+   */
+  public function it_returns_default_point_conversion_rate_when_not_set()
+  {
+    // Không có giá trị trong DB => phải trả về mặc định 25000
+    $rate = $this->systemSettingService->getPointConversionRate();
+    $this->assertEquals(25000, $rate);
+  }
+
+  /**
+   * @testdox Trả về tỷ lệ quy đổi điểm tùy chỉnh khi có giá trị trong hệ thống
+   * @test
+   */
+  public function it_returns_custom_point_conversion_rate_when_set()
+  {
+    // Tạo giá trị trong DB
+    SystemSetting::create([
+      'key' => 'point_conversion_rate',
+      'value' => 30000,
+    ]);
+
+    // Phải trả về giá trị đã lưu (30000)
+    $rate = $this->systemSettingService->getPointConversionRate();
+    $this->assertEquals(30000, $rate);
+  }
+
+  /**
+   * @testdox Trả về tỷ lệ quy đổi điểm thưởng mặc định (1,000) khi không có giá trị trong hệ thống
+   * @test
+   */
+  public function it_returns_default_reward_point_conversion_rate_when_not_set()
+  {
+    // Không có giá trị trong DB => phải trả về mặc định 1000
+    $rate = $this->systemSettingService->getRewardPointConversionRate();
+    $this->assertEquals(1000, $rate);
+  }
+
+  /**
+   * @testdox Trả về tỷ lệ quy đổi điểm thưởng tùy chỉnh khi có giá trị trong hệ thống
+   * @test
+   */
+  public function it_returns_custom_reward_point_conversion_rate_when_set()
+  {
+    // Tạo giá trị trong DB
+    SystemSetting::create([
+      'key' => 'reward_point_conversion_rate',
+      'value' => 2000,
+    ]);
+
+    // Phải trả về giá trị đã lưu (2000)
+    $rate = $this->systemSettingService->getRewardPointConversionRate();
+    $this->assertEquals(2000, $rate);
   }
 }
