@@ -7,6 +7,8 @@
 ## Test
 
 ```sh
+rm -rf vendor/phpunit/phpunit/cache
+
 php artisan migrate:fresh --env=testing
 
 php artisan test --filter=OrderServiceTest --testdox

@@ -154,4 +154,15 @@ class InvoiceService
   {
     return Invoice::orderBy('created_at', 'desc')->paginate($perPage);
   }
+
+  /**
+   * Kiểm tra hoá đơn có được phép hoàn không
+   */
+  public function canBeRefunded($invoice): bool
+  {
+    if (!$invoice->customer)
+      return true;
+
+    return true;
+  }
 }

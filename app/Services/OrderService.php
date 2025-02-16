@@ -8,11 +8,17 @@ use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
 use App\Models\Voucher;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-
+  protected PointService $pointService;
+  protected VoucherService $voucherService;
+  public function __construct(PointService $pointService, VoucherService $voucherService)
+  {
+    $this->pointService = $pointService;
+  }
   /**
    * Tạo đơn đặt hàng
    */
@@ -155,35 +161,17 @@ class OrderService
   }
 
   /**
-   * Tính tổng tiền đơn hàng
+   * Kiểm tra và áp dụng điểm thưởng
    */
-  private function calculateOrderTotal(Order $order)
+  public function applyRewardPoints(Order $order, int $requestedPoints): Order
   {
-    if ($order->items->isEmpty()) {
-      return 0;
+    if (!$order->customer || $requestedPoints <= 0) {
+      return $order;
     }
-
-    $totalPrice = $order->items->sum(function ($item) {
-      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price * $t->quantity) : 0;
-      return ($item->unit_price * $item->quantity) + $toppingTotal;
-    });
-    return $totalPrice;
-  }
-
-  /**
-   * Lấy giá sản phẩm từ database
-   */
-  private function getProductPrice($productId)
-  {
-    return Product::findOrFail($productId)->price;
-  }
-
-  /**
-   * Lấy giá topping từ database
-   */
-  private function getToppingPrice($toppingId)
-  {
-    return $this->getProductPrice($toppingId);
+    // Kiểm tra và Áp dụng điểm thưởng nếu có
+    $this->pointService->useRewardPointsForOrder($order, $requestedPoints ?? 0);
+    $order->refresh();
+    return $order;
   }
 
   /**
@@ -200,8 +188,8 @@ class OrderService
   public function cancelOrder($orderId)
   {
     $order =  $this->updateOrderStatus($orderId, 'cancelled');
-    $voucherService = new VoucherService();
-    $voucherService->refundVoucher($order);
+    if ($order->order_status == 'completed')
+      throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
   }
 
   /**
@@ -246,5 +234,38 @@ class OrderService
   public function getOrders($perPage = 10)
   {
     return Order::orderBy('created_at', 'desc')->paginate($perPage);
+  }
+
+
+  /**
+   * Tính tổng tiền đơn hàng
+   */
+  private function calculateOrderTotal(Order $order)
+  {
+    if ($order->items->isEmpty()) {
+      return 0;
+    }
+
+    $totalPrice = $order->items->sum(function ($item) {
+      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price * $t->quantity) : 0;
+      return ($item->unit_price * $item->quantity) + $toppingTotal;
+    });
+    return $totalPrice;
+  }
+
+  /**
+   * Lấy giá sản phẩm từ database
+   */
+  private function getProductPrice($productId)
+  {
+    return Product::findOrFail($productId)->price;
+  }
+
+  /**
+   * Lấy giá topping từ database
+   */
+  private function getToppingPrice($toppingId)
+  {
+    return $this->getProductPrice($toppingId);
   }
 }

@@ -30,6 +30,11 @@ return new class extends Migration
       $table->foreignId('table_id')->nullable()->constrained('tables_and_rooms')->nullOnDelete(); // Bàn/phòng
       $table->decimal('total_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
+      $table->integer('earned_loyalty_points')->default(0); // Số điểm tích luỹ đạt được từ đơn hàng này
+      $table->integer('earned_reward_points')->default(0); // Số điểm tích thưởng đạt được từ đơn hàng này
+      $table->integer('used_reward_points')->default(0); // Số điểm thưởng khách muốn dùng
+      $table->decimal('reward_points_value', 15, 2)->default(0.00); // Giá trị quy đổi từ điểm thưởng
+
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); // Mã giảm giá
       $table->string('voucher_code')->nullable()->unique(); // Mã đơn hàng
       $table->enum('order_status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng

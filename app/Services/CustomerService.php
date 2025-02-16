@@ -70,6 +70,14 @@ class CustomerService
   }
 
   /**
+   * Cập nhật tổng số tiền đã chi tiêu
+   */
+  public function updateTotalSpent($customer, $total_amount)
+  {
+    $customer->total_spent += $total_amount;
+    $customer->save();
+  }
+  /**
    * Lấy số điểm hoặc tổng chi tiêu cần để thăng cấp tiếp theo
    */
   public function getNextMembershipLevel(Customer $customer)
@@ -91,7 +99,6 @@ class CustomerService
    */
   public function updateMembershipLevel($customer)
   {
-    echo "updateMembershipLevel\n===============\n\n";
     $points = $customer->loyalty_points;
 
     // Tìm hạng cao nhất mà khách hàng có thể đạt được
@@ -111,4 +118,6 @@ class CustomerService
       }
     }
   }
+
+  public function downgradeMembershipLevel($customer) {}
 }

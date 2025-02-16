@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\CustomerService;
 use App\Services\PointService;
 use App\Services\SystemSettingService;
+use App\Services\VoucherService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     $this->app->singleton(PointService::class);
     $this->app->singleton(CustomerService::class);
     $this->app->singleton(SystemSettingService::class);
+    $this->app->singleton(VoucherService::class);
   }
 
   /**

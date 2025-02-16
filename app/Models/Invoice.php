@@ -16,6 +16,8 @@ class Invoice extends Model
     'total_amount',
     'paid_amount',
     'change_amount',
+    'earned_loyalty_points',
+    'earned_reward_points',
     'used_reward_points',
     'reward_points_value',
 

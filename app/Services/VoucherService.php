@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
@@ -320,12 +321,39 @@ class VoucherService
   /**
    * Hoàn lại voucher khi đơn hàng bị hủy
    */
-  public function refundVoucher($order)
+  public function refundVoucherFromOrder($order)
   {
     if ($order->order_status === 'completed')
       return ['success' => false, 'message' => 'Không thể hoàn lại voucher vì đơn hàng đã hoàn tất.'];
 
     $voucherUsage = VoucherUsage::where('order_id', $order->id)->first();
+
+    if (!$voucherUsage) {
+      return ['success' => false, 'message' => 'Không tìm thấy voucher để hoàn lại.'];
+    }
+
+    DB::transaction(function () use ($voucherUsage) {
+      // Hoàn lại số lần sử dụng voucher
+      $voucher = Voucher::find($voucherUsage->voucher_id);
+      if ($voucher) {
+        $voucher->decrement('applied_count');
+      }
+
+      // Xóa bản ghi sử dụng voucher
+      $voucherUsage->delete();
+    });
+
+    return ['success' => true, 'message' => 'Voucher đã được hoàn lại.'];
+  }
+  /**
+   * Hoàn lại voucher khi hoá đơn bị hủy
+   */
+  public function refundVoucherFromInvoice(Invoice $invoice)
+  {
+    if ($invoice->invoice_status === 'completed')
+      return ['success' => false, 'message' => 'Không thể hoàn lại voucher vì đơn hàng đã hoàn tất.'];
+
+    $voucherUsage = VoucherUsage::where('invoice_id', $invoice->id)->first();
 
     if (!$voucherUsage) {
       return ['success' => false, 'message' => 'Không tìm thấy voucher để hoàn lại.'];

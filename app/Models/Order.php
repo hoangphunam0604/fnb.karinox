@@ -20,6 +20,11 @@ class Order extends Model
     'table_id',
     'total_price',
     'discount_amount',
+    'earned_loyalty_points',
+    'earned_reward_points',
+    'used_reward_points',
+    'reward_points_value',
+
     'voucher_id',
     'voucher_code',
     'order_status',
@@ -72,6 +77,11 @@ class Order extends Model
   public function creator()
   {
     return $this->belongsTo(User::class, 'creator_id')->withDefault();
+  }
+
+  public function customer()
+  {
+    return $this->belongsTo(Customer::class);
   }
 
   public function table()
