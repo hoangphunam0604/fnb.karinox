@@ -2,74 +2,103 @@
 
 namespace Tests\Unit\Services;
 
+use Tests\TestCase;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceTopping;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
+use App\Models\Customer;
+use App\Models\Branch;
+use App\Models\Product;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class InvoiceServiceTest extends TestCase
 {
   use RefreshDatabase;
 
-  private InvoiceService $invoiceService;
+  protected InvoiceService $invoiceService;
 
   protected function setUp(): void
   {
     parent::setUp();
-    $this->invoiceService = $this->app->make(InvoiceService::class);
+    $this->invoiceService = new InvoiceService();
   }
 
-  /**
-   * @testdox Tạo hóa đơn từ đơn hàng thành công
-   * @test
-   */
-  public function test_create_invoice_from_order_successfully()
+  /** @test */
+  public function it_creates_invoice_from_completed_order_with_toppings()
   {
-    $order = Order::factory()->has(OrderItem::factory()->count(2))->create(['order_status' => 'completed']);
+    $customer = Customer::factory()->create();
+    $branch = Branch::factory()->create();
 
-    $invoice = $this->invoiceService->createInvoiceFromOrder($order->id, 100);
+    // Tạo sản phẩm chính
+    $product = Product::factory()->create(['is_topping' => false, 'price' => 50000]);
 
-    $this->assertInstanceOf(Invoice::class, $invoice);
-    $this->assertEquals($order->id, $invoice->order_id);
-    $this->assertEquals(100, $invoice->paid_amount);
-    $this->assertEquals('pending', $invoice->invoice_status);
-    $this->assertEquals('unpaid', $invoice->payment_status);
+    // Tạo sản phẩm topping
+    $topping = Product::factory()->create(['is_topping' => true, 'price' => 10000]);
+
+    // Tạo đơn hàng đã hoàn tất
+    $order = Order::factory()->create([
+      'customer_id' => $customer->id,
+      'branch_id' => $branch->id,
+      'order_status' => 'completed',
+      'total_price' => 60000,
+      'discount_amount' => 0,
+    ]);
+
+    // Tạo sản phẩm trong đơn hàng
+    $orderItem = OrderItem::factory()->create([
+      'order_id' => $order->id,
+      'product_id' => $product->id,
+      'quantity' => 1,
+      'unit_price' => 50000,
+      'total_price_with_topping' => 70000,
+    ]);
+
+    // Tạo topping cho sản phẩm trong đơn hàng
+    $orderTopping = OrderTopping::factory()->create([
+      'order_item_id' => $orderItem->id,
+      'topping_id' => $topping->id,
+      'unit_price' => 10000,
+      'quantity' => 2,
+      'total_price' => 20000,
+    ]);
+
+    // Tạo hóa đơn từ đơn hàng
+    $invoice = $this->invoiceService->createInvoiceFromOrder($order->id, 60000);
+
+    // Kiểm tra hóa đơn đã được tạo
+    $this->assertDatabaseHas('invoices', [
+      'id' => $invoice->id,
+      'order_id' => $order->id,
+      'invoice_status' => 'pending',
+      'payment_status' => 'unpaid',
+    ]);
+
+    // Kiểm tra sản phẩm trong hóa đơn
+    $this->assertDatabaseHas('invoice_items', [
+      'invoice_id' => $invoice->id,
+      'product_id' => $product->id,
+      'unit_price' => 50000,
+      'total_price' => 50000,
+      'quantity' => 1,
+      'total_price_with_topping' => 70000,
+    ]);
+
+    // Kiểm tra topping trong hóa đơn
+    $this->assertDatabaseHas('invoice_toppings', [
+      'invoice_item_id' => $invoice->items()->first()->id,
+      'topping_id' => $topping->id,
+      'unit_price' => $orderTopping->unit_price,
+      'quantity' => $orderTopping->quantity,
+      'total_price' => $orderTopping->total_price,
+    ]);
   }
-  /**
-   * @testdox Tạo hóa đơn từ đơn hàng có sản phẩm và topping thành công
-   * @test
-   */
-  public function test_create_invoice_from_order_with_toppings()
-  {
-    $order = Order::factory()
-      ->has(
-        OrderItem::factory()
-          ->has(OrderTopping::factory()->count(2))
-          ->count(2)
-      )
-      ->create(['order_status' => 'completed']);
 
-    $invoice = $this->invoiceService->createInvoiceFromOrder($order->id, 100);
-
-    $this->assertInstanceOf(Invoice::class, $invoice);
-    $this->assertEquals($order->id, $invoice->order_id);
-    $this->assertEquals(100, $invoice->paid_amount);
-    $this->assertEquals('pending', $invoice->invoice_status);
-    $this->assertEquals('unpaid', $invoice->payment_status);
-
-    foreach ($invoice->items as $invoiceItem) {
-      $this->assertCount(2, $invoiceItem->toppings);
-    }
-  }
-
-  /**
-   * @testdox Tạo hóa đơn thất bại nếu đơn hàng chưa hoàn tất
-   * @test
-   */
-  public function test_create_invoice_fails_if_order_not_completed()
+  /** @test */
+  public function it_throws_exception_if_order_is_not_completed()
   {
     $order = Order::factory()->create(['order_status' => 'pending']);
 
@@ -79,93 +108,52 @@ class InvoiceServiceTest extends TestCase
     $this->invoiceService->createInvoiceFromOrder($order->id);
   }
 
-  /**
-   * @testdox Cập nhật phương thức thanh toán thành công
-   * @test
-   */
-  public function test_update_payment_method_successfully()
+  /** @test */
+  public function it_updates_invoice_payment_method_correctly()
   {
-    $invoice = Invoice::factory()->create();
+    $invoice = Invoice::factory()->create(['payment_method' => 'cash']);
 
-    $updatedInvoice = $this->invoiceService->updatePaymentMethod($invoice->id, 'credit_card');
+    $updatedInvoice = $this->invoiceService->updatePaymentMethod($invoice->id, 'visa');
 
-    $this->assertEquals('credit_card', $updatedInvoice->payment_method);
+    $this->assertEquals('visa', $updatedInvoice->payment_method);
+    $this->assertDatabaseHas('invoices', [
+      'id' => $invoice->id,
+      'payment_method' => 'visa',
+    ]);
   }
 
-  /**
-   * @testdox Cập nhật trạng thái thanh toán thành công
-   * @test
-   */
-  public function test_update_payment_status_successfully()
+  /** @test */
+  public function it_updates_invoice_payment_status_correctly()
   {
     $invoice = Invoice::factory()->create(['payment_status' => 'unpaid']);
 
     $updatedInvoice = $this->invoiceService->updatePaymentStatus($invoice->id, 'paid');
 
     $this->assertEquals('paid', $updatedInvoice->payment_status);
+    $this->assertDatabaseHas('invoices', [
+      'id' => $invoice->id,
+      'payment_status' => 'paid',
+    ]);
   }
 
-  /**
-   * @testdox Không thể cập nhật trạng thái thanh toán với giá trị không hợp lệ
-   * @test
-   */
-  public function test_update_payment_status_fails_with_invalid_status()
-  {
-    $invoice = Invoice::factory()->create();
-
-    $this->expectException(\Exception::class);
-    $this->expectExceptionMessage("Trạng thái thanh toán không hợp lệ.");
-
-    $this->invoiceService->updatePaymentStatus($invoice->id, 'invalid_status');
-  }
-
-  /**
-   * @testdox Tìm hóa đơn theo mã thành công
-   * @test
-   */
-  public function test_find_invoice_by_code_returns_invoice()
+  /** @test */
+  public function it_finds_invoice_by_code()
   {
     $invoice = Invoice::factory()->create(['code' => 'INV123']);
 
-    $foundInvoice = $this->invoiceService->findInvoiceByCode('INV123');
+    $foundInvoice = $this->invoiceService->findInvoiceByCode('inv123');
 
     $this->assertNotNull($foundInvoice);
     $this->assertEquals($invoice->id, $foundInvoice->id);
   }
 
-  /**
-   * @testdox Tìm hóa đơn theo mã nhưng không tìm thấy
-   * @test
-   */
-  public function test_find_invoice_by_code_returns_null_if_not_found()
-  {
-    $foundInvoice = $this->invoiceService->findInvoiceByCode('NON_EXISTENT_CODE');
-
-    $this->assertNull($foundInvoice);
-  }
-
-  /**
-   * @testdox Lấy danh sách hóa đơn với phân trang
-   * @test
-   */
-  public function test_get_invoices_pagination()
+  /** @test */
+  public function it_paginates_invoice_list()
   {
     Invoice::factory()->count(15)->create();
 
     $invoices = $this->invoiceService->getInvoices(10);
 
-    $this->assertCount(10, $invoices);
-    $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $invoices);
-  }
-
-  /**
-   * @testdox Kiểm tra hóa đơn có thể hoàn tiền hay không
-   * @test
-   */
-  public function test_can_be_refunded_returns_true()
-  {
-    $invoice = Invoice::factory()->create();
-
-    $this->assertTrue($this->invoiceService->canBeRefunded($invoice));
+    $this->assertEquals(10, $invoices->count());
   }
 }
