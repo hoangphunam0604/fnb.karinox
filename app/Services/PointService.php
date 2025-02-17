@@ -99,15 +99,15 @@ class PointService implements PointServiceInterface
       $customer = $order->customer;
       $this->validateRewardPointsUsageToOrder($order, $requestedPoints);
 
-      [$usedRewardPoints, $rewardPointsValue] = $this->calculateRewardPointsCanbeUsedValue($customer, $requestedPoints);
+      [$usedRewardPoints, $rewardDiscount] = $this->calculateRewardPointsCanbeUsedValue($customer, $requestedPoints);
 
       if ($usedRewardPoints == 0) {
         return;
       }
 
       $order->update([
-        'used_reward_points' => $usedRewardPoints,
-        'reward_points_value' => $rewardPointsValue
+        'reward_points_used' => $usedRewardPoints,
+        'reward_discount' => $rewardDiscount
       ]);
 
       $this->useRewardPoints(
@@ -216,7 +216,7 @@ class PointService implements PointServiceInterface
     if (!$invoice->customer) {
       return;
     }
-    if ($invoice->earned_loyalty_points <= 0 && $invoice->earned_reward_points <= 0 && $invoice->used_reward_points <= 0) {
+    if ($invoice->earned_loyalty_points <= 0 && $invoice->earned_reward_points <= 0 && $invoice->reward_points_used <= 0) {
       return; // Không có gì để khôi phục, thoát sớm
     }
     DB::transaction(function () use ($invoice) {
@@ -251,7 +251,7 @@ class PointService implements PointServiceInterface
   private function restoreUsedRewardPoints(Invoice $invoice)
   {
     $customer = $invoice->customer;
-    $usedRewardPoints = $invoice->used_reward_points;
+    $usedRewardPoints = $invoice->reward_points_used;
 
     if ($usedRewardPoints <= 0) {
       return;
@@ -275,9 +275,9 @@ class PointService implements PointServiceInterface
     }
 
     $rewardPointConversionRate = $this->systemSettingService->getRewardPointConversionRate();
-    $rewardPointsValue = $maxUsablePoints * $rewardPointConversionRate;
+    $rewardDiscount = $maxUsablePoints * $rewardPointConversionRate;
 
-    return [$maxUsablePoints, $rewardPointsValue];
+    return [$maxUsablePoints, $rewardDiscount];
   }
 
   /**

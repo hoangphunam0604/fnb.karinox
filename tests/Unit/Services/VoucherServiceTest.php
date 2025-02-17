@@ -185,7 +185,7 @@ class VoucherServiceTest extends TestCase
     // Tạo đơn hàng nhưng chưa dùng voucher
     $order = Order::factory()->create(['order_status' => 'confirmed', 'total_price' => 200]);
 
-    $result = $this->voucherService->applyVoucher($voucher, $order);
+    $result = $this->voucherService->applyVoucher($voucher->code, $order);
 
     $this->assertTrue($result['success']);
     $this->assertEquals(20, $result['discount']);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
@@ -266,12 +267,29 @@ class VoucherService
   }
 
 
+  public function applyVoucherToOrder(Order $order, string $voucherCode): void
+  {
+    $result = $this->applyVoucher($voucherCode, $order);
+
+    if ($result['success']) {
+      $order->update([
+        'voucher_id' => $result['voucher_id'],
+        'voucher_code' => $result['voucher_code'],
+        'discount_amount' => $result['discount'],
+        'total_price' => $result['final_total']
+      ]);
+    }
+  }
 
   /**
    * Sử dụng voucher
    */
-  public function applyVoucher(Voucher $voucher, $order)
+  public function applyVoucher(string $voucherCode, $order)
   {
+    $voucher = Voucher::where('code', $voucherCode)->first();
+    if (!$voucher) {
+      return ['success' => false];
+    }
     if (!$this->isValid($voucher, $order->total_price, $order->customer_id)) {
       return ['success' => false, 'message' => 'Voucher không hợp lệ.'];
     }
@@ -315,6 +333,8 @@ class VoucherService
       'success' => true,
       'discount' => $discount,
       'final_total' => $totalBeforeDiscount - $discount,
+      'voucher_id'  =>  $voucher->id,
+      'voucher_code'  =>  $voucher->code,
     ];
   }
 

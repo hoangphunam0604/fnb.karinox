@@ -32,7 +32,7 @@ class VoucherFactory extends Factory
       : null;
 
     return [
-      'code' => strtoupper(Str::random(8)), // Mã voucher ngẫu nhiên
+      'code' => 'VC' . now()->timestamp . mt_rand(100, 999),
       'discount_type' => $discountType,
       'discount_value' => $discountValue,
       'max_discount' => $maxDiscount,

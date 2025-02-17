@@ -7,7 +7,6 @@ use App\Models\OrderItem;
 use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
-use App\Models\Voucher;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -15,10 +14,32 @@ class OrderService
 {
   protected PointService $pointService;
   protected VoucherService $voucherService;
-  public function __construct(PointService $pointService, VoucherService $voucherService)
+  protected InvoiceService $invoiceService;
+
+  public function __construct(PointService $pointService, VoucherService $voucherService, InvoiceService $invoiceService)
   {
     $this->pointService = $pointService;
+    $this->voucherService = $voucherService;
+    $this->invoiceService = $invoiceService;
   }
+
+  /**
+   * Tìm kiếm đơn đặt hàng theo mã
+   */
+  public function findOrderByCode($code)
+  {
+    return Order::where('order_code', strtoupper($code))->first();
+  }
+
+  /**
+   * Lấy danh sách đơn đặt hàng (phân trang)
+   */
+  public function getOrders($perPage = 10)
+  {
+    return Order::orderBy('created_at', 'desc')->paginate($perPage);
+  }
+
+
   /**
    * Tạo đơn đặt hàng
    */
@@ -41,124 +62,102 @@ class OrderService
   public function saveOrder(array $data, $orderId = null)
   {
     return DB::transaction(function () use ($data, $orderId) {
-      $order = $orderId ? Order::findOrFail($orderId) : new Order();
+      $order = $this->prepareOrder($data, $orderId);
 
-      $order->fill([
-        'customer_id' => $data['customer_id'] ?? $order->customer_id,
-        'receiver_id' => $data['receiver_id'] ?? $order->receiver_id,
-        'branch_id' => $data['branch_id'] ?? $order->branch_id,
-        'table_id' => $data['table_id'] ?? $order->table_id,
-        'order_status' => $data['order_status'] ?? 'pending',
-        'note' => $data['note'] ?? $order->note,
-      ]);
-
-      $order->save();
-
-      // Cập nhật danh sách sản phẩm trong đơn hàng
       if (!empty($data['items'])) {
         $this->updateOrderItems($order, $data['items']);
       }
-      $this->updateTotalPrice($order);
-
-      if (!empty($data['voucher_code'])) {
-        $this->applyVoucher($order, $data['voucher_code']);
-      }
 
       $order->refresh();
+      // 1️⃣ Tính tổng tiền ban đầu (chưa áp dụng giảm giá)
+      $this->updateTotalPrice($order);
+
+      $order->refresh();
+      $this->applyDiscounts($order, $data);
+
+      return $order->refresh();
+    });
+  }
+
+  /**
+   * Tính tiền đơn hàng
+   */
+  public function updateTotalPrice(Order $order): void
+  {
+    // 1️⃣ Tính tổng tiền sản phẩm & topping (trước giảm giá)
+    $subtotal = $order->items->sum(fn($item) => $item->total_price_with_topping);
+
+    // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
+    $discountAmount = $order->discount_amount ?? 0;
+
+    // 3️⃣ Lấy số tiền giảm từ điểm thưởng (nếu có)
+    $rewardDiscount = $order->reward_discount ?? 0;
+
+    // 4️⃣ Tính tổng tiền cần thanh toán
+    $totalPrice = max($subtotal - $discountAmount - $rewardDiscount, 0);
+
+    // 5️⃣ Cập nhật vào đơn hàng
+    $order->update([
+      'subtotal_price' => $subtotal,
+      'discount_amount' => $discountAmount,
+      'reward_discount' => $rewardDiscount,
+      'total_price' => $totalPrice
+    ]);
+  }
+
+
+  /**
+   * Xác nhận đơn hàng
+   */
+  public function confirmOrder($orderId): Order
+  {
+    return $this->updateOrderStatus($orderId, 'confirmed');
+  }
+
+  /**
+   * Hủy đơn hàng
+   */
+  public function cancelOrder($orderId): Order
+  {
+    $order = Order::findOrFail($orderId);
+    if ($order->order_status == 'completed')
+      throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
+
+    return  $this->updateOrderStatus($orderId, 'cancelled');
+  }
+
+  /**
+   * Hoàn tất đơn hàng
+   */
+  public function markAsCompleted($orderId, $paidAmount = 0)
+  {
+    return DB::transaction(function () use ($orderId, $paidAmount) {
+      $order = Order::findOrFail($orderId);
+
+      if ($order->order_status === 'completed') {
+        throw new Exception('Đơn hàng đã hoàn tất trước đó.');
+      }
+
+      if ($order->total_price > 0 && $paidAmount < $order->total_price) {
+        throw new Exception('Số tiền thanh toán không đủ.');
+      }
+
+      $order = $this->updateOrderStatus($orderId, 'completed');
+      $this->invoiceService->createInvoiceFromOrder($orderId, $paidAmount);
       return $order;
     });
   }
 
   /**
-   * Cập nhật danh sách sản phẩm trong đơn hàng
+   * Cập nhật trạng thái đơn hàng
    */
-  private function updateOrderItems(Order $order, array $items)
+  public function updateOrderStatus(int $orderId, string $status): Order
   {
-    // Xóa các mục cũ nếu cập nhật
-    OrderItem::where('order_id', $order->id)->delete();
-
-    foreach ($items as $item) {
-      $unit_price = $this->getProductPrice($item['product_id']);
-      $total_price = $unit_price * $item['quantity'];
-      $orderItem = OrderItem::create([
-        'order_id' => $order->id,
-        'product_id' => $item['product_id'],
-        'quantity' => $item['quantity'],
-        'unit_price' => $unit_price,
-        'total_price' => $total_price,
-        'total_price_with_topping'  =>  $total_price,
-      ]);
-
-      // Xử lý topping nếu có
-      if (!empty($item['toppings'])) {
-        $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
-      }
-    }
+    $order = Order::findOrFail($orderId);
+    $order->update(['order_status' => $status]);
+    return $order;
   }
 
-  /**
-   * Cập nhật danh sách topping của sản phẩm trong đơn hàng
-   */
-  private function updateOrderToppings(OrderItem $orderItem, $productId, array $toppings)
-  {
-    $validToppings = ProductTopping::where('product_id', $productId)->pluck('topping_id')->toArray();
-
-    foreach ($toppings as $topping) {
-      $toppingId = $topping['topping_id'] ?? null;
-      $quantity = $topping['quantity'] ?? 1; // Mặc định số lượng là 1 nếu không có
-
-      if (!$toppingId || !in_array($toppingId, $validToppings) || $quantity <= 0) {
-        continue; // Bỏ qua nếu topping không hợp lệ hoặc số lượng không hợp lệ
-      }
-
-      $unitPrice = $this->getToppingPrice($toppingId);
-      $totalPrice = $unitPrice * $quantity;
-
-      OrderTopping::create([
-        'order_item_id' => $orderItem->id,
-        'topping_id' => $toppingId,
-        'quantity' => $quantity,
-        'unit_price' => $unitPrice,
-        'total_price' => $totalPrice,
-      ]);
-      $orderItem->total_price_with_topping = $orderItem->total_price + $totalPrice;
-      $orderItem->save();
-    }
-  }
-
-  /**
-   * Áp dụng voucher vào đơn hàng
-   */
-  private function applyVoucher(Order $order, $voucherCode)
-  {
-    $voucher = Voucher::where('code', $voucherCode)->first();
-    if (!$voucher) {
-      return; // Không áp dụng nếu không tìm thấy voucher hợp lệ
-    }
-
-    $voucherService = new VoucherService();
-    $result = $voucherService->applyVoucher($voucher, $order);
-
-    if ($result['success']) {
-      // Lưu thông tin voucher vào đơn hàng
-      $order->refresh();
-      $order->voucher_id = $voucher->id;
-      $order->voucher_code = $voucher->code;
-      $order->discount_amount = $result['discount'];
-      $order->total_price = $result['final_total'];
-      $order->save();
-    }
-  }
-  /**
-   * Cập nhật tổng tiền đơn hàng
-   */
-  public function updateTotalPrice(Order $order)
-  {
-    $order->refresh();
-    // Cập nhật tổng tiền đơn hàng
-    $order->total_price = $this->calculateOrderTotal($order);
-    $order->save();
-  }
 
   /**
    * Kiểm tra và áp dụng điểm thưởng
@@ -170,87 +169,119 @@ class OrderService
     }
     // Kiểm tra và Áp dụng điểm thưởng nếu có
     $this->pointService->useRewardPointsForOrder($order, $requestedPoints ?? 0);
+
+    // 4️⃣ Cập nhật tổng tiền sau khi  trừ điểm thưởng
+    $this->updateTotalPrice($order);
     $order->refresh();
     return $order;
   }
 
   /**
-   * Xác nhận đơn hàng
+   * Chuẩn bị đơn hàng
    */
-  public function confirmOrder($orderId)
+  private function prepareOrder(array $data, $orderId = null): Order
   {
-    return $this->updateOrderStatus($orderId, 'confirmed');
-  }
+    $order = $orderId ? Order::findOrFail($orderId) : new Order();
 
-  /**
-   * Hủy đơn hàng
-   */
-  public function cancelOrder($orderId)
-  {
-    $order =  $this->updateOrderStatus($orderId, 'cancelled');
-    if ($order->order_status == 'completed')
-      throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
-  }
+    $order->fill([
+      'customer_id' => $data['customer_id'] ?? $order->customer_id,
+      'receiver_id' => $data['receiver_id'] ?? $order->receiver_id,
+      'branch_id' => $data['branch_id'] ?? $order->branch_id,
+      'table_id' => $data['table_id'] ?? $order->table_id,
+      'order_status' => $data['order_status'] ?? 'pending',
+      'note' => $data['note'] ?? $order->note,
+    ]);
 
-  /**
-   * Hoàn tất đơn hàng
-   */
-  public function markAsCompleted($orderId, $paidAmount = 0)
-  {
-    return DB::transaction(function () use ($orderId, $paidAmount) {
-      $order = $this->updateOrderStatus($orderId, 'completed');
-
-      // Gọi `InvoiceService` để tạo hóa đơn
-      $invoiceService = new InvoiceService();
-      $invoiceService->createInvoiceFromOrder($orderId, $paidAmount);
-
-      return $order;
-    });
-  }
-
-  /**
-   * Cập nhật trạng thái đơn hàng
-   */
-  public function updateOrderStatus($orderId, $status)
-  {
-    $order = Order::findOrFail($orderId);
-    $order->order_status = $status;
     $order->save();
-
     return $order;
   }
 
   /**
-   * Tìm kiếm đơn đặt hàng theo mã
+   * Cập nhật danh sách sản phẩm trong đơn hàng
    */
-  public function findOrderByCode($code)
+  private function updateOrderItems(Order $order, array $items)
   {
-    return Order::where('order_code', strtoupper($code))->first();
-  }
+    $orderItemIds = [];
 
-  /**
-   * Lấy danh sách đơn đặt hàng (phân trang)
-   */
-  public function getOrders($perPage = 10)
-  {
-    return Order::orderBy('created_at', 'desc')->paginate($perPage);
-  }
+    foreach ($items as $item) {
+      $orderItem = OrderItem::updateOrCreate(
+        ['order_id' => $order->id, 'product_id' => $item['product_id']],
+        [
+          'quantity' => $item['quantity'],
+          'unit_price' => $this->getProductPrice($item['product_id']),
+          'total_price' => $this->getProductPrice($item['product_id']) * $item['quantity'],
+          'total_price_with_topping' => $this->getProductPrice($item['product_id']) * $item['quantity'],
+        ]
+      );
 
+      $orderItemIds[] = $orderItem->id;
 
-  /**
-   * Tính tổng tiền đơn hàng
-   */
-  private function calculateOrderTotal(Order $order)
-  {
-    if ($order->items->isEmpty()) {
-      return 0;
+      // Xử lý topping
+      if (!empty($item['toppings'])) {
+        $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
+      }
     }
 
-    $totalPrice = $order->items->sum(function ($item) {
-      $toppingTotal = $item->toppings ? $item->toppings->sum(fn($t) => $t->unit_price * $t->quantity) : 0;
-      return ($item->unit_price * $item->quantity) + $toppingTotal;
-    });
-    return $totalPrice;
+    // Xóa các mục không có trong danh sách mới
+    OrderItem::where('order_id', $order->id)->whereNotIn('id', $orderItemIds)->delete();
+  }
+
+
+  /**
+   * Cập nhật danh sách topping của sản phẩm trong đơn hàng
+   */
+  private function updateOrderToppings(OrderItem $orderItem, $productId, array $toppings)
+  {
+    $validToppings = ProductTopping::where('product_id', $productId)->pluck('topping_id')->toArray();
+    $toppingIds = [];
+
+    foreach ($toppings as $topping) {
+      $toppingId = $topping['topping_id'] ?? null;
+      $quantity = $topping['quantity'] ?? 1;
+
+      if (!$toppingId || !in_array($toppingId, $validToppings) || $quantity <= 0) {
+        continue;
+      }
+
+      $unitPrice = $this->getToppingPrice($toppingId);
+      $totalPrice = $unitPrice * $quantity;
+
+      $orderTopping = OrderTopping::updateOrCreate(
+        ['order_item_id' => $orderItem->id, 'topping_id' => $toppingId],
+        ['quantity' => $quantity, 'unit_price' => $unitPrice, 'total_price' => $totalPrice]
+      );
+
+      $toppingIds[] = $orderTopping->id;
+    }
+
+    // Xóa các topping không còn trong danh sách mới
+    OrderTopping::where('order_item_id', $orderItem->id)->whereNotIn('id', $toppingIds)->delete();
+
+    // Cập nhật tổng tiền sản phẩm kèm topping
+    $orderItem->total_price_with_topping = $orderItem->toppings->sum('total_price') + $orderItem->total_price;
+    $orderItem->save();
+  }
+
+  /**
+   * Áp dụng giảm giá từ voucher và điểm thưởng
+   */
+  private function applyDiscounts(Order $order, array $data): void
+  {
+    // 2️⃣ Áp dụng voucher nếu có
+    if (!empty($data['voucher_code'])) {
+      $order->refresh();
+      $this->voucherService->applyVoucherToOrder($order, $data['voucher_code']);
+    }
+
+    // 3️⃣ Áp dụng điểm thưởng nếu có
+    if (!empty($data['reward_points_used'])) {
+      $order->refresh();
+      $this->pointService->useRewardPointsForOrder($order, $data['reward_points_used']);
+    }
+
+    $order->refresh();
+    // 4️⃣ Cập nhật tổng tiền sau khi giảm giá & trừ điểm thưởng
+    $this->updateTotalPrice($order);
   }
 
   /**

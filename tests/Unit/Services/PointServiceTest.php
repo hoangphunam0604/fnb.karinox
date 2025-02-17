@@ -145,7 +145,7 @@ class PointServiceTest extends TestCase
     $order->refresh();
     $this->assertEquals(20, $customer->reward_points);
     $this->assertEquals(30, $order->used_reward_points);
-    $this->assertEquals(30, $order->reward_points_value);
+    $this->assertEquals(30, $order->reward_discount);
   }
 
   public function test_validate_reward_points_usage_to_order_throws_exception()

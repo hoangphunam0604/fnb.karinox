@@ -57,7 +57,7 @@ interface PointServiceInterface
    * @param Customer $customer
    * @param Order $order
    * @param int $requestedPoints
-   * @return bool
+   * @return 
    */
   public function useRewardPointsForOrder(Order $order, int $requestedPoints): void;
 

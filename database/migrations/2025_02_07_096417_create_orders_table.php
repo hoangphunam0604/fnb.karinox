@@ -28,13 +28,15 @@ return new class extends Migration
       $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete(); // Khách hàng
       $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Chi nhánh
       $table->foreignId('table_id')->nullable()->constrained('tables_and_rooms')->nullOnDelete(); // Bàn/phòng
-      $table->decimal('total_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng
-      $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
+
+      $table->decimal('subtotal_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng trước khi giảm giá (chỉ tính sản phẩm và topping, chưa áp dụng voucher hay điểm thưởng).
+      $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm từ voucher.
+      $table->integer('reward_points_used')->default(0); // Số điểm thưởng khách muốn dùng      
+      $table->decimal('reward_discount', 15, 2)->default(0.00); // Số tiền giảm từ điểm thưởng.
+      $table->decimal('total_price', 15, 2)->default(0.00); // Số tiền cần thanh toán cuối cùng (sau khi trừ cả voucher và điểm thưởng).
+
       $table->integer('earned_loyalty_points')->default(0); // Số điểm tích luỹ đạt được từ đơn hàng này
       $table->integer('earned_reward_points')->default(0); // Số điểm tích thưởng đạt được từ đơn hàng này
-      $table->integer('used_reward_points')->default(0); // Số điểm thưởng khách muốn dùng
-      $table->decimal('reward_points_value', 15, 2)->default(0.00); // Giá trị quy đổi từ điểm thưởng
-
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); // Mã giảm giá
       $table->string('voucher_code')->nullable()->unique(); // Mã đơn hàng
       $table->enum('order_status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng
