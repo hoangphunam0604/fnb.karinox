@@ -21,7 +21,7 @@ class InvoiceFactory extends Factory
     $changeAmount = 0; // Mặc định không có tiền thừa
 
     return [
-      'code'  =>  $this->faker->unique()->numerify('ORD##########'),
+      'code' => 'HD' . now()->timestamp . mt_rand(100, 999),
       'branch_id' => Branch::factory(),
       'order_id' => Order::factory(),
       'total_amount' => $totalAmount,
@@ -29,7 +29,7 @@ class InvoiceFactory extends Factory
       'change_amount' => $changeAmount,
       'voucher_id' => $this->faker->boolean(50) ? Voucher::factory() : null,
       'sales_channel' => $this->faker->randomElement(['online', 'offline']),
-      'invoice_status' => $this->faker->randomElement(['pending', 'completed', 'canceled']),
+      'invoice_status' => $this->faker->randomElement(['pending', 'cancelled', 'completed']),
       'payment_status' => $this->faker->randomElement(['unpaid', 'partial', 'paid', 'refunded']),
       'payment_method' => $this->faker->randomElement(['cash', 'credit_card', 'bank_transfer', 'e_wallet']),
       'note' => $this->faker->optional()->sentence(),
