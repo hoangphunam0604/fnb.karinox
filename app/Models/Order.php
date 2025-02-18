@@ -18,12 +18,15 @@ class Order extends Model
     'customer_id',
     'branch_id',
     'table_id',
-    'total_price',
+
+    'subtotal_price',
     'discount_amount',
+    'reward_points_used',
+    'reward_discount',
+    'total_price',
+
     'earned_loyalty_points',
     'earned_reward_points',
-    'used_reward_points',
-    'reward_points_value',
 
     'voucher_id',
     'voucher_code',
@@ -32,8 +35,11 @@ class Order extends Model
   ];
 
   protected $casts = [
-    'total_price' => 'integer',
+    'subtotal_price'  => 'integer',
     'discount_amount' => 'integer',
+    'reward_points_used'  => 'integer',
+    'reward_discount' => 'integer',
+    'total_price' => 'integer',
   ];
 
   protected static function boot()

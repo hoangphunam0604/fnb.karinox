@@ -66,6 +66,9 @@ class OrderService
 
       if (!empty($data['items'])) {
         $this->updateOrderItems($order, $data['items']);
+      } else {
+        // Nếu không có sản phẩm, xóa tất cả sản phẩm cũ
+        OrderItem::where('order_id', $order->id)->delete();
       }
 
       $order->refresh();
@@ -164,7 +167,7 @@ class OrderService
    */
   public function applyRewardPoints(Order $order, int $requestedPoints): Order
   {
-    if (!$order->customer || $requestedPoints <= 0) {
+    if (!$order->customer || $requestedPoints < 0) {
       return $order;
     }
     // Kiểm tra và Áp dụng điểm thưởng nếu có
@@ -204,13 +207,14 @@ class OrderService
     $orderItemIds = [];
 
     foreach ($items as $item) {
+      $unitPrice = $this->getProductPrice($item['product_id']);
       $orderItem = OrderItem::updateOrCreate(
         ['order_id' => $order->id, 'product_id' => $item['product_id']],
         [
           'quantity' => $item['quantity'],
-          'unit_price' => $this->getProductPrice($item['product_id']),
-          'total_price' => $this->getProductPrice($item['product_id']) * $item['quantity'],
-          'total_price_with_topping' => $this->getProductPrice($item['product_id']) * $item['quantity'],
+          'unit_price' => $unitPrice,
+          'total_price' => $unitPrice  * $item['quantity'],
+          'total_price_with_topping' => $unitPrice  * $item['quantity'],
         ]
       );
 
@@ -219,6 +223,9 @@ class OrderService
       // Xử lý topping
       if (!empty($item['toppings'])) {
         $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
+      } else {
+        // Nếu không có topping mới, xóa tất cả topping cũ
+        OrderTopping::where('order_item_id', $orderItem->id)->delete();
       }
     }
 
@@ -272,7 +279,6 @@ class OrderService
       $order->refresh();
       $this->voucherService->applyVoucherToOrder($order, $data['voucher_code']);
     }
-
     // 3️⃣ Áp dụng điểm thưởng nếu có
     if (!empty($data['reward_points_used'])) {
       $order->refresh();
