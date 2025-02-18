@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\Contracts\PointServiceInterface;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use App\Models\PointHistory;
@@ -11,7 +10,7 @@ use App\Models\Invoice;
 use App\Models\Order;
 use Exception;
 
-class PointService implements PointServiceInterface
+class PointService
 {
   protected SystemSettingService $systemSettingService;
 

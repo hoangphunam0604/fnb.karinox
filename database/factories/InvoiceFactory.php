@@ -21,7 +21,7 @@ class InvoiceFactory extends Factory
     $changeAmount = 0; // Mặc định không có tiền thừa
 
     return [
-      'code' => 'HD' . now()->timestamp . mt_rand(100, 999),
+      'code' => 'HD' . (string) Str::uuid() . now()->timestamp . mt_rand(100, 9999999),
       'branch_id' => Branch::factory(),
       'order_id' => Order::factory(),
       'total_amount' => $totalAmount,

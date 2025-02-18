@@ -26,6 +26,15 @@ class InvoiceServiceTest extends TestCase
     parent::setUp();
     $this->invoiceService = new InvoiceService();
   }
+  /** @test */
+  public function it_paginates_invoice_list()
+  {
+    Invoice::factory()->count(15)->create();
+
+    $invoices = $this->invoiceService->getInvoices(10);
+
+    $this->assertEquals(10, $invoices->count());
+  }
 
   /** @test */
   public function it_creates_invoice_from_completed_order_with_toppings()
@@ -145,15 +154,5 @@ class InvoiceServiceTest extends TestCase
 
     $this->assertNotNull($foundInvoice);
     $this->assertEquals($invoice->id, $foundInvoice->id);
-  }
-
-  /** @test */
-  public function it_paginates_invoice_list()
-  {
-    Invoice::factory()->count(15)->create();
-
-    $invoices = $this->invoiceService->getInvoices(10);
-
-    $this->assertEquals(10, $invoices->count());
   }
 }

@@ -6,6 +6,8 @@ use App\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Order;
 
+use Illuminate\Support\Str;
+
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Area>
  */
@@ -21,7 +23,7 @@ class OrderFactory extends Factory
   {
     return [
       'branch_id' => Branch::factory(),
-      'order_code'  =>  'ORD' . now()->timestamp . mt_rand(100, 99999),
+      'order_code'  => 'ORD' . (string) Str::uuid() . now()->timestamp . mt_rand(100, 9999999),
       'order_status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'note' => $this->faker->sentence(),
     ];

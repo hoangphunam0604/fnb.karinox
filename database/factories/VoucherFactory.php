@@ -32,7 +32,7 @@ class VoucherFactory extends Factory
       : null;
 
     return [
-      'code' => 'VC' . now()->timestamp . mt_rand(100, 999),
+      'code' => 'VC' . (string) Str::uuid() . now()->timestamp . mt_rand(100, 9999999),
       'discount_type' => $discountType,
       'discount_value' => $discountValue,
       'max_discount' => $maxDiscount,

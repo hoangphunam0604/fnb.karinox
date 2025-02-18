@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\Contracts\InvoiceServiceInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\InvoiceTopping;
 use App\Models\InvoiceItem;
@@ -11,8 +10,19 @@ use App\Models\OrderItem;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 
-class InvoiceService implements InvoiceServiceInterface
+class InvoiceService
 {
+  public function findInvoiceByCode(string $code): ?Invoice
+  {
+    return Invoice::where('code', strtoupper($code))->first();
+  }
+
+  public function getInvoices(int $perPage = 10): LengthAwarePaginator
+  {
+    return Invoice::orderBy('created_at', 'desc')->paginate($perPage);
+  }
+
+
   public function createInvoiceFromOrder(int $orderId, float $paidAmount = 0): Invoice
   {
     return DB::transaction(function () use ($orderId, $paidAmount) {
@@ -100,16 +110,6 @@ class InvoiceService implements InvoiceServiceInterface
       }
       return $invoice;
     });
-  }
-
-  public function findInvoiceByCode(string $code): ?Invoice
-  {
-    return Invoice::where('code', strtoupper($code))->first();
-  }
-
-  public function getInvoices(int $perPage = 10): LengthAwarePaginator
-  {
-    return Invoice::orderBy('created_at', 'desc')->paginate($perPage);
   }
 
   public function canBeRefunded(Invoice $invoice): bool
