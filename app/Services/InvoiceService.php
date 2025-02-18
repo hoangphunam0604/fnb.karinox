@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\InvoiceStatus;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\InvoiceTopping;
 use App\Models\InvoiceItem;
@@ -12,6 +15,12 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
+  protected TaxService $taxService;
+
+  public function __construct(TaxService $taxService)
+  {
+    $this->taxService = $taxService;
+  }
   public function findInvoiceByCode(string $code): ?Invoice
   {
     return Invoice::where('code', strtoupper($code))->first();
@@ -19,7 +28,9 @@ class InvoiceService
 
   public function getInvoices(int $perPage = 10): LengthAwarePaginator
   {
-    return Invoice::orderBy('created_at', 'desc')->paginate($perPage);
+    return Invoice::with(['customer', 'order'])
+      ->orderBy('created_at', 'desc')
+      ->paginate($perPage);
   }
 
 
@@ -28,15 +39,22 @@ class InvoiceService
     return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = Order::findOrFail($orderId);
 
-      if ($order->order_status !== 'completed') {
+      if ($order->order_status !== OrderStatus::COMPLETED) {
         throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
       }
+      if (!$paidAmount)
+        $paidAmount = $order->total_price;
 
       $invoice = Invoice::create([
         'order_id' => $order->id,
         'customer_id' => $order->customer_id,
         'branch_id' => $order->branch_id,
+
+        'subtotal_price' => $order->subtotal_price,
         'discount_amount' => $order->discount_amount,
+        'reward_points_used' => $order->reward_points_used,
+        'reward_discount' => $order->reward_discount,
+
         'paid_amount' => $paidAmount,
         'invoice_status' => 'pending',
         'payment_status' => 'unpaid',
@@ -83,7 +101,19 @@ class InvoiceService
   private function updateInvoiceTotal(Invoice $invoice): void
   {
     $total = $invoice->items->sum(fn($item) => $item->total_price_with_topping);
-    $invoice->total_amount = max($total - $invoice->discount_amount, 0);
+    $totalPrice = max($total - $invoice->discount_amount - $invoice->reward_discount, 0);
+
+    // Tính toán thuế bằng TaxService
+    $taxData = $this->taxService->calculateTax($totalPrice) ?: [
+      'tax_rate' => null,
+      'tax_amount' => 0,
+      'total_price_without_vat' => $totalPrice
+    ];
+
+    $invoice->total_price = $totalPrice;
+    $invoice->tax_rate = $taxData['tax_rate'];
+    $invoice->tax_amount = $taxData['tax_amount'];
+    $invoice->total_price_without_vat = $taxData['total_price_without_vat'];
     $invoice->save();
   }
 
@@ -95,17 +125,14 @@ class InvoiceService
     return $invoice;
   }
 
-  public function updatePaymentStatus(int $invoiceId, string $status): Invoice
+  public function updatePaymentStatus(int $invoiceId, PaymentStatus $status): Invoice
   {
     return DB::transaction(function () use ($invoiceId, $status) {
       $invoice = Invoice::findOrFail($invoiceId);
-      if (!in_array($status, ['unpaid', 'partial', 'paid', 'refunded'])) {
-        throw new \Exception("Trạng thái thanh toán không hợp lệ.");
-      }
       $invoice->payment_status = $status;
       $invoice->save();
 
-      if ($invoice->isPaid()) {
+      if ($invoice->isPaid() && $invoice->invoice_status !== InvoiceStatus::CANCELED) {
         $invoice->markAsCompleted();
       }
       return $invoice;
@@ -114,6 +141,6 @@ class InvoiceService
 
   public function canBeRefunded(Invoice $invoice): bool
   {
-    return (bool) $invoice->customer;
+    return $invoice->customer && $invoice->payment_status === PaymentStatus::PAID;
   }
 }

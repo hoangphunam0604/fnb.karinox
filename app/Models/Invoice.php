@@ -6,6 +6,9 @@ use App\Events\InvoiceCompleted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
+
 class Invoice extends Model
 {
   use HasFactory;
@@ -13,13 +16,21 @@ class Invoice extends Model
     'branch_id',
     'order_id',
 
-    'total_amount',
+    'subtotal_price',
+    'discount_amount',
+    'reward_discount',
+    'total_price',
+
     'paid_amount',
     'change_amount',
+
+    'tax_rate',
+    'tax_amount',
+    'total_price_without_vat',
+
+    'reward_points_used',
     'earned_loyalty_points',
     'earned_reward_points',
-    'used_reward_points',
-    'reward_points_value',
 
     'voucher_id',
     'sales_channel',
@@ -34,6 +45,13 @@ class Invoice extends Model
     'customer_email',
     'customer_address',
   ];
+
+
+  protected $casts = [
+    'invoice_status' => InvoiceStatus::class,
+    'payment_status' => PaymentStatus::class,
+  ];
+
   protected static function boot()
   {
     parent::boot();
@@ -88,7 +106,7 @@ class Invoice extends Model
    */
   public function isPaid()
   {
-    return $this->payment_status === 'paid';
+    return $this->payment_status === PaymentStatus::PAID;
   }
 
   /**
@@ -96,7 +114,7 @@ class Invoice extends Model
    */
   public function isCompleted()
   {
-    return $this->invoice_status === 'completed';
+    return $this->invoice_status === InvoiceStatus::COMPLETED;
   }
 
   /**
@@ -105,7 +123,7 @@ class Invoice extends Model
   public function markAsCompleted()
   {
     if ($this->isPaid()) {
-      $this->invoice_status = 'completed';
+      $this->invoice_status = InvoiceStatus::COMPLETED;
       $this->save();
     }
   }

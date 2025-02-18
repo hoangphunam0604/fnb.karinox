@@ -16,7 +16,7 @@ return new class extends Migration
      * pending -	Đơn hàng mới, chưa xác nhận.
      * confirmed -	Đã xác nhận bởi nhân viên.
      * completed -	Đơn hàng hoàn tất, có thể tạo hóa đơn.
-     * cancelled -	Đã hủy bởi khách hoặc nhân viên.
+     * canceled -	Đã hủy bởi khách hoặc nhân viên.
      */
     Schema::create('orders', function (Blueprint $table) {
       $table->id();
@@ -35,11 +35,9 @@ return new class extends Migration
       $table->decimal('reward_discount', 15, 2)->default(0.00); // Số tiền giảm từ điểm thưởng.
       $table->decimal('total_price', 15, 2)->default(0.00); // Số tiền cần thanh toán cuối cùng (sau khi trừ cả voucher và điểm thưởng).
 
-      $table->integer('earned_loyalty_points')->default(0); // Số điểm tích luỹ đạt được từ đơn hàng này
-      $table->integer('earned_reward_points')->default(0); // Số điểm tích thưởng đạt được từ đơn hàng này
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); // Mã giảm giá
-      $table->string('voucher_code')->nullable()->unique(); // Mã đơn hàng
-      $table->enum('order_status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending'); // Trạng thái đơn hàng
+      $table->string('voucher_code')->nullable();
+      $table->enum('order_status', ['pending', 'confirmed', 'completed', 'canceled'])->default('pending'); // Trạng thái đơn hàng
       $table->text('note')->nullable(); // Ghi chú
     });
   }

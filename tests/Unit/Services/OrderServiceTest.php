@@ -23,6 +23,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
@@ -337,11 +338,11 @@ class OrderServiceTest extends TestCase
    */
   public function it_can_confirm_order()
   {
-    $order = Order::factory()->create(['order_status' => 'pending']);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
 
     $confirmedOrder = $this->orderService->confirmOrder($order->id);
 
-    $this->assertEquals('confirmed', $confirmedOrder->order_status);
+    $this->assertEquals(OrderStatus::CONFIRMED, $confirmedOrder->order_status);
   }
 
   /** 
@@ -350,11 +351,11 @@ class OrderServiceTest extends TestCase
    */
   public function it_can_cancel_order()
   {
-    $order = Order::factory()->create(['order_status' => 'pending']);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
 
     $cancelledOrder = $this->orderService->cancelOrder($order->id);
 
-    $this->assertEquals('cancelled', $cancelledOrder->order_status);
+    $this->assertEquals(OrderStatus::CANCELED, $cancelledOrder->order_status);
   }
 
   /** 
@@ -363,7 +364,7 @@ class OrderServiceTest extends TestCase
    */
   public function it_cannot_cancel_completed_order()
   {
-    $order = Order::factory()->create(['order_status' => 'completed']);
+    $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED]);
 
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('Hoá đơn đã được hoàn thành, không thể huỷ');
@@ -377,7 +378,7 @@ class OrderServiceTest extends TestCase
    */
   public function it_can_mark_order_as_completed()
   {
-    $order = Order::factory()->create(['order_status' => 'pending', 'total_price' => 50000]);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
 
     DB::shouldReceive('transaction')->andReturnUsing(function ($callback) use ($order) {
       return $callback();
@@ -387,7 +388,7 @@ class OrderServiceTest extends TestCase
 
     $completedOrder = $this->orderService->markAsCompleted($order->id, 50000);
 
-    $this->assertEquals('completed', $completedOrder->order_status);
+    $this->assertEquals(OrderStatus::COMPLETED, $completedOrder->order_status);
   }
 
   /** 
@@ -396,7 +397,7 @@ class OrderServiceTest extends TestCase
    */
   public function it_cannot_complete_order_already_completed()
   {
-    $order = Order::factory()->create(['order_status' => 'completed', 'total_price' => 50000]);
+    $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED, 'total_price' => 50000]);
 
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('Đơn hàng đã hoàn tất trước đó.');
@@ -410,7 +411,7 @@ class OrderServiceTest extends TestCase
    */
   public function it_cannot_complete_order_with_insufficient_payment()
   {
-    $order = Order::factory()->create(['order_status' => 'pending', 'total_price' => 50000]);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
 
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('Số tiền thanh toán không đủ.');
@@ -423,11 +424,11 @@ class OrderServiceTest extends TestCase
    */
   public function it_can_update_order_status()
   {
-    $order = Order::factory()->create(['order_status' => 'pending']);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
 
-    $updatedOrder = $this->orderService->updateOrderStatus($order->id, 'confirmed');
+    $updatedOrder = $this->orderService->updateOrderStatus($order->id, OrderStatus::CONFIRMED);
 
-    $this->assertEquals('confirmed', $updatedOrder->order_status);
+    $this->assertEquals(OrderStatus::CONFIRMED, $updatedOrder->order_status);
   }
 
   /** 

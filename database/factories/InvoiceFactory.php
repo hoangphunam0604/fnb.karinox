@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Customer;
@@ -16,21 +18,27 @@ class InvoiceFactory extends Factory
 
   public function definition()
   {
-    $totalAmount = $this->faker->randomFloat(2, 50000, 500000);
-    $paidAmount = $totalAmount; // Giả sử khách hàng thanh toán đủ
+    $totalPrice = $this->faker->randomFloat(2, 50000, 500000);
+    $paidAmount = $totalPrice; // Giả sử khách hàng thanh toán đủ
     $changeAmount = 0; // Mặc định không có tiền thừa
 
     return [
-      'code' => 'HD' . (string) Str::uuid() . now()->timestamp . mt_rand(100, 9999999),
+      'code' => function () {
+        do {
+          $code = 'HD' . Str::uuid()->toString() . now()->timestamp . mt_rand(100, 9999999);
+        } while (\App\Models\Invoice::where('code', $code)->exists());
+        return $code;
+      },
+
       'branch_id' => Branch::factory(),
       'order_id' => Order::factory(),
-      'total_amount' => $totalAmount,
+      'total_price' => $totalPrice,
       'paid_amount' => $paidAmount,
       'change_amount' => $changeAmount,
       'voucher_id' => $this->faker->boolean(50) ? Voucher::factory() : null,
       'sales_channel' => $this->faker->randomElement(['online', 'offline']),
-      'invoice_status' => $this->faker->randomElement(['pending', 'cancelled', 'completed']),
-      'payment_status' => $this->faker->randomElement(['unpaid', 'partial', 'paid', 'refunded']),
+      'invoice_status' => InvoiceStatus::fake()->value,
+      'payment_status' => PaymentStatus::fake()->value,
       'payment_method' => $this->faker->randomElement(['cash', 'credit_card', 'bank_transfer', 'e_wallet']),
       'note' => $this->faker->optional()->sentence(),
       'customer_id' => $this->faker->boolean(70) ? Customer::factory() : null, // 70% có khách hàng

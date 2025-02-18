@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\OrderStatus;
 use App\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Order;
-
 use Illuminate\Support\Str;
 
 /**
@@ -23,8 +23,13 @@ class OrderFactory extends Factory
   {
     return [
       'branch_id' => Branch::factory(),
-      'order_code'  => 'ORD' . (string) Str::uuid() . now()->timestamp . mt_rand(100, 9999999),
-      'order_status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
+      'order_code'  => function () {
+        do {
+          $code = 'ORDER' . Str::uuid()->toString() . now()->timestamp . mt_rand(100, 9999999);
+        } while (\App\Models\Invoice::where('code', $code)->exists());
+        return $code;
+      },
+      'order_status' => OrderStatus::fake()->value,
       'note' => $this->faker->sentence(),
     ];
   }

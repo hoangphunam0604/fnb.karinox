@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
@@ -114,7 +115,7 @@ class OrderService
    */
   public function confirmOrder($orderId): Order
   {
-    return $this->updateOrderStatus($orderId, 'confirmed');
+    return $this->updateOrderStatus($orderId, OrderStatus::CONFIRMED);
   }
 
   /**
@@ -123,10 +124,10 @@ class OrderService
   public function cancelOrder($orderId): Order
   {
     $order = Order::findOrFail($orderId);
-    if ($order->order_status == 'completed')
+    if ($order->order_status == OrderStatus::COMPLETED)
       throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
 
-    return  $this->updateOrderStatus($orderId, 'cancelled');
+    return  $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
   }
 
   /**
@@ -137,7 +138,7 @@ class OrderService
     return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = Order::findOrFail($orderId);
 
-      if ($order->order_status === 'completed') {
+      if ($order->order_status === OrderStatus::COMPLETED) {
         throw new Exception('Đơn hàng đã hoàn tất trước đó.');
       }
 
@@ -145,7 +146,7 @@ class OrderService
         throw new Exception('Số tiền thanh toán không đủ.');
       }
 
-      $order = $this->updateOrderStatus($orderId, 'completed');
+      $order = $this->updateOrderStatus($orderId, OrderStatus::COMPLETED);
       $this->invoiceService->createInvoiceFromOrder($orderId, $paidAmount);
       return $order;
     });
@@ -154,7 +155,7 @@ class OrderService
   /**
    * Cập nhật trạng thái đơn hàng
    */
-  public function updateOrderStatus(int $orderId, string $status): Order
+  public function updateOrderStatus(int $orderId, OrderStatus $status): Order
   {
     $order = Order::findOrFail($orderId);
     $order->update(['order_status' => $status]);

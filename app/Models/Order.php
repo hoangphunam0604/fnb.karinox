@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\OrderStatus;
 
 class Order extends Model
 {
@@ -25,9 +26,6 @@ class Order extends Model
     'reward_discount',
     'total_price',
 
-    'earned_loyalty_points',
-    'earned_reward_points',
-
     'voucher_id',
     'voucher_code',
     'order_status',
@@ -40,6 +38,7 @@ class Order extends Model
     'reward_points_used'  => 'integer',
     'reward_discount' => 'integer',
     'total_price' => 'integer',
+    'order_status' => OrderStatus::class,
   ];
 
   protected static function boot()

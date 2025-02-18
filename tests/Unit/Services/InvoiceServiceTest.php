@@ -2,10 +2,11 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\InvoiceStatus;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use Tests\TestCase;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\InvoiceTopping;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
@@ -13,27 +14,32 @@ use App\Models\Customer;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Services\InvoiceService;
+use App\Services\TaxService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
+use Mockery;
 
 class InvoiceServiceTest extends TestCase
 {
   use RefreshDatabase;
 
-  protected InvoiceService $invoiceService;
-
+  protected $taxServiceMock;
+  protected $invoiceService;
   protected function setUp(): void
   {
     parent::setUp();
-    $this->invoiceService = new InvoiceService();
+    $this->taxServiceMock = Mockery::spy(TaxService::class);
+    $this->app->instance(TaxService::class, $this->taxServiceMock);
+    $this->invoiceService = app(InvoiceService::class);
   }
   /** @test */
   public function it_paginates_invoice_list()
   {
-    Invoice::factory()->count(15)->create();
+    Invoice::factory()->count(5)->create();
 
-    $invoices = $this->invoiceService->getInvoices(10);
+    $invoices = $this->invoiceService->getInvoices(5);
 
-    $this->assertEquals(10, $invoices->count());
+    $this->assertEquals(5, $invoices->count());
   }
 
   /** @test */
@@ -52,9 +58,10 @@ class InvoiceServiceTest extends TestCase
     $order = Order::factory()->create([
       'customer_id' => $customer->id,
       'branch_id' => $branch->id,
-      'order_status' => 'completed',
-      'total_price' => 60000,
-      'discount_amount' => 0,
+      'order_status' => OrderStatus::COMPLETED,
+      'subtotal_price' => 70000, //sản phẩm 50k, 2 topping 20k
+      'discount_amount' => 20000, // Dùng mã giảm giá 20k
+      'reward_discount' =>  10000 // Dùng điểm giảm 10k
     ]);
 
     // Tạo sản phẩm trong đơn hàng
@@ -74,16 +81,35 @@ class InvoiceServiceTest extends TestCase
       'quantity' => 2,
       'total_price' => 20000,
     ]);
+    // Mock applyVoucherToOrder để không gọi thực tế
+    $this->taxServiceMock->shouldReceive('calculateTax')
+      ->once()
+      ->andReturnUsing(function () {
+        return [
+          'tax_rate' => 5,
+          'tax_amount' => 10000,
+          'total_price_without_vat' => 30000
+        ];
+      });
 
     // Tạo hóa đơn từ đơn hàng
-    $invoice = $this->invoiceService->createInvoiceFromOrder($order->id, 60000);
+    $invoice = $this->invoiceService->createInvoiceFromOrder($order->id);
+
+    //Kiểm tra giá trị đơn hàng hợp lệ
+    $this->assertEquals(70000, $invoice->subtotal_price);
+    $this->assertEquals(20000, $invoice->discount_amount);
+    $this->assertEquals(10000, $invoice->reward_discount);
+    $this->assertEquals(40000, $invoice->total_price);
+    $this->assertEquals(5, $invoice->tax_rate);
+    $this->assertEquals(10000, $invoice->tax_amount);
+    $this->assertEquals(30000, $invoice->total_price_without_vat);
 
     // Kiểm tra hóa đơn đã được tạo
     $this->assertDatabaseHas('invoices', [
       'id' => $invoice->id,
       'order_id' => $order->id,
-      'invoice_status' => 'pending',
-      'payment_status' => 'unpaid',
+      'invoice_status' => InvoiceStatus::PENDING,
+      'payment_status' => PaymentStatus::UNPAID,
     ]);
 
     // Kiểm tra sản phẩm trong hóa đơn
@@ -109,7 +135,7 @@ class InvoiceServiceTest extends TestCase
   /** @test */
   public function it_throws_exception_if_order_is_not_completed()
   {
-    $order = Order::factory()->create(['order_status' => 'pending']);
+    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
 
     $this->expectException(\Exception::class);
     $this->expectExceptionMessage("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
@@ -134,14 +160,14 @@ class InvoiceServiceTest extends TestCase
   /** @test */
   public function it_updates_invoice_payment_status_correctly()
   {
-    $invoice = Invoice::factory()->create(['payment_status' => 'unpaid']);
+    $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::UNPAID]);
 
-    $updatedInvoice = $this->invoiceService->updatePaymentStatus($invoice->id, 'paid');
+    $updatedInvoice = $this->invoiceService->updatePaymentStatus($invoice->id, PaymentStatus::PAID);
 
-    $this->assertEquals('paid', $updatedInvoice->payment_status);
+    $this->assertEquals(PaymentStatus::PAID, $updatedInvoice->payment_status);
     $this->assertDatabaseHas('invoices', [
       'id' => $invoice->id,
-      'payment_status' => 'paid',
+      'payment_status' => PaymentStatus::PAID,
     ]);
   }
 

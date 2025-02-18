@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
-use App\Models\PointHistory;
+use App\Services\OrderService;
 use App\Services\PointService;
 use App\Services\SystemSettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,16 +17,19 @@ class PointServiceTest extends TestCase
   use RefreshDatabase;
 
   protected $pointService;
+  protected $orderService;
   protected $systemSettingService;
 
   protected function setUp(): void
   {
     parent::setUp();
 
-    /** @var SystemSettingService $systemSettingService */
-    $this->systemSettingService = Mockery::mock(SystemSettingService::class)->shouldIgnoreMissing();
+    $this->orderService = Mockery::spy(OrderService::class);
+    $this->app->instance(OrderService::class, $this->orderService);
 
-    $this->pointService = new PointService($this->systemSettingService);
+    $this->systemSettingService = Mockery::spy(SystemSettingService::class);
+    $this->app->instance(SystemSettingService::class, $this->systemSettingService);
+    $this->pointService = app(PointService::class);
   }
 
 
@@ -134,18 +137,31 @@ class PointServiceTest extends TestCase
   public function test_use_reward_points_for_order()
   {
     $customer = Customer::factory()->create(['reward_points' => 50]);
-    $order = Order::factory()->create(['customer_id' => $customer->id, 'total_price' => 100]);
+    $order = Order::factory()->create(['customer_id' => $customer->id, 'subtotal_price' => 100000, 'total_price' => 100000]);
 
+    // Mock updateTotalPrice để không gọi thực tế
+    $this->orderService->shouldReceive('updateTotalPrice')
+      ->once()
+      ->with(\Mockery::type(Order::class), 20)
+      ->andReturnUsing(function ($order) {
+        $order->update([
+          'total_price' => 70000
+        ]);
+      });
+
+    // Mock getRewardPointConversionRate để không gọi thực tế
     $this->systemSettingService->shouldReceive('getRewardPointConversionRate')
-      ->andReturn(1); // 1 point = 1 currency unit
+      ->twice()
+      ->andReturn(1000); // giả SystemSettingService::getRewardPointConversionRate trả về 1000 tương đương tỷ lệ đổi 1 điểm = 1000đ
 
-    $this->pointService->useRewardPointsForOrder($order, 30);
+    $this->pointService->useRewardPointsForOrder($order, 30); // Sử dụng 30 điểm, quy đổi 30.000đ để thanh toán
 
     $customer->refresh();
     $order->refresh();
     $this->assertEquals(20, $customer->reward_points);
-    $this->assertEquals(30, $order->used_reward_points);
-    $this->assertEquals(30, $order->reward_discount);
+    $this->assertEquals(30, $order->reward_points_used);
+    $this->assertEquals(30000, $order->reward_discount);
+    $this->assertEquals(70000, $order->total_price);
   }
 
   public function test_validate_reward_points_usage_to_order_throws_exception()

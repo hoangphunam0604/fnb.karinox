@@ -17,19 +17,27 @@ return new class extends Migration
       $table->string('code')->unique(); // Mã hóa đơn
       $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
-      $table->decimal('total_amount', 15, 2)->default(0); //Tổng số tiền khách cần thanh toán.
+
+      $table->decimal('subtotal_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng trước khi giảm giá (chỉ tính sản phẩm và topping, chưa áp dụng voucher hay điểm thưởng).
+      $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm từ voucher.
+      $table->decimal('reward_discount', 15, 2)->default(0.00); // Số tiền giảm từ điểm thưởng.
+      $table->decimal('total_price', 15, 2)->default(0.00); // Số tiền cần thanh toán cuối cùng (sau khi trừ cả voucher và điểm thưởng).
+
       $table->decimal('paid_amount', 15, 2)->default(0); //Số tiền thực tế khách đã trả.
       $table->decimal('change_amount', 15, 2)->default(0); //Tiền thừa trả lại cho khách (mặc định = 0).
-      $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm giá
+
+      $table->decimal('tax_rate', 5, 2)->nullable(); // Tỷ lệ thuế (%)
+      $table->decimal('tax_amount', 15, 2)->default(0); // Tiền thuế phải trả
+      $table->decimal('total_price_without_vat', 15, 2)->default(0); // Tổng tiền trước thuế
+
+      $table->integer('reward_points_used')->default(0); // Số điểm thưởng khách muốn dùng      
       $table->integer('earned_loyalty_points')->default(0); // Số điểm tích luỹ đạt được từ đơn hàng này
       $table->integer('earned_reward_points')->default(0); // Số điểm tích thưởng đạt được từ đơn hàng này
-      $table->integer('used_reward_points')->default(0); // Số điểm thưởng sử dụng
-      $table->decimal('reward_points_value', 15, 2)->default(0.00); // Giá trị tiền quy đổi từ điểm thưởng
 
       $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->nullOnDelete(); //Nếu khách hàng dùng mã giảm giá, liên kết với bảng vouchers.
 
       $table->string('sales_channel')->default('pos'); //Kênh bán hàng, mặc định pos
-      $table->enum('invoice_status', ['pending', 'cancelled', 'completed'])->default('pending'); // Trạng thái hóa đơn
+      $table->enum('invoice_status', ['pending', 'canceled', 'completed'])->default('pending'); // Trạng thái hóa đơn
       $table->enum('payment_status', ['unpaid', 'partial', 'paid', 'refunded'])->default('unpaid'); // Trạng thái thanh toán
       $table->string('payment_method')->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->text('note')->nullable(); //Ghi chú thêm về hóa đơn.
