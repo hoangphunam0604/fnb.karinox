@@ -180,14 +180,15 @@ class PointService implements PointServiceInterface
   public function restoreTransactionRewardPoints(RewardPointUsable $transaction): void
   {
     DB::transaction(function () use ($transaction) {
-      if (!$transaction->customer) return;
+      $customer = $transaction->getCustomer();
+      if (!$customer) return;
 
-      $rewardPointsUsed = $transaction->getRewardPointUsed();
+      $rewardPointsUsed = $transaction->getRewardPointsUsed();
       if (!$rewardPointsUsed) return;
-
+      dump($rewardPointsUsed);
       $transaction->remoreRewardPointsUsed();
 
-      $this->earnPoints($transaction->getCustomer(), 0, $rewardPointsUsed, [
+      $this->earnPoints($customer, 0, $rewardPointsUsed, [
         'source_type' => $transaction->getTransactionType(),
         'source_id' => $transaction->getTransactionId(),
         'note'  =>  $transaction->getNoteToRestoreRewardPoints()
@@ -201,7 +202,8 @@ class PointService implements PointServiceInterface
   public function restoreTransactionEarnedPoints(PointEarningTransaction $transaction): void
   {
     DB::transaction(function () use ($transaction) {
-      if (!$transaction->customer) return;
+      $customer = $transaction->getCustomer();
+      if (!$customer) return;
       $earnedLoyaltyPoints = $transaction->getEarnedLoyaltyPoints();
       $earnedRewardPoints = $transaction->getEarnedRewardPoints();
 
@@ -209,14 +211,14 @@ class PointService implements PointServiceInterface
         return;
       }
 
-      $transaction->restorePoints();
+      $transaction->removePoints();
 
       $metadata = [
         'source_id' => $transaction->getTransactionId(),
         'source_type' => $transaction->getTransactionType(),
         'note'  =>  $transaction->getRestoredPointsNote()
       ];
-      return $this->redeemPoints($transaction->getCustomer(), $earnedLoyaltyPoints, $earnedRewardPoints, $metadata);
+      return $this->redeemPoints($customer, $earnedLoyaltyPoints, $earnedRewardPoints, $metadata);
     });
   }
 

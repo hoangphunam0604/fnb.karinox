@@ -146,7 +146,7 @@ class Order extends Model implements RewardPointUsable
   }
 
 
-  public function getRewardPointUsed(): float
+  public function getRewardPointsUsed(): float
   {
     return $this->reward_points_used;
   }

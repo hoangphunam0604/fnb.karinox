@@ -26,5 +26,5 @@ interface PointEarningTransaction
 
   public function getRestoredPointsNote(): string;
 
-  public function restorePoints(): void;
+  public function removePoints(): void;
 }

@@ -15,7 +15,7 @@ interface RewardPointUsable
 
   public function getTotalAmount(): float;
 
-  public function getRewardPointUsed(): float;
+  public function getRewardPointsUsed(): float;
 
   public function getNoteToUseRewardPoints(): PointHistoryNote;
 

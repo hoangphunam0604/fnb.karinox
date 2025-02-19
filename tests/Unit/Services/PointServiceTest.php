@@ -202,19 +202,15 @@ class PointServiceTest extends TestCase
    */
   public function test_restore_transaction_reward_points_restores_correctly()
   {
-    $transaction = Mockery::mock(RewardPointUsable::class);
-    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
-
-    $transaction->shouldReceive('getCustomer')->andReturn($customer);
-    $transaction->shouldReceive('getRewardPointUsed')->andReturn(30);
-    $transaction->shouldReceive('remoreRewardPointsUsed');
-    $transaction->shouldReceive('getTransactionType')->andReturn('order');
-    $transaction->shouldReceive('getTransactionId')->andReturn(1);
-    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
-    $transaction->shouldReceive('getNoteToRestoreRewardPoints')->andReturn('Hoàn điểm do huỷ giao dịch');
-
+    $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 50]);
+    $transaction = Invoice::factory()->create([
+      'customer_id' =>  $customer->id,
+      'reward_points_used' => 10,
+    ]);
+    $customer->refresh();
     $this->pointService->restoreTransactionRewardPoints($transaction);
-    $this->assertEquals(80, $customer->reward_points);
+    $this->assertEquals(60, $customer->reward_points);
+    $this->assertEquals(0, $transaction->reward_points_used);
   }
 
   /**
@@ -223,23 +219,21 @@ class PointServiceTest extends TestCase
    */
   public function test_restore_transaction_earned_points_restores_correctly()
   {
-    $transaction = Mockery::mock(PointEarningTransaction::class);
     $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
-
-
-    $transaction->shouldReceive('getCustomer')->andReturn($customer);
-    $transaction->shouldReceive('getEarnedLoyaltyPoints')->andReturn(15);
-    $transaction->shouldReceive('getEarnedRewardPoints')->andReturn(10);
-    $transaction->shouldReceive('restorePoints');
-    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
-    $transaction->shouldReceive('getTransactionType')->andReturn('invoice');
-    $transaction->shouldReceive('getTransactionId')->andReturn(2);
-    $transaction->shouldReceive('getRestoredPointsNote')->andReturn('Hoàn điểm tích luỹ từ hoá đơn bị huỷ');
+    $transaction = Invoice::factory()->create([
+      'customer_id' =>  $customer->id,
+      'total_price' => 250000,
+      'earned_loyalty_points' => 10,
+      'earned_reward_points' => 10,
+    ]);
 
     $this->pointService->restoreTransactionEarnedPoints($transaction);
 
-    $this->assertEquals(85, $customer->loyalty_points);
+    $customer->refresh();
+    $this->assertEquals(90, $customer->loyalty_points);
     $this->assertEquals(40, $customer->reward_points);
+    $this->assertEquals(0, $customer->earned_loyalty_points);
+    $this->assertEquals(0, $customer->earned_reward_points);
   }
 
   protected function tearDown(): void

@@ -185,7 +185,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     $this->save();
   }
 
-  public function restorePoints(): void
+  public function removePoints(): void
   {
     $this->updatePoints(0, 0);
   }
@@ -198,7 +198,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     ]);
   }
 
-  public function getRewardPointUsed(): float
+  public function getRewardPointsUsed(): float
   {
     return $this->reward_points_used;
   }
