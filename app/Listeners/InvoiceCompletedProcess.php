@@ -34,15 +34,14 @@ class InvoiceCompletedProcess
 
     try {
       DB::transaction(function () use ($customer, $invoice) {
-        //Cộng điểm từ hoá đơn
-        $this->pointService->addPointsOnInvoiceCompletion($invoice);
 
         // Chuyển điểm đã sử dụng từ đơn đặt hàng sang hoá đơn
         $this->pointService->transferUsedPointsToInvoice($invoice);
 
         // Cập nhật tổng số tiền đã chi tiêu
         $this->customerService->updateTotalSpent($customer, $invoice->total_amount);
-
+        //Cộng điểm từ hoá đơn
+        $this->pointService->earnPointsOnTransactionCompletion($invoice);
         // Cập nhật cấp độ thành viên
         $this->customerService->updateMembershipLevel($customer);
       });

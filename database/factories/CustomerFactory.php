@@ -23,9 +23,6 @@ class CustomerFactory extends Factory
       'fullname' => $this->faker->name,
       'email' => $this->faker->unique()->safeEmail,
       'phone' => $this->faker->unique()->phoneNumber,
-      'loyalty_points' => $this->faker->numberBetween(0, 10000), // Điểm tích lũy dùng để xét hạng
-      'reward_points' => $this->faker->numberBetween(0, 5000), // Điểm thưởng dùng để đổi quà
-
     ];
   }
 }

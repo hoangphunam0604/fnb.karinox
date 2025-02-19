@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Contracts\RewardPointUsable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\OrderStatus;
+use App\Enums\PointHistoryNote;
 
-class Order extends Model
+class Order extends Model implements RewardPointUsable
 {
   use HasFactory;
 
@@ -120,5 +122,56 @@ class Order extends Model
   public function isCompleted()
   {
     return $this->order_status === 'completed';
+  }
+
+
+  public function getTransactionType(): string
+  {
+    return 'order';
+  }
+
+  public function getTransactionId(): int
+  {
+    return $this->id;
+  }
+
+  public function getCustomer(): ?Customer
+  {
+    return $this->customer;
+  }
+
+  public function getTotalAmount(): float
+  {
+    return $this->total_price;
+  }
+
+
+  public function getRewardPointUsed(): float
+  {
+    return $this->reward_points_used;
+  }
+
+  public function getNoteToUseRewardPoints(): PointHistoryNote
+  {
+    return PointHistoryNote::ORDER_USER_REWARD_POINTS;
+  }
+
+  public function getNoteToRestoreRewardPoints(): PointHistoryNote
+  {
+    return PointHistoryNote::ORDER_RESTORE_REWARD_POINTS;
+  }
+
+  public function remoreRewardPointsUsed(): void
+  {
+    $this->reward_points_used = 0;
+    $this->save();
+  }
+
+  public function applyRewardPointsDiscount(int $usedRewardPoints, int $rewardDiscount): void
+  {
+    $this->update([
+      'reward_points_used' => $usedRewardPoints,
+      'reward_discount' => $rewardDiscount
+    ]);
   }
 }

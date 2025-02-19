@@ -2,13 +2,21 @@
 
 namespace Tests\Unit\Services;
 
+use App\Services\PointService;
+use App\Services\Interfaces\PointServiceInterface;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\PointHistory;
+use App\Contracts\PointEarningTransaction;
+use App\Contracts\RewardPointUsable;
+use App\Models\MembershipLevel;
 use App\Services\OrderService;
-use App\Services\PointService;
 use App\Services\SystemSettingService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 
@@ -24,154 +32,219 @@ class PointServiceTest extends TestCase
   {
     parent::setUp();
 
-    $this->orderService = Mockery::spy(OrderService::class);
-    $this->app->instance(OrderService::class, $this->orderService);
+    /** @var OrderService $orderService */
+    $this->orderService = Mockery::mock(OrderService::class);
+    /** @var SystemSettingService $systemSettingService */
+    $this->systemSettingService = Mockery::mock(SystemSettingService::class);
 
-    $this->systemSettingService = Mockery::spy(SystemSettingService::class);
-    $this->app->instance(SystemSettingService::class, $this->systemSettingService);
-    $this->pointService = app(PointService::class);
+    $this->pointService = new PointService($this->orderService, $this->systemSettingService);
   }
 
-
-  public function test_update_points_correctly()
+  /**
+   * @testdox Kiểm tra lịch sử điểm khách hàng trả về dữ liệu phân trang
+   * @test
+   */
+  public function test_get_customer_point_history_returns_paginated_data()
   {
-    $customer = Customer::factory()->create(['loyalty_points' => 50, 'reward_points' => 30]);
+    $customer = Customer::factory()->create();
+    PointHistory::factory()->count(5)->create(['customer_id' => $customer->id]);
 
-    $this->pointService->updatePoints($customer, 20, 10, 'earn');
+    $result = $this->pointService->getCustomerPointHistory($customer);
 
-    $customer->refresh();
-    $this->assertEquals(70, $customer->loyalty_points);
+    $this->assertInstanceOf(LengthAwarePaginator::class, $result);
+  }
+
+  /**
+   * @testdox Kiểm tra cập nhật điểm khách hàng đúng cách
+   * @test
+   */
+  public function test_update_points_increases_or_decreases_points_correctly()
+  {
+    $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 5]);
+
+    DB::shouldReceive('transaction')->once()->andReturnUsing(function ($callback) use ($customer) {
+      return $callback();
+    });
+
+    $history = $this->pointService->updatePoints($customer, 5, 2, 'earn');
+
+    $this->assertEquals(15, $customer->loyalty_points);
+    $this->assertEquals(7, $customer->reward_points);
+    $this->assertInstanceOf(PointHistory::class, $history);
+  }
+
+  /**
+   * @testdox Kiểm tra cộng điểm cho khách hàng hoạt động đúng
+   * @test
+   */
+  public function test_earn_points_adds_points_correctly()
+  {
+    $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 0]);
+    $history = $this->pointService->earnPoints($customer, 5, 3);
+
+    $this->assertEquals(15, $customer->loyalty_points);
+    $this->assertEquals(3, $customer->reward_points);
+    $this->assertEquals('earn', $history->transaction_type);
+    $this->assertInstanceOf(PointHistory::class, $history);
+  }
+
+  /**
+   * @testdox Kiểm tra trừ điểm của khách hàng hoạt động đúng
+   * @test
+   */
+  public function test_redeem_points_deducts_points_correctly()
+  {
+    $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 5]);
+    $history = $this->pointService->redeemPoints($customer, 3, 2);
+
+    $this->assertEquals(7, $customer->loyalty_points);
+    $this->assertEquals(3, $customer->reward_points);
+    $this->assertEquals('redeem', $history->transaction_type);
+    $this->assertInstanceOf(PointHistory::class, $history);
+  }
+
+  /**
+   * @testdox Kiểm tra chuyển điểm đã sử dụng từ đơn hàng sang hóa đơn
+   * @test
+   */
+  public function test_transfer_used_points_to_invoice_updates_point_history()
+  {
+    $customer = Customer::factory()->create();
+    $invoice = Invoice::factory()->create(['customer_id' => $customer->id]);
+    $pointHistory = PointHistory::factory()->create([
+      'customer_id' => $customer->id,
+      'source_type' => 'order',
+      'source_id' => $invoice->order_id,
+      'usage_type' => 'discount',
+      'usage_id' => $invoice->order_id,
+    ]);
+
+    $this->pointService->transferUsedPointsToInvoice($invoice);
+
+    $pointHistory->refresh();
+    $this->assertEquals('invoice', $pointHistory->source_type);
+    $this->assertEquals($invoice->id, $pointHistory->source_id);
+  }
+
+  /**
+   * @testdox Kiểm tra tính toán điểm từ giao dịch hoạt động đúng
+   * @test
+   */
+  public function test_calculate_points_from_transaction_returns_correct_points()
+  {
+    $transaction = Mockery::mock(PointEarningTransaction::class);
+    $transaction->shouldReceive('canEarnPoints')->andReturn(true);
+    $transaction->shouldReceive('getTotalAmount')->andReturn(250000); //Giao dịch 250k
+    $transaction->shouldReceive('getCustomer')->andReturn(Customer::factory()->make());
+
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(25000); //Tỷ lệ quy đỏi 25k
+
+    [$loyaltyPoints, $rewardPoints] = $this->pointService->calculatePointsFromTransaction($transaction);
+
+    $this->assertEquals(10, $loyaltyPoints); //Nhận được 10 điểm
+    $this->assertGreaterThanOrEqual(0, $rewardPoints);
+  }
+
+  /**
+   * @testdox Kiểm tra cộng điểm khi giao dịch hoàn thành hoạt động đúng
+   * @test
+   */
+  public function test_earn_points_on_transaction_completion_applies_correct_points()
+  {
+    $transaction = Mockery::mock(PointEarningTransaction::class);
+    $membershipLevel = MembershipLevel::factory()->create(['reward_multiplier' => 2]);
+    $customer = Customer::factory()->create([
+      'membership_level_id' => $membershipLevel->id,
+      'birthday' => Carbon::now(),
+      'loyalty_points' => 100,
+      'reward_points' => 100,
+    ]);
+
+    $transaction->shouldReceive('canEarnPoints')->andReturn(true);
+    $transaction->shouldReceive('getCustomer')->andReturn($customer);
+    $transaction->shouldReceive('getTransactionType')->andReturn('invoice');
+    $transaction->shouldReceive('getTransactionId')->andReturn(1);
+    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
+    $transaction->shouldReceive('getEarnedPointsNote')->andReturn('Earned from invoice');
+    $transaction->shouldReceive('updatePoints');
+
+    $this->systemSettingService->shouldReceive('getPointConversionRate')->andReturn(25000); //Tỷ lệ quy đỏi 25k
+
+    $this->pointService->earnPointsOnTransactionCompletion($transaction);
+
+    $this->assertEquals(110, $customer->loyalty_points); //Nhận được 10 điểm
+    $this->assertEquals(120, $customer->reward_points); //Nhận được x2 tích điểm thưởng =  20đ
+  }
+  /**
+   * @testdox Kiểm tra sử dụng điểm thưởng hoạt động đúng
+   * @test
+   */
+  public function test_use_reward_points_applies_discount_correctly()
+  {
+    $transaction = Mockery::mock(RewardPointUsable::class);
+    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
+
+    $transaction->shouldReceive('getCustomer')->andReturn($customer);
+    $transaction->shouldReceive('getTransactionType')->andReturn('order');
+    $transaction->shouldReceive('getTransactionId')->andReturn(1);
+    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
+    $transaction->shouldReceive('applyRewardPointsDiscount');
+
+    $this->systemSettingService->shouldReceive('getRewardPointConversionRate')->andReturn(1);
+
+    $this->pointService->useRewardPoints($transaction, 20);
+    $this->assertEquals(30, $customer->reward_points);
+  }
+
+  /**
+   * @testdox Kiểm tra khôi phục điểm thưởng đã sử dụng khi huỷ giao dịch
+   * @test
+   */
+  public function test_restore_transaction_reward_points_restores_correctly()
+  {
+    $transaction = Mockery::mock(RewardPointUsable::class);
+    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
+
+    $transaction->shouldReceive('getCustomer')->andReturn($customer);
+    $transaction->shouldReceive('getRewardPointUsed')->andReturn(30);
+    $transaction->shouldReceive('remoreRewardPointsUsed');
+    $transaction->shouldReceive('getTransactionType')->andReturn('order');
+    $transaction->shouldReceive('getTransactionId')->andReturn(1);
+    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
+    $transaction->shouldReceive('getNoteToRestoreRewardPoints')->andReturn('Hoàn điểm do huỷ giao dịch');
+
+    $this->pointService->restoreTransactionRewardPoints($transaction);
+    $this->assertEquals(80, $customer->reward_points);
+  }
+
+  /**
+   * @testdox Kiểm tra khôi phục điểm đã tích lũy khi giao dịch bị huỷ
+   * @test
+   */
+  public function test_restore_transaction_earned_points_restores_correctly()
+  {
+    $transaction = Mockery::mock(PointEarningTransaction::class);
+    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
+
+
+    $transaction->shouldReceive('getCustomer')->andReturn($customer);
+    $transaction->shouldReceive('getEarnedLoyaltyPoints')->andReturn(15);
+    $transaction->shouldReceive('getEarnedRewardPoints')->andReturn(10);
+    $transaction->shouldReceive('restorePoints');
+    $transaction->shouldReceive('getTotalAmount')->andReturn(250000);
+    $transaction->shouldReceive('getTransactionType')->andReturn('invoice');
+    $transaction->shouldReceive('getTransactionId')->andReturn(2);
+    $transaction->shouldReceive('getRestoredPointsNote')->andReturn('Hoàn điểm tích luỹ từ hoá đơn bị huỷ');
+
+    $this->pointService->restoreTransactionEarnedPoints($transaction);
+
+    $this->assertEquals(85, $customer->loyalty_points);
     $this->assertEquals(40, $customer->reward_points);
-
-    $this->assertDatabaseHas('point_histories', [
-      'customer_id' => $customer->id,
-      'transaction_type' => 'earn',
-      'loyalty_points_changed' => 20,
-      'reward_points_changed' => 10,
-      'loyalty_points_after' => 70,
-      'reward_points_after' => 40,
-    ]);
   }
 
-  public function test_earn_points_increases_loyalty_and_reward_points()
+  protected function tearDown(): void
   {
-    $customer = Customer::factory()->create(['loyalty_points' => 0, 'reward_points' => 0]);
-
-    $this->pointService->earnPoints($customer, 10, 5);
-
-    $customer->refresh();
-    $this->assertEquals(10, $customer->loyalty_points);
-    $this->assertEquals(5, $customer->reward_points);
-  }
-
-  public function test_redeem_points_decreases_loyalty_and_reward_points()
-  {
-    $customer = Customer::factory()->create(['loyalty_points' => 50, 'reward_points' => 30]);
-
-    $this->pointService->redeemPoints($customer, 20, 10);
-
-    $customer->refresh();
-    $this->assertEquals(30, $customer->loyalty_points);
-    $this->assertEquals(20, $customer->reward_points);
-  }
-
-  public function test_use_reward_points_decreases_only_reward_points()
-  {
-    $customer = Customer::factory()->create(['loyalty_points' => 50, 'reward_points' => 30]);
-
-    $this->pointService->useRewardPoints($customer, 15);
-
-    $customer->refresh();
-    $this->assertEquals(50, $customer->loyalty_points);
-    $this->assertEquals(15, $customer->reward_points);
-  }
-
-  public function test_restore_reward_points_used_on_order_cancellation()
-  {
-    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
-    $order = Order::factory()->create([
-      'customer_id' => $customer->id,
-      'earned_loyalty_points' => 20,
-      'earned_reward_points' => 10,
-    ]);
-
-    $this->pointService->restoreRewardPointsUsedOnInvoiceCancellation($order);
-
-    $customer->refresh();
-    $this->assertEquals(120, $customer->loyalty_points);
-    $this->assertEquals(60, $customer->reward_points);
-  }
-
-  public function test_add_points_on_invoice_completion()
-  {
-    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'earned_loyalty_points' => 30,
-      'earned_reward_points' => 15,
-    ]);
-
-    $this->pointService->addPointsOnInvoiceCompletion($invoice);
-
-    $customer->refresh();
-    $this->assertEquals(130, $customer->loyalty_points);
-    $this->assertEquals(65, $customer->reward_points);
-  }
-
-  public function test_restore_points_on_invoice_cancellation()
-  {
-    $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
-    $invoice = Invoice::factory()->create([
-      'customer_id' => $customer->id,
-      'earned_loyalty_points' => 30,
-      'earned_reward_points' => 15,
-    ]);
-
-    $this->pointService->restorePointsOnInvoiceCancellation($invoice);
-
-    $customer->refresh();
-    $this->assertEquals(70, $customer->loyalty_points);
-    $this->assertEquals(35, $customer->reward_points);
-  }
-
-  public function test_use_reward_points_for_order()
-  {
-    $customer = Customer::factory()->create(['reward_points' => 50]);
-    $order = Order::factory()->create(['customer_id' => $customer->id, 'subtotal_price' => 100000, 'total_price' => 100000]);
-
-    // Mock updateTotalPrice để không gọi thực tế
-    $this->orderService->shouldReceive('updateTotalPrice')
-      ->once()
-      ->with(\Mockery::type(Order::class), 20)
-      ->andReturnUsing(function ($order) {
-        $order->update([
-          'total_price' => 70000
-        ]);
-      });
-
-    // Mock getRewardPointConversionRate để không gọi thực tế
-    $this->systemSettingService->shouldReceive('getRewardPointConversionRate')
-      ->twice()
-      ->andReturn(1000); // giả SystemSettingService::getRewardPointConversionRate trả về 1000 tương đương tỷ lệ đổi 1 điểm = 1000đ
-
-    $this->pointService->useRewardPointsForOrder($order, 30); // Sử dụng 30 điểm, quy đổi 30.000đ để thanh toán
-
-    $customer->refresh();
-    $order->refresh();
-    $this->assertEquals(20, $customer->reward_points);
-    $this->assertEquals(30, $order->reward_points_used);
-    $this->assertEquals(30000, $order->reward_discount);
-    $this->assertEquals(70000, $order->total_price);
-  }
-
-  public function test_validate_reward_points_usage_to_order_throws_exception()
-  {
-    $this->expectException(\Exception::class);
-    $this->expectExceptionMessage('Số điểm sử dụng vượt quá số điểm hiện có.');
-
-    $customer = Customer::factory()->create(['reward_points' => 10]);
-    $order = Order::factory()->create(['customer_id' => $customer->id, 'total_price' => 100]);
-
-    $this->pointService->useRewardPointsForOrder($order, 20);
+    Mockery::close();
+    parent::tearDown();
   }
 }

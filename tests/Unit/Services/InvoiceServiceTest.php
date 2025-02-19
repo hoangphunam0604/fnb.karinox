@@ -14,6 +14,7 @@ use App\Models\Customer;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Services\InvoiceService;
+use App\Services\PointService;
 use App\Services\TaxService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -24,12 +25,17 @@ class InvoiceServiceTest extends TestCase
   use RefreshDatabase;
 
   protected $taxServiceMock;
+  protected $pointServiceMock;
   protected $invoiceService;
   protected function setUp(): void
   {
     parent::setUp();
     $this->taxServiceMock = Mockery::spy(TaxService::class);
     $this->app->instance(TaxService::class, $this->taxServiceMock);
+
+    $this->pointServiceMock = Mockery::spy(PointService::class);
+    $this->app->instance(PointService::class, $this->pointServiceMock);
+
     $this->invoiceService = app(InvoiceService::class);
   }
   /** @test */
@@ -91,6 +97,11 @@ class InvoiceServiceTest extends TestCase
           'total_price_without_vat' => 30000
         ];
       });
+
+    // Mock earnPointsOnTransactionCompletion để không gọi thực tế
+    $this->pointServiceMock->shouldReceive('earnPointsOnTransactionCompletion')
+      ->once()
+      ->andReturn(true);
 
     // Tạo hóa đơn từ đơn hàng
     $invoice = $this->invoiceService->createInvoiceFromOrder($order->id);

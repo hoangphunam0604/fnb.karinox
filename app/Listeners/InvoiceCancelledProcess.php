@@ -34,7 +34,7 @@ class InvoiceCancelledProcess
     try {
       DB::transaction(function () use ($invoice, $customer) {
         //Khôi phục điểm đã đuọc cộng từ hoá đơn
-        $this->pointService->restorePointsOnInvoiceCancellation($invoice);
+        $this->pointService->restoreTransactionRewardPoints($invoice);
 
         //Khôi phục voucher đã sử dụng
         $this->voucherService->refundVoucherFromInvoice($invoice);

@@ -172,7 +172,7 @@ class OrderService
       return $order;
     }
     // Kiểm tra và Áp dụng điểm thưởng nếu có
-    $this->pointService->useRewardPointsForOrder($order, $requestedPoints ?? 0);
+    $this->pointService->useRewardPoints($order, $requestedPoints ?? 0);
 
     // 4️⃣ Cập nhật tổng tiền sau khi  trừ điểm thưởng
     $this->updateTotalPrice($order);
@@ -283,7 +283,7 @@ class OrderService
     // 3️⃣ Áp dụng điểm thưởng nếu có
     if (!empty($data['reward_points_used'])) {
       $order->refresh();
-      $this->pointService->useRewardPointsForOrder($order, $data['reward_points_used']);
+      $this->pointService->useRewardPoints($order, $data['reward_points_used']);
     }
 
     $order->refresh();

@@ -2,15 +2,19 @@
 
 namespace App\Services;
 
+use App\Contracts\PointEarningTransaction;
+use App\Contracts\RewardPointUsable;
+use App\Enums\PointHistoryNote;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use App\Models\PointHistory;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\Order;
+use App\Services\Interfaces\PointServiceInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 use InvalidArgumentException;
 
-class PointService
+class PointService implements PointServiceInterface
 {
   protected OrderService $orderService;
   protected SystemSettingService $systemSettingService;
@@ -24,7 +28,7 @@ class PointService
   /**
    * Lấy lịch sử điểm của khách hàng
    */
-  public function getCustomerPointHistory(Customer $customer, int $limit = 10): Paginator
+  public function getCustomerPointHistory(Customer $customer, int $limit = 10): LengthAwarePaginator
   {
     return PointHistory::where('customer_id', $customer->id)
       ->orderBy('created_at', 'desc')
@@ -81,94 +85,6 @@ class PointService
   }
 
   /**
-   * Sử dụng điểm thưởng
-   */
-  public function useRewardPoints(Customer $customer, int $rewardPoints,  array $metadata = []): PointHistory
-  {
-    return $this->redeemPoints($customer, 0, $rewardPoints, $metadata);
-  }
-
-  /**
-   * Đặt hàng: Sử dụng điểm thưởng để thanh toán đơn hàng.
-   */
-  public function useRewardPointsForOrder(Order $order, int $requestedPoints): void
-  {
-    if (!$order->customer || $requestedPoints <= 0) {
-      return;
-    }
-    DB::transaction(function () use ($order, $requestedPoints) {
-      $customer = $order->customer;
-      $this->validateRewardPointsUsageToOrder($order, $requestedPoints);
-
-      [$usedRewardPoints, $rewardDiscount] = $this->calculateRewardPointsCanbeUsedValue($customer, $requestedPoints);
-
-      if ($usedRewardPoints == 0) {
-        return;
-      }
-      $order->update([
-        'reward_points_used' => $usedRewardPoints,
-        'reward_discount' => $rewardDiscount
-      ]);
-      $this->orderService->updateTotalPrice($order);
-
-      $this->useRewardPoints(
-        $customer,
-        $usedRewardPoints,
-        [
-          'source_type' => 'order',
-          'source_id' => $order->id,
-          'usage_type' => 'discount',
-          'usage_id' => $order->id,
-          'note'  =>  "Sử dụng điểm thưởng để thanh toán"
-        ]
-      );
-    });
-  }
-
-  /**
-   * Huỷ đặt hàng: Khôi phục điểm đã sử dụng khi huỷ đơn đặt hàng.
-   */
-  public function restoreRewardPointsUsedOnOrderCancellation(Order $order): void
-  {
-    $customer = $order->customer;
-    if (!$customer) {
-      return;
-    }
-    $rewardPointsUsed = $order->reward_points_used;
-    if ($rewardPointsUsed > 0) {
-      DB::transaction(function () use ($order, $customer,  $rewardPointsUsed) {
-        $this->earnPoints($customer, 0, $rewardPointsUsed, [
-          'source_type' => 'order',
-          'source_id' => $order->id,
-          'note'  =>  "Hoàn điểm đã dùng khi hủy đặt hàng"
-        ]);
-      });
-    }
-  }
-
-  /**
-   * Đặt hàng: Tính giá trị điểm thưởng nhận được hóa đơn
-   */
-  public function calculatePointsFromInvoice(Invoice $invoice): array
-  {
-    if (!$invoice->customer)
-      return [0, 0];
-
-    // Lấy tỷ lệ quy đổi điểm từ SystemSettingService
-    $conversionRate = $this->systemSettingService->getPointConversionRate();
-
-    // Nếu tổng tiền = 0 hoặc nhỏ hơn tỷ lệ quy đổi thì không cộng điểm
-    if ($invoice->total_amount <= 0 || $invoice->total_amount < $conversionRate) {
-      return [0, 0];
-    }
-    // Tính toán điểm thưởng
-    $pointsEarned = floor($invoice->total_amount / $conversionRate);
-    $loyaltyPoints = $pointsEarned;
-    $rewardPoints = $this->calculateRewardPoints($invoice->customer, $pointsEarned);
-    return [$loyaltyPoints, $rewardPoints];
-  }
-
-  /**
    * Hoá đơn thành công: Chuyển điểm đã sử dụng từ đơn hàng sang hóa đơn tương ứng.
    */
   public function transferUsedPointsToInvoice(Invoice $invoice): void
@@ -187,86 +103,127 @@ class PointService
   }
 
   /**
-   * Hoá đơn thành công: Cộng điểm tích lũy và điểm thưởng khi hóa đơn hoàn thành.
+   * Tính giá trị điểm thưởng nhận được từ giao dịch
    */
-  public function addPointsOnInvoiceCompletion(Invoice $invoice): void
+  public function calculatePointsFromTransaction(PointEarningTransaction $transaction): array
   {
-    if (!$invoice->customer) {
+    if (!$transaction->canEarnPoints())
+      return [0, 0];
+
+    // Lấy tỷ lệ quy đổi điểm từ SystemSettingService
+    $conversionRate = $this->systemSettingService->getPointConversionRate();
+    $totalAmount = $transaction->getTotalAmount();
+    // Nếu tổng tiền = 0 hoặc nhỏ hơn tỷ lệ quy đổi thì không cộng điểm
+    if ($totalAmount <= 0 || $totalAmount < $conversionRate) {
+      return [0, 0];
+    }
+    $customer = $transaction->getCustomer();
+    // Tính toán điểm thưởng
+    $pointsEarned = floor($totalAmount / $conversionRate);
+    $loyaltyPoints = $pointsEarned;
+    $rewardPoints = $this->calculateRewardPoints($customer, $pointsEarned);
+    return [$loyaltyPoints, $rewardPoints];
+  }
+
+  /**
+   * Cộng điểm tích lũy và điểm thưởng khi giao dịch hoàn thành
+   */
+  public function earnPointsOnTransactionCompletion(PointEarningTransaction $transaction): void
+  {
+    if (!$transaction->canEarnPoints()) {
       return;
     }
-    if ($invoice->earned_loyalty_points <= 0 && $invoice->earned_reward_points <= 0) {
-      return;
-    }
-    $customer = $invoice->customer;
-    $loyaltyPoints = $invoice->earned_loyalty_points;
-    $rewardPoints = $invoice->earned_reward_points;
+    $customer = $transaction->getCustomer();
+    [$loyaltyPoints, $rewardPoints] = $this->calculatePointsFromTransaction($transaction);
+    $transaction->updatePoints($loyaltyPoints, $rewardPoints);
     $metadata = [
-      'source_type' => 'invoice',
-      'source_id' => $invoice->id,
+      'source_type' => $transaction->getTransactionType(),
+      'source_id' => $transaction->getTransactionId(),
+      'note'  =>  $transaction->getEarnedPointsNote()
     ];
     $this->earnPoints($customer, $loyaltyPoints, $rewardPoints, $metadata);
   }
 
 
   /**
-   * Hoá đơn huỷ bỏ: Khôi phục điểm đã sử dụng, điểm tích lũy và điểm thưởng khi hoá đơn bị huỷ.
+   * Sử dụng điểm thưởng
    */
-  public function restorePointsOnInvoiceCancellation(Invoice $invoice): void
+  public function useRewardPoints(RewardPointUsable $transaction, int $requestedPoints): void
   {
-    if (!$invoice->customer) {
+    if (!$transaction->getCustomer() || $requestedPoints <= 0) {
       return;
     }
-    if ($invoice->earned_loyalty_points <= 0 && $invoice->earned_reward_points <= 0 && $invoice->reward_points_used <= 0) {
-      return; // Không có gì để khôi phục, thoát sớm
-    }
-    DB::transaction(function () use ($invoice) {
-      $this->restoreRewardPointsUsedOnInvoiceCancellation($invoice);
-      $this->restoreRewardPointsUsedOnInvoiceCancellation($invoice);
+    DB::transaction(function () use ($transaction, $requestedPoints) {
+      $customer = $transaction->getCustomer();
+      $this->validateRewardPointsUsageToOrder($transaction, $requestedPoints);
+
+      [$usedRewardPoints, $rewardDiscount] = $this->calculateRewardPointsCanbeUsedValue($customer, $requestedPoints);
+
+      if ($usedRewardPoints == 0) {
+        return;
+      }
+      $transaction->applyRewardPointsDiscount($usedRewardPoints, $rewardDiscount);
+
+      return $this->redeemPoints($customer, 0, $usedRewardPoints, [
+        'source_type' => $transaction->getTransactionType(),
+        'source_id' => $transaction->getTransactionId(),
+        'usage_type' => 'discount',
+        'usage_id' => $transaction->getTransactionId(),
+        'note'  =>  PointHistoryNote::ORDER_USER_REWARD_POINTS
+      ]);
     });
   }
 
   /**
-   * Trừ điểm tích luỹ, điểm thưởng được cộng từ hoá đơn đã huỷ
+   * Khôi phục điểm đã sử dụng trong giao dịch khi huỷ
    */
-  private function restoreLoyaltyAndRewardPointsOnInvoiceCancellation(Invoice $invoice)
+  public function restoreTransactionRewardPoints(RewardPointUsable $transaction): void
   {
-    $customer = $invoice->customer;
-    $loyaltyPoints = $invoice->earned_loyalty_points;
-    $rewardPoints = $invoice->earned_reward_points;
+    DB::transaction(function () use ($transaction) {
+      if (!$transaction->customer) return;
 
-    if ($loyaltyPoints <= 0 && $rewardPoints <= 0) {
-      return;
-    }
-    $metadata = [
-      'source_type' => 'invoice',
-      'source_id' => $invoice->id,
-      'note'  =>  "Hoàn điểm tích luỹ và điểm thưởng từ đơn hàng bị huỷ"
-    ];
-    return $this->redeemPoints($customer, $loyaltyPoints, $rewardPoints, $metadata);
+      $rewardPointsUsed = $transaction->getRewardPointUsed();
+      if (!$rewardPointsUsed) return;
+
+      $transaction->remoreRewardPointsUsed();
+
+      $this->earnPoints($transaction->getCustomer(), 0, $rewardPointsUsed, [
+        'source_type' => $transaction->getTransactionType(),
+        'source_id' => $transaction->getTransactionId(),
+        'note'  =>  $transaction->getNoteToRestoreRewardPoints()
+      ]);
+    });
   }
 
   /**
-   * Cộng lại điểm thưởng đã sử dụng để thanh toán đơn hàng
+   * Khôi phục điểm đã được tăng trong giao dịch (điểm tích luỹ, điểm thưởng)
    */
-  private function restoreRewardPointsUsedOnInvoiceCancellation(Invoice $invoice)
+  public function restoreTransactionEarnedPoints(PointEarningTransaction $transaction): void
   {
-    $customer = $invoice->customer;
-    $usedRewardPoints = $invoice->reward_points_used;
+    DB::transaction(function () use ($transaction) {
+      if (!$transaction->customer) return;
+      $earnedLoyaltyPoints = $transaction->getEarnedLoyaltyPoints();
+      $earnedRewardPoints = $transaction->getEarnedRewardPoints();
 
-    if ($usedRewardPoints <= 0) {
-      return;
-    }
-    $metadata = [
-      'source_type' => 'invoice',
-      'source_id' => $invoice->id,
-      'note'  =>  "Cộng lại điểm thưởng đã sử dụng từ đơn hàng bị huỷ"
-    ];
-    return $this->earnPoints($customer, 0, $usedRewardPoints, $metadata);
+      if ($earnedLoyaltyPoints <= 0 && $earnedRewardPoints <= 0) {
+        return;
+      }
+
+      $transaction->restorePoints();
+
+      $metadata = [
+        'source_id' => $transaction->getTransactionId(),
+        'source_type' => $transaction->getTransactionType(),
+        'note'  =>  $transaction->getRestoredPointsNote()
+      ];
+      return $this->redeemPoints($transaction->getCustomer(), $earnedLoyaltyPoints, $earnedRewardPoints, $metadata);
+    });
   }
 
+  /* ============================ */
 
   /**
-   * Hoá đơn thành công: Tính điểm thưởng có hệ số nhân dựa vào ngày sinh nhật.
+   * Tính điểm thưởng có hệ số nhân dựa vào ngày sinh nhật.
    * Hệ số nhỏ nhất là 1
    */
   private function calculateRewardPoints(Customer $customer, int $pointsEarned): int
@@ -274,7 +231,7 @@ class PointService
     $multiplier = max(1, ($customer->isBirthdayToday() && $customer->membershipLevel)
       ? $customer->membershipLevel->reward_multiplier ?? 1
       : 1);
-
+    dump($multiplier);
     return $pointsEarned * $multiplier;
   }
 
@@ -282,16 +239,16 @@ class PointService
   /**
    * Kiểm tra đơn hàng có khách hàng và điểm thưởng phù hợp với đơn hàng.
    */
-  private function validateRewardPointsUsageToOrder(Order $order, int $requestedPoints)
+  private function validateRewardPointsUsageToOrder(RewardPointUsable $transaction, int $requestedPoints)
   {
     if ($requestedPoints <= 0) {
       throw new \InvalidArgumentException('Số điểm sử dụng phải lớn hơn 0.');
     }
 
-    if (!$order->customer) {
+    $customer = $transaction->getCustomer();
+    if (!$customer) {
       throw new InvalidArgumentException('Đơn hàng chưa có khách hàng.');
     }
-    $customer = $order->customer;
     if ($customer->reward_points <= 0) {
       throw new InvalidArgumentException('Khách hàng không có điểm thưởng.');
     }
@@ -301,7 +258,7 @@ class PointService
     }
 
     $conversionRate = $this->systemSettingService->getRewardPointConversionRate();
-    $totalAmount = $order->total_price;
+    $totalAmount = $transaction->getTotalAmount();
 
     if ($requestedPoints * $conversionRate > $totalAmount) {
       throw new InvalidArgumentException('Điểm thưởng sử dụng không thể vượt quá tổng giá trị đơn hàng.');

@@ -67,7 +67,7 @@ class InvoiceService
       $this->copyOrderItemsToInvoice($order, $invoice);
       $invoice->refresh();
       $this->updateInvoiceTotal($invoice);
-      $this->pointService->calculatePointsFromInvoice($invoice);
+      $this->pointService->earnPointsOnTransactionCompletion($invoice);
 
       return $invoice;
     });

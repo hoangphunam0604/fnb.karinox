@@ -53,7 +53,7 @@ class InvoiceCancelledProcessTest extends TestCase
     /** @var Invoice $invoice */
     $event = new InvoiceCancelled($invoice);
 
-    $this->pointService->shouldReceive('restorePointsOnInvoiceCancellation')->once()->with($invoice);
+    $this->pointService->shouldReceive('restoreTransactionRewardPoints')->once()->with($invoice);
     $this->voucherService->shouldReceive('refundVoucherFromInvoice')->once()->with($invoice);
     $this->customerService->shouldReceive('updateTotalSpent')->once()->with($customer, -200);
     $this->customerService->shouldReceive('downgradeMembershipLevel')->once()->with($customer);
@@ -105,7 +105,7 @@ class InvoiceCancelledProcessTest extends TestCase
     $invoice->shouldReceive('getAttribute')->with('total_amount')->andReturn(200);
     $invoice->shouldReceive('getAttribute')->with('id')->andReturn(1);
 
-    $this->pointService->shouldReceive('restorePointsOnInvoiceCancellation')->once()->with($invoice);
+    $this->pointService->shouldReceive('restoreTransactionRewardPoints')->once()->with($invoice);
     $this->voucherService->shouldReceive('refundVoucherFromInvoice')->once()->with($invoice);
     $this->customerService->shouldReceive('updateTotalSpent')->once()->with($customer, -200);
     $this->customerService->shouldReceive('downgradeMembershipLevel')->once()->with($customer);

@@ -56,9 +56,9 @@ class InvoiceCompletedProcessTest extends TestCase
     $event = new InvoiceCompleted($invoice);
 
     // Định nghĩa hành vi mong đợi của các service
-    $this->pointService->shouldReceive('addPointsOnInvoiceCompletion')->once()->with($invoice);
     $this->pointService->shouldReceive('transferUsedPointsToInvoice')->once()->with($invoice);
     $this->customerService->shouldReceive('updateTotalSpent')->once()->with($customer, 200);
+    $this->pointService->shouldReceive('earnPointsOnTransactionCompletion')->once()->with($invoice);
     $this->customerService->shouldReceive('updateMembershipLevel')->once()->with($customer);
 
     // Chạy handle()
