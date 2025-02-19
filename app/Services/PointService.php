@@ -147,24 +147,24 @@ class PointService
   }
 
   /**
-   * Đặt hàng: Tính giá trị điểm thưởng nhận được từ đơn hàng
+   * Đặt hàng: Tính giá trị điểm thưởng nhận được hóa đơn
    */
-  public function calculatePointsFromOrder(Order $order): array
+  public function calculatePointsFromInvoice(Invoice $invoice): array
   {
-    if (!$order->customer)
+    if (!$invoice->customer)
       return [0, 0];
 
     // Lấy tỷ lệ quy đổi điểm từ SystemSettingService
     $conversionRate = $this->systemSettingService->getPointConversionRate();
 
     // Nếu tổng tiền = 0 hoặc nhỏ hơn tỷ lệ quy đổi thì không cộng điểm
-    if ($order->total_amount <= 0 || $order->total_amount < $conversionRate) {
+    if ($invoice->total_amount <= 0 || $invoice->total_amount < $conversionRate) {
       return [0, 0];
     }
     // Tính toán điểm thưởng
-    $pointsEarned = floor($order->total_amount / $conversionRate);
+    $pointsEarned = floor($invoice->total_amount / $conversionRate);
     $loyaltyPoints = $pointsEarned;
-    $rewardPoints = $this->calculateRewardPoints($order->customer, $pointsEarned);
+    $rewardPoints = $this->calculateRewardPoints($invoice->customer, $pointsEarned);
     return [$loyaltyPoints, $rewardPoints];
   }
 
@@ -220,8 +220,8 @@ class PointService
       return; // Không có gì để khôi phục, thoát sớm
     }
     DB::transaction(function () use ($invoice) {
-      $this->restoreLoyaltyAndRewardPointsOnInvoiceCancellation($invoice);
-      $this->restoreUsedRewardPointsOnInvoiceCancellation($invoice);
+      $this->restoreRewardPointsUsedOnInvoiceCancellation($invoice);
+      $this->restoreRewardPointsUsedOnInvoiceCancellation($invoice);
     });
   }
 
@@ -248,7 +248,7 @@ class PointService
   /**
    * Cộng lại điểm thưởng đã sử dụng để thanh toán đơn hàng
    */
-  private function restoreUsedRewardPointsOnInvoiceCancellation(Invoice $invoice)
+  private function restoreRewardPointsUsedOnInvoiceCancellation(Invoice $invoice)
   {
     $customer = $invoice->customer;
     $usedRewardPoints = $invoice->reward_points_used;

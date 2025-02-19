@@ -86,7 +86,7 @@ class PointServiceTest extends TestCase
     $this->assertEquals(15, $customer->reward_points);
   }
 
-  public function test_restore_points_on_order_cancellation()
+  public function test_restore_reward_points_used_on_order_cancellation()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);
     $order = Order::factory()->create([
@@ -95,7 +95,7 @@ class PointServiceTest extends TestCase
       'earned_reward_points' => 10,
     ]);
 
-    $this->pointService->restorePointsOnOrderCancellation($order);
+    $this->pointService->restoreRewardPointsUsedOnInvoiceCancellation($order);
 
     $customer->refresh();
     $this->assertEquals(120, $customer->loyalty_points);

@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\DB;
 class InvoiceService
 {
   protected TaxService $taxService;
+  protected PointService $pointService;
 
-  public function __construct(TaxService $taxService)
+  public function __construct(TaxService $taxService, PointService $pointService)
   {
     $this->taxService = $taxService;
+    $this->pointService = $pointService;
   }
   public function findInvoiceByCode(string $code): ?Invoice
   {
@@ -65,6 +67,7 @@ class InvoiceService
       $this->copyOrderItemsToInvoice($order, $invoice);
       $invoice->refresh();
       $this->updateInvoiceTotal($invoice);
+      $this->pointService->calculatePointsFromInvoice($invoice);
 
       return $invoice;
     });
