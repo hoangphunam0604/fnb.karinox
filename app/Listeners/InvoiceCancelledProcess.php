@@ -37,7 +37,7 @@ class InvoiceCancelledProcess
         $this->pointService->restoreTransactionRewardPoints($invoice);
 
         //Khôi phục voucher đã sử dụng
-        $this->voucherService->refundVoucherFromInvoice($invoice);
+        $this->voucherService->restoreVoucherUsage($invoice);
 
         // Cập nhật tổng số tiền đã chi tiêu, trừ đi số tiền hoá đơn đã huỷ
         $this->customerService->updateTotalSpent($customer, -$invoice->total_amount);

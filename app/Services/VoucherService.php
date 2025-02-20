@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\VoucherApplicable;
+use App\Enums\Msg;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
@@ -65,8 +67,14 @@ class VoucherService
     $time = $now->format('H:i');
 
     $query = Voucher::where('is_active', true)
-      ->where('start_date', '<=', $now)
-      ->where('end_date', '>=', $now)
+      ->where(function ($q) use ($now) {
+        $q->whereNull('start_date')
+          ->orWhere('start_date',  '<=', $now);
+      })
+      ->where(function ($q) use ($now) {
+        $q->whereNull('end_date')
+          ->orWhere('end_date',  '>=', $now);
+      })
       ->where(function ($q) use ($dayOfWeek) {
         $q->whereNull('valid_days_of_week')
           ->orWhereJsonContains('valid_days_of_week', $dayOfWeek);
@@ -165,10 +173,9 @@ class VoucherService
     $month = $now->month;
     $currentTime = $now->format('H:i');
 
-    if (!$voucher->is_active || $voucher->start_date > $now || $voucher->end_date < $now) {
+    if (!$voucher->is_active || ($voucher->start_date && $voucher->start_date > $now) || ($voucher->end_date && $voucher->end_date < $now)) {
       return false;
     }
-
 
     // Kiểm tra giá trị tối thiểu của order
     if ($voucher->min_order_value && $totalOrder < $voucher->min_order_value) {
@@ -339,20 +346,23 @@ class VoucherService
   }
 
   /**
-   * Hoàn lại voucher khi đơn hàng bị hủy
+   * Hoàn lại voucher khi giao dịch bị hủy
    */
-  public function refundVoucherFromOrder($order)
+  public function restoreVoucherUsage(VoucherApplicable $transaction): array
   {
-    if ($order->order_status === 'completed')
-      return ['success' => false, 'message' => 'Không thể hoàn lại voucher vì đơn hàng đã hoàn tất.'];
-
-    $voucherUsage = VoucherUsage::where('order_id', $order->id)->first();
-
-    if (!$voucherUsage) {
-      return ['success' => false, 'message' => 'Không tìm thấy voucher để hoàn lại.'];
+    if ($transaction->canNotRestoreVoucher()) {
+      return [
+        'success' => false,
+        'message' => $transaction->getMsgVoucherCanNotRestore()
+      ];
     }
 
-    DB::transaction(function () use ($voucherUsage) {
+    $voucherUsage = VoucherUsage::where($transaction->getSourceIdField(), $transaction->getTransactionId())->first();
+    if (!$voucherUsage) {
+      return ['success' => false, 'message' => $transaction->getMsgVoucherNotFound()];
+    }
+    /* 
+    DB::transaction(function () use ($voucherUsage, $transaction) {
       // Hoàn lại số lần sử dụng voucher
       $voucher = Voucher::find($voucherUsage->voucher_id);
       if ($voucher) {
@@ -361,35 +371,9 @@ class VoucherService
 
       // Xóa bản ghi sử dụng voucher
       $voucherUsage->delete();
-    });
+      $transaction->removeVoucherUsed();
+    }); */
 
-    return ['success' => true, 'message' => 'Voucher đã được hoàn lại.'];
-  }
-  /**
-   * Hoàn lại voucher khi hoá đơn bị hủy
-   */
-  public function refundVoucherFromInvoice(Invoice $invoice)
-  {
-    if ($invoice->invoice_status === 'completed')
-      return ['success' => false, 'message' => 'Không thể hoàn lại voucher vì đơn hàng đã hoàn tất.'];
-
-    $voucherUsage = VoucherUsage::where('invoice_id', $invoice->id)->first();
-
-    if (!$voucherUsage) {
-      return ['success' => false, 'message' => 'Không tìm thấy voucher để hoàn lại.'];
-    }
-
-    DB::transaction(function () use ($voucherUsage) {
-      // Hoàn lại số lần sử dụng voucher
-      $voucher = Voucher::find($voucherUsage->voucher_id);
-      if ($voucher) {
-        $voucher->decrement('applied_count');
-      }
-
-      // Xóa bản ghi sử dụng voucher
-      $voucherUsage->delete();
-    });
-
-    return ['success' => true, 'message' => 'Voucher đã được hoàn lại.'];
+    return ['success' => true, 'message' => Msg::VOUCHER_RESTORE_SUCCESSFULL];
   }
 }

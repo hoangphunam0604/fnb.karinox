@@ -11,9 +11,11 @@ use App\Enums\PaymentStatus;
 
 use App\Contracts\PointEarningTransaction;
 use App\Contracts\RewardPointUsable;
+use App\Contracts\VoucherApplicable;
+use App\Enums\Msg;
 use App\Enums\PointHistoryNote;
 
-class Invoice extends Model implements PointEarningTransaction, RewardPointUsable
+class Invoice extends Model implements PointEarningTransaction, RewardPointUsable, VoucherApplicable
 {
   use HasFactory;
   protected $fillable = [
@@ -217,5 +219,31 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   {
     $this->reward_points_used = 0;
     $this->save();
+  }
+
+
+  public function getSourceIdField(): string
+  {
+    return 'invoice_id';
+  }
+
+  public function canNotRestoreVoucher(): bool
+  {
+    return $this->order_status === 'completed' || !$this->voucher_id;;
+  }
+
+  public function getMsgVoucherCanNotRestore(): Msg
+  {
+    return Msg::VOUCHER_CANNOT_RESTORE_FROM_INVOICE;
+  }
+
+  public function getMsgVoucherNotFound(): Msg
+  {
+    return Msg::VOUCHER_RESTORE_NOT_FOUND;
+  }
+
+  public function removeVoucherUsed(): void
+  {
+    $this->update(['voucher_id' => null]);
   }
 }

@@ -14,8 +14,8 @@ return new class extends Migration {
       $table->decimal('discount_value', 10, 2);
       $table->decimal('max_discount', 10, 2)->nullable();
       $table->decimal('min_order_value', 10, 2)->nullable();
-      $table->dateTime('start_date');
-      $table->dateTime('end_date');
+      $table->dateTime('start_date')->nullable();
+      $table->dateTime('end_date')->nullable();
       $table->unsignedInteger('applied_count')->default(0);
       $table->unsignedInteger('usage_limit')->nullable();
       $table->unsignedInteger('per_customer_limit')->nullable();

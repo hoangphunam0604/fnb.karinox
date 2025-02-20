@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Contracts\RewardPointUsable;
+use App\Contracts\VoucherApplicable;
+use App\Enums\Msg;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\OrderStatus;
 use App\Enums\PointHistoryNote;
 
-class Order extends Model implements RewardPointUsable
+class Order extends Model implements RewardPointUsable, VoucherApplicable
 {
   use HasFactory;
 
@@ -173,5 +175,30 @@ class Order extends Model implements RewardPointUsable
       'reward_points_used' => $usedRewardPoints,
       'reward_discount' => $rewardDiscount
     ]);
+  }
+
+  public function getSourceIdField(): string
+  {
+    return 'order_id';
+  }
+
+  public function canNotRestoreVoucher(): bool
+  {
+    return $this->order_status === 'completed' || !$this->voucher_id;
+  }
+
+  public function getMsgVoucherCanNotRestore(): Msg
+  {
+    return Msg::VOUCHER_CANNOT_RESTORE_FROM_ORDER;
+  }
+
+  public function getMsgVoucherNotFound(): Msg
+  {
+    return Msg::VOUCHER_RESTORE_NOT_FOUND;
+  }
+
+  public function removeVoucherUsed(): void
+  {
+    // $this->update(['voucher_id' => null]);
   }
 }

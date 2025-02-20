@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\Msg;
+use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\MembershipLevel;
 use App\Models\Order;
@@ -11,6 +13,7 @@ use App\Services\VoucherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Carbon\Carbon;
+use Mockery;
 
 /**
  * @testdox Kiểm tra VoucherService
@@ -430,56 +433,6 @@ class VoucherServiceTest extends TestCase
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
 
-  /**
-   * @testdox Không hoàn tiền voucher nếu chưa sử dụng
-   * @test
-   */
-  public function it_does_not_refund_voucher_if_not_used()
-  {
-    // Tạo voucher nhưng chưa áp dụng
-    $voucher = Voucher::factory()->create(['is_active' => true]);
-
-    // Tạo đơn hàng nhưng chưa dùng voucher
-    $order = Order::factory()->create(['order_status' => 'confirmed']);
-
-    // Cố gắng hoàn lại voucher
-    $result = $this->voucherService->refundVoucher($order);
-
-    // Kiểm tra thông báo lỗi
-    $this->assertFalse($result['success']);
-    $this->assertEquals('Không tìm thấy voucher để hoàn lại.', $result['message']);
-  }
-
-  /**
-   * @testdox Không hoàn tiền voucher nếu đơn hàng đã hoàn thành
-   * @test
-   */
-  public function it_does_not_refund_voucher_if_order_already_completed()
-  {
-    // Tạo voucher
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'discount_type' => 'percentage',
-      'discount_value' => 10,
-      'usage_limit' => 10,
-      'applied_count' => 2,
-    ]);
-
-    $customer = Customer::factory()->create();
-    // Tạo đơn hàng đã hoàn thành (completed)
-    $order = Order::factory()->create(['customer_id' => null, 'order_status' => 'completed', 'total_price' => 200]);
-
-    // Áp dụng voucher
-    $this->voucherService->applyVoucher($voucher, $order);
-
-    // Cố gắng hoàn lại voucher (đơn đã hoàn tất)
-    $result = $this->voucherService->refundVoucher($order);
-
-    // Kiểm tra rằng voucher không được hoàn lại
-    $this->assertFalse($result['success']);
-    $this->assertEquals('Không thể hoàn lại voucher vì đơn hàng đã hoàn tất.', $result['message']);
-  }
-
 
   /**
    * @testdox Không cho phép sử dụng voucher nếu vượt quá giới hạn tổng số lần sử dụng của khách hàng
@@ -619,5 +572,71 @@ class VoucherServiceTest extends TestCase
     $this->assertTrue($validVouchers->contains($validVoucher));
     $this->assertTrue($validVouchers->contains($validVoucher2));
     $this->assertFalse($validVouchers->contains($exceededDailyLimitVoucher));
+  }
+
+  /** @test */
+  public function it_returns_error_if_voucher_cannot_be_restored()
+  {
+    $transaction = Mockery::mock(\App\Contracts\VoucherApplicable::class);
+    $transaction->shouldReceive('canNotRestoreVoucher')->once()->andReturn(true);
+    $transaction->shouldReceive('getMsgVoucherCanNotRestore')->once()->andReturn(Msg::VOUCHER_CANNOT_RESTORE_FROM_INVOICE);
+
+    $result = $this->voucherService->restoreVoucherUsage($transaction);
+
+    $this->assertFalse($result['success']);
+    $this->assertEquals(Msg::VOUCHER_CANNOT_RESTORE_FROM_INVOICE, $result['message']);
+  }
+
+  /** @test */
+  public function it_returns_error_if_voucher_usage_not_found()
+  {
+    $transaction = Mockery::mock(\App\Contracts\VoucherApplicable::class);
+    $transaction->shouldReceive('canNotRestoreVoucher')->once()->andReturn(false);
+    $transaction->shouldReceive('getSourceIdField')->once()->andReturn('order_id');
+    $transaction->shouldReceive('getTransactionId')->once()->andReturn(999);
+    $transaction->shouldReceive('getMsgVoucherNotFound')->once()->andReturn(Msg::VOUCHER_RESTORE_NOT_FOUND);
+
+    $result = $this->voucherService->restoreVoucherUsage($transaction);
+
+    $this->assertFalse($result['success']);
+    $this->assertEquals(Msg::VOUCHER_RESTORE_NOT_FOUND, $result['message']);
+  }
+
+  /** @test */
+  public function it_successfully_restores_voucher_usage_into_order()
+  {
+    // Tạo voucher
+    $voucher = Voucher::create([
+      'code' => 'DISCOUNT50',
+      'discount_type' => 'percentage',
+      'discount_value' => 50,
+      'applied_count' => 1,
+      'usage_limit' => 10,
+    ]);
+    //Tạo order
+    $order = Order::factory()->create([
+      'order_status'  =>  OrderStatus::PENDING,
+      'voucher_id' => $voucher->id
+    ]);
+    // Tạo bản ghi sử dụng voucher
+    $voucherUsage = VoucherUsage::factory()->create([
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,  // Giả định đơn hàng có ID 123
+      'discount_amount' => 10000
+    ]);
+
+
+    // Gọi hàm restoreVoucherUsage()
+    $result = $this->voucherService->restoreVoucherUsage($order);
+
+    // Kiểm tra kết quả trả về
+    $this->assertTrue($result['success']);
+    $this->assertEquals(Msg::VOUCHER_RESTORE_SUCCESSFULL, $result['message']);
+
+    // Kiểm tra voucher đã được giảm `applied_count`
+    $this->assertEquals(0, $voucher->fresh()->applied_count);
+
+    // Kiểm tra bản ghi `VoucherUsage` đã bị xóa
+    $this->assertDatabaseMissing('voucher_usages', ['id' => $voucherUsage->id]);
   }
 }
