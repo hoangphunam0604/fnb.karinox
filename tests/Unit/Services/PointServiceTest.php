@@ -207,8 +207,8 @@ class PointServiceTest extends TestCase
       'customer_id' =>  $customer->id,
       'reward_points_used' => 10,
     ]);
-    $customer->refresh();
     $this->pointService->restoreTransactionRewardPoints($transaction);
+    $customer->refresh();
     $this->assertEquals(60, $customer->reward_points);
     $this->assertEquals(0, $transaction->reward_points_used);
   }

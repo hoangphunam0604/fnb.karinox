@@ -185,7 +185,6 @@ class PointService implements PointServiceInterface
 
       $rewardPointsUsed = $transaction->getRewardPointsUsed();
       if (!$rewardPointsUsed) return;
-      dump($rewardPointsUsed);
       $transaction->remoreRewardPointsUsed();
 
       $this->earnPoints($customer, 0, $rewardPointsUsed, [
@@ -233,7 +232,6 @@ class PointService implements PointServiceInterface
     $multiplier = max(1, ($customer->isBirthdayToday() && $customer->membershipLevel)
       ? $customer->membershipLevel->reward_multiplier ?? 1
       : 1);
-    dump($multiplier);
     return $pointsEarned * $multiplier;
   }
 
