@@ -45,30 +45,30 @@ class SystemSettingService
   /**
    * Lấy tỷ lệ quy đổi từ số tiền tiêu dùng sang điểm tích luỹ (mặc định: 25,000 VND = 1 điểm)
    *
-   * @return float
+   * @return int
    */
-  public function getPointConversionRate(): float
+  public function getPointConversionRate(): int
   {
-    return floatval($this->get('point_conversion_rate', 25000));
+    return intval($this->get('point_conversion_rate', 25000));
   }
 
   /**
    * Lấy tỷ lệ quy đổi điểm thưởng thành tiền (mặc định: 1,000 VND = 1 điểm)
    *
-   * @return float
+   * @return int
    */
-  public function getRewardPointConversionRate(): float
+  public function getRewardPointConversionRate(): int
   {
-    return floatval($this->get('reward_point_conversion_rate', 1000));
+    return intval($this->get('reward_point_conversion_rate', 1000));
   }
 
   /**
    * Lấy phần trăm thuế VAT (mặc định: 10%)
    *
-   * @return float
+   * @return int
    */
-  public function getTaxRate(): float
+  public function getTaxRate(): int
   {
-    return floatval($this->get('tax_rate', 10));
+    return intval($this->get('tax_rate', 10));
   }
 }

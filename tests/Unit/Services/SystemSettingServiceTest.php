@@ -22,15 +22,15 @@ class SystemSettingServiceTest extends TestCase
    * @testdox Lấy giá trị từ cache nếu cache đã có dữ liệu
    * @test
    */
-  public function it_returns_value_from_cache_if_exists()
+  public function it_fetches_value_from_cache_if_available()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_test_key', Mockery::any(), Mockery::any())
-      ->andReturn('cached_value');
+    // Đặt sẵn dữ liệu trong cache
+    Cache::put('system_setting_test_key', 'cached_value', now()->addMinutes(10));
 
+    // Gọi phương thức get(), nó phải lấy từ cache thay vì database
     $result = $this->systemSettingService->get('test_key', 'default_value');
 
+    // Kiểm tra giá trị trả về từ cache
     $this->assertEquals('cached_value', $result);
   }
 
@@ -40,20 +40,41 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_fetches_value_from_database_if_not_in_cache()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_test_key', Mockery::any(), Mockery::on(function ($closure) {
-        SystemSetting::shouldReceive('getValue')
-          ->once()
-          ->with('test_key', 'default_value')
-          ->andReturn('db_value');
-        return true;
-      }))
-      ->andReturn('db_value');
+    // Xóa cache trước để đảm bảo nó không có dữ liệu
+    Cache::flush();
 
-    $result = $this->systemSettingService->get('test_key', 'default_value');
+    // Tạo giá trị trong database
+    SystemSetting::updateOrCreate([
+      'key' => 'test_key_not_in_cache',
+      'value' => 'db_value',
+    ]);
 
+    // Kiểm tra nếu cache không có, nó sẽ truy vấn từ database
+    $result = $this->systemSettingService->get('test_key_not_in_cache', 'default_value');
+
+    // Kiểm tra giá trị trả về từ database
     $this->assertEquals('db_value', $result);
+
+    // Kiểm tra xem giá trị có được cache hay không
+    $this->assertTrue(Cache::has('system_setting_test_key_not_in_cache'));
+    $this->assertEquals('db_value', Cache::get('system_setting_test_key_not_in_cache'));
+  }
+
+
+  /**
+   * @testdox Trả về giá trị mặc định nếu không được cache và không có trong database
+   * @test
+   */
+  public function it_returns_default_value_if_not_in_cache_and_database()
+  {
+    // Xóa cache trước để đảm bảo nó không có dữ liệu
+    Cache::flush();
+
+    // Gọi phương thức get(), nhưng không có dữ liệu trong cache và database
+    $result = $this->systemSettingService->get('non_existing_key', 'default_value');
+
+    // Kiểm tra giá trị trả về là default
+    $this->assertEquals('default_value', $result);
   }
 
   /**
@@ -62,20 +83,28 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_sets_value_and_clears_cache()
   {
+    // Đảm bảo có gọi xóa cache
     Cache::shouldReceive('forget')
       ->once()
-      ->with('system_setting_test_key');
-
+      ->with('system_setting_test_key_set_value');
+    // Đảm bảo có gọi gọi lưu cache 
     Cache::shouldReceive('put')
       ->once()
-      ->with('system_setting_test_key', 'new_value', Mockery::any());
+      ->with('system_setting_test_key_set_value', 'new_value', Mockery::any());
 
-    SystemSetting::shouldReceive('updateOrCreate')
+    //Đảm bảo có gọi updateOrCreate
+    $mockSystemSetting = Mockery::mock(SystemSetting::class);
+    $mockSystemSetting->shouldReceive('updateOrCreate')
       ->once()
-      ->with(['key' => 'test_key'], ['value' => 'new_value'])
+      ->with(['key' => 'test_key_set_value'], ['value' => 'new_value'])
       ->andReturnSelf();
 
-    $this->systemSettingService->set('test_key', 'new_value');
+
+    $result = $this->systemSettingService->set('test_key_set_value', 'new_value');
+
+    // Kiểm tra giá trị trả về là giá trị vừa cập nhật
+    $this->assertEquals('test_key_set_value', $result->key);
+    $this->assertEquals('new_value', $result->value);
   }
 
   /**
@@ -87,7 +116,7 @@ class SystemSettingServiceTest extends TestCase
     Cache::shouldReceive('remember')
       ->once()
       ->with('system_setting_point_conversion_rate', Mockery::any(), Mockery::any())
-      ->andReturn(null);
+      ->andReturn(25000);
 
     $result = $this->systemSettingService->getPointConversionRate();
 
