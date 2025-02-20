@@ -276,8 +276,8 @@ class OrderServiceTest extends TestCase
     $customer = Customer::factory()->create(['reward_points' => 2000]);
     $product = Product::factory()->create(['price' => 100000]);
 
-    // Mock applyVoucherToOrder để không gọi thực tế
-    $this->pointServiceMock->shouldReceive('useRewardPointsForOrder')
+    // Mock useRewardPoints để không gọi thực tế
+    $this->pointServiceMock->shouldReceive('useRewardPoints')
       ->once()
       ->with(\Mockery::type(Order::class), 20)
       ->andReturnUsing(function ($order) {
@@ -440,7 +440,7 @@ class OrderServiceTest extends TestCase
     $customer = Customer::factory()->create(['reward_points' => 2000]);
     $order = Order::factory()->create(['customer_id' => $customer->id, 'total_price' => 100000]);
 
-    $this->pointServiceMock->shouldReceive('useRewardPointsForOrder')
+    $this->pointServiceMock->shouldReceive('useRewardPoints')
       ->once()
       ->with(\Mockery::on(fn($arg) => $arg instanceof Order), 2000);
 
@@ -457,7 +457,7 @@ class OrderServiceTest extends TestCase
   {
     $order = Order::factory()->create(['customer_id' => null, 'total_price' => 100000]);
 
-    $this->pointServiceMock->shouldNotReceive('useRewardPointsForOrder');
+    $this->pointServiceMock->shouldNotReceive('useRewardPoints');
 
     $updatedOrder = $this->orderService->applyRewardPoints($order, 2000);
 
