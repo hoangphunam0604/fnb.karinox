@@ -83,28 +83,31 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_sets_value_and_clears_cache()
   {
-    // Đảm bảo có gọi xóa cache
-    Cache::shouldReceive('forget')
-      ->once()
-      ->with('system_setting_test_key_set_value');
-    // Đảm bảo có gọi gọi lưu cache 
-    Cache::shouldReceive('put')
-      ->once()
-      ->with('system_setting_test_key_set_value', 'new_value', Mockery::any());
-
-    //Đảm bảo có gọi updateOrCreate
-    $mockSystemSetting = Mockery::mock(SystemSetting::class);
-    $mockSystemSetting->shouldReceive('updateOrCreate')
-      ->once()
-      ->with(['key' => 'test_key_set_value'], ['value' => 'new_value'])
-      ->andReturnSelf();
+    // Xóa cache để đảm bảo không có dữ liệu cũ
+    Cache::flush();
 
 
+    // Đặt một giá trị giả vào cache trước để kiểm tra việc xóa
+    Cache::put('system_setting_test_key_set_value', 'old_value', now()->addMinutes(10));
+
+    // Gọi phương thức set()
     $result = $this->systemSettingService->set('test_key_set_value', 'new_value');
 
-    // Kiểm tra giá trị trả về là giá trị vừa cập nhật
+
+
+    // Kiểm tra cache đã lưu giá trị mới
+    $this->assertTrue(Cache::has('system_setting_test_key_set_value'));;
+
+    // Kiểm tra dữ liệu trả về từ phương thức set()
+    $this->assertInstanceOf(SystemSetting::class, $result);
     $this->assertEquals('test_key_set_value', $result->key);
     $this->assertEquals('new_value', $result->value);
+
+    // Kiểm tra dữ liệu đã thực sự được lưu vào database
+    $this->assertDatabaseHas('system_settings', [
+      'key' => 'test_key_set_value',
+      'value' => 'new_value'
+    ]);
   }
 
   /**
@@ -113,13 +116,13 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_default_point_conversion_rate_if_not_set()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_point_conversion_rate', Mockery::any(), Mockery::any())
-      ->andReturn(25000);
-
+    // Xóa cache và đảm bảo database không có dữ liệu
+    Cache::flush();
+    SystemSetting::where('key', 'point_conversion_rate')->delete();
+    // Không tạo dữ liệu trong database để kiểm tra giá trị mặc định
     $result = $this->systemSettingService->getPointConversionRate();
 
+    // Kiểm tra giá trị trả về phải là mặc định 25000
     $this->assertEquals(25000, $result);
   }
 
@@ -129,14 +132,14 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_saved_point_conversion_rate()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_point_conversion_rate', Mockery::any(), Mockery::any())
-      ->andReturn(30000);
+    // Xóa cache 
+    Cache::flush();
+    // Tạo dữ liệu được thiết lập trong database
+    SystemSetting::updateOrCreate(['key' => 'point_conversion_rate', 'value' => 10000]);
 
     $result = $this->systemSettingService->getPointConversionRate();
 
-    $this->assertEquals(30000, $result);
+    $this->assertEquals(10000, $result);
   }
 
   /**
@@ -145,13 +148,13 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_default_reward_point_conversion_rate_if_not_set()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_reward_point_conversion_rate', Mockery::any(), Mockery::any())
-      ->andReturn(null);
-
+    // Xóa cache và đảm bảo database không có dữ liệu
+    Cache::flush();
+    SystemSetting::where('key', 'reward_point_conversion_rate')->delete();
+    // Không tạo dữ liệu trong database để kiểm tra giá trị mặc định
     $result = $this->systemSettingService->getRewardPointConversionRate();
 
+    // Kiểm tra giá trị trả về phải là mặc định 1000
     $this->assertEquals(1000, $result);
   }
 
@@ -161,10 +164,10 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_saved_reward_point_conversion_rate()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_reward_point_conversion_rate', Mockery::any(), Mockery::any())
-      ->andReturn(1500);
+    // Xóa cache 
+    Cache::flush();
+    // Tạo dữ liệu được thiết lập trong database
+    SystemSetting::updateOrCreate(['key' => 'reward_point_conversion_rate', 'value' => 1500]);
 
     $result = $this->systemSettingService->getRewardPointConversionRate();
 
@@ -177,13 +180,13 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_default_tax_rate_if_not_set()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_tax_rate', Mockery::any(), Mockery::any())
-      ->andReturn(null);
-
+    // Xóa cache và đảm bảo database không có dữ liệu
+    Cache::flush();
+    SystemSetting::where('key', 'tax_rate')->delete();
+    // Không tạo dữ liệu trong database để kiểm tra giá trị mặc định
     $result = $this->systemSettingService->getTaxRate();
 
+    // Kiểm tra giá trị trả về phải là mặc định 10 (%)
     $this->assertEquals(10, $result);
   }
 
@@ -193,13 +196,13 @@ class SystemSettingServiceTest extends TestCase
    */
   public function it_returns_saved_tax_rate()
   {
-    Cache::shouldReceive('remember')
-      ->once()
-      ->with('system_setting_tax_rate', Mockery::any(), Mockery::any())
-      ->andReturn(8);
+    // Xóa cache 
+    Cache::flush();
+    // Tạo dữ liệu được thiết lập trong database
+    SystemSetting::updateOrCreate(['key' => 'tax_rate', 'value' => 15]);
 
     $result = $this->systemSettingService->getTaxRate();
 
-    $this->assertEquals(8, $result);
+    $this->assertEquals(15, $result);
   }
 }
