@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Services;
 
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\Order;
@@ -41,10 +43,8 @@ class OrderServiceTest extends TestCase
     $this->orderService = app(OrderService::class);
   }
 
-  /** 
-   * @testdox Tìm kiếm đơn đặt hàng theo mã
-   * @test 
-   */
+  #[Test]
+  #[TestDox("Tìm kiếm đơn đặt hàng theo mã")]
   public function it_can_find_order_by_code()
   {
     $order = Order::factory()->create(['order_code' => 'ORDER123']);

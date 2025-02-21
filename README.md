@@ -1,330 +1,66 @@
-# Hệ thống FnB KarinoX
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-## Yêu cầu
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## Cài đặt
+## About Laravel
 
-## Test
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-```sh
-rm -rf vendor/phpunit/phpunit/cache
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-php artisan migrate:fresh --env=testing
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-php artisan test --filter=OrderServiceTest --testdox
-php artisan test --filter=VoucherServiceTest --testdox
-php artisan test --filter=InvoiceServiceTest --testdox
-php artisan test --filter=SystemSettingServiceTest --testdox
-php artisan test --filter=MembershipUpgradeServiceTest
+## Learning Laravel
 
-```
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-## Phân tích hệ thống
+You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-### **Tổng hợp các bảng dữ liệu quan trọng của hệ thống bán hàng quán cà phê**
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
----
+## Laravel Sponsors
 
--   ~~**`shelves`**: Lưu danh sách kệ sản phẩm để tái sử dụng.~~
--   ~~**`product_shelves`**: Lưu thông tin kệ sản phẩm để tái sử dụng.~~
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-## **Quản lý khách hàng và thành viên**
+### Premium Partners
 
--   **`customers`**: Lưu thông tin khách hàng.
+- **[Vehikl](https://vehikl.com/)**
+- **[Tighten Co.](https://tighten.co)**
+- **[WebReinvent](https://webreinvent.com/)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+- **[Cyber-Duck](https://cyber-duck.co.uk)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Jump24](https://jump24.co.uk)**
+- **[Redberry](https://redberry.international/laravel/)**
+- **[Active Logic](https://activelogic.com)**
+- **[byte5](https://byte5.de)**
+- **[OP.GG](https://op.gg)**
 
--   **`customer_points`**: Quản lý điểm thưởng của khách hàng.
+## Contributing
 
-## **1. Quản lý chi nhánh**
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
--   **`branches`**: Lưu thông tin các chi nhánh của hệ thống.
--   **`areas`**: Quản lý khu vực trong quán.
--   **`tables_and_rooms`**: Quản lý bàn/phòng sử dụng trong quán.
+## Code of Conduct
 
----
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## **2. Quản lý sản phẩm**
+## Security Vulnerabilities
 
--   **`categories`**: Quản lý danh mục sản phẩm theo dạng cha - con.
--   **`attributes`**: Lưu danh sách các thuộc tính sản phẩm.
--   **`products`**: Lưu thông tin sản phẩm bao gồm tên, mã, giá bán, loại sản phẩm, v.v.
--   **`product_branches`**: Quản lý sản phẩm theo từng chi nhánh và tồn kho tại mỗi chi nhánh.
--   **`product_attributes`**: Liên kết sản phẩm với thuộc tính và giá trị của nó.
--   **`product_formulas`**: Quản lý công thức của sản phẩm chế biến.
--   **`product_toppings`**: Lưu danh sách sản phẩm có thể được bán kèm (topping).
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
----
+## License
 
-## **3. Quản lý kho**
-
--   **`inventory_receipts`**: Lưu thông tin nhập kho, xuất kho và chuyển kho.
--   **`inventory_transactions`**: Chi tiết từng sản phẩm nhập/xuất trong mỗi phiếu kho.
-
----
-
-## **4. Quản lý đặt hàng và bán hàng**
-
--   **`orders`**: Lưu thông tin đơn đặt hàng chưa thanh toán.
--   **`order_items`**: Chi tiết từng sản phẩm trong đơn đặt hàng.
--   **`order_toppings`**: Mỗi sản phẩm trong đơn hàng có thể có thêm topping
--   **`order_histories`**: Lưu lịch sử thay đổi trạng thái đơn hàng.
-
----
-
-## **5. Quản lý hóa đơn**
-
--   **`invoices`**: Lưu thông tin giao dịch đã thanh toán.
--   **`invoice_details`**: Lưu chi tiết sản phẩm trong hóa đơn.
-
----
-
-## **6. Quản lý mã giảm giá**
-
--   **`vouchers`**: Quản lý danh sách mã giảm giá.
--   **`order_vouchers`**: Lưu thông tin mã giảm giá đã sử dụng trong đơn hàng.
-
----
-
-## Các trường trong từng bảng dữ liệu
-
--   Bảng dữ liệu **`branches`**: Lưu thông tin các chi nhánh của hệ thống.
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-  $table->string('name');
-  $table->string('phone_number')->nullable();
-  $table->string('email')->nullable();
-  $table->string('address')->nullable();
-  $table->enum('status', ['active', 'inactive'])->default('active');
-```
-
----
-
--   bảng **`areas`**: Quản lý khu vực trong quán.
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-````php
-```
-
----
-
--   bảng **`tables_and_rooms`**: Quản lý bàn/phòng sử dụng trong quán.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`categories`**: Quản lý danh mục sản phẩm theo dạng cha - con.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`attributes`**: Lưu danh sách các thuộc tính sản phẩm.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`products`**: Lưu thông tin sản phẩm bao gồm tên, mã, giá bán, loại sản phẩm, v.v.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`product_branches`**: Quản lý sản phẩm theo từng chi nhánh và tồn kho tại mỗi chi nhánh.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`product_attributes`**: Liên kết sản phẩm với thuộc tính và giá trị của nó.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`product_formulas`**: Quản lý công thức của sản phẩm chế biến.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`product_toppings`**: Lưu danh sách sản phẩm có thể được bán kèm (topping).
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`inventory_receipts`**: Lưu thông tin nhập kho, xuất kho và chuyển kho.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`inventory_transactions`**: Chi tiết từng sản phẩm nhập/xuất trong mỗi phiếu kho.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`orders`**: Lưu thông tin đơn đặt hàng chưa thanh toán.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`order_items`**: Chi tiết từng sản phẩm trong đơn đặt hàng.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`order_toppings`**: Mỗi sản phẩm trong đơn hàng có thể có thêm topping
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`order_histories`**: Lưu lịch sử thay đổi trạng thái đơn hàng.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`invoices`**: Lưu thông tin giao dịch đã thanh toán.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
--   bảng **`invoice_details`**: Lưu chi tiết sản phẩm trong hóa đơn.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
-## **6. Quản lý mã giảm giá**
-
--   bảng **`vouchers`**: Quản lý danh sách mã giảm giá.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
--   bảng **`order_vouchers`**: Lưu thông tin mã giảm giá đã sử dụng trong đơn hàng.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
-
----
-
-## **7. Quản lý khách hàng và thành viên**
-
--   bảng **`customers`**: Lưu thông tin khách hàng.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-```
--   bảng **`customer_points`**: Quản lý điểm thưởng của khách hàng.
-
-
-
-    Nội dung file migration tạo các trường của nó như sau:
-
-```php
-````
-
-```
-
-```
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
