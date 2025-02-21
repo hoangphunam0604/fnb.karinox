@@ -25,6 +25,14 @@ class VoucherUsage extends Model
   protected $primaryKey = ['voucher_id', 'order_id']; // Định nghĩa khóa chính phức hợp
   public $incrementing = false; // Không có cột ID tự động tăng
 
+  //Ghi đè phương thức delete để xử lý xóa dữ liệu 
+  public function delete()
+  {
+    return static::where('voucher_id', $this->voucher_id)
+      ->where('order_id', $this->order_id)
+      ->delete();
+  }
+
   public function voucher()
   {
     return $this->belongsTo(Voucher::class);

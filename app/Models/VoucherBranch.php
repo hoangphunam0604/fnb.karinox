@@ -15,6 +15,14 @@ class VoucherBranch extends Model
 
   protected $fillable = ['voucher_id', 'branch_id'];
 
+  //Ghi đè phương thức delete để xử lý xóa dữ liệu 
+  public function delete()
+  {
+    return static::where('voucher_id', $this->voucher_id)
+      ->where('branch_id', $this->branch_id)
+      ->delete();
+  }
+
   public function voucher()
   {
     return $this->belongsTo(Voucher::class);

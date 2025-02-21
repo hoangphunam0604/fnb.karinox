@@ -199,6 +199,6 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   public function removeVoucherUsed(): void
   {
-    // $this->update(['voucher_id' => null]);
+    $this->update(['voucher_id' => null]);
   }
 }

@@ -356,23 +356,20 @@ class VoucherService
         'message' => $transaction->getMsgVoucherCanNotRestore()
       ];
     }
-
-    $voucherUsage = VoucherUsage::where($transaction->getSourceIdField(), $transaction->getTransactionId())->first();
+    $voucherUsage = VoucherUsage::where((string) $transaction->getSourceIdField(), $transaction->getTransactionId())->first();
     if (!$voucherUsage) {
       return ['success' => false, 'message' => $transaction->getMsgVoucherNotFound()];
     }
-    /* 
     DB::transaction(function () use ($voucherUsage, $transaction) {
       // Hoàn lại số lần sử dụng voucher
       $voucher = Voucher::find($voucherUsage->voucher_id);
       if ($voucher) {
         $voucher->decrement('applied_count');
       }
-
       // Xóa bản ghi sử dụng voucher
       $voucherUsage->delete();
       $transaction->removeVoucherUsed();
-    }); */
+    });
 
     return ['success' => true, 'message' => Msg::VOUCHER_RESTORE_SUCCESSFULL];
   }

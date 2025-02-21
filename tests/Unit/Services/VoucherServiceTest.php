@@ -13,6 +13,7 @@ use App\Services\VoucherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 
 /**
@@ -603,6 +604,41 @@ class VoucherServiceTest extends TestCase
   }
 
   /** @test */
+  public function it_fails_if_order_completed_or_not_use_voucher()
+  {
+    $order = Order::factory()->create(['voucher_id' => null]); // Không có voucher
+
+    $result = $this->voucherService->restoreVoucherUsage($order);
+
+    $this->assertFalse($result['success']);
+    $this->assertEquals($order->getMsgVoucherCanNotRestore(), $result['message']);
+  }
+
+  /** @test */
+  public function it_fails_if_order_has_voucher_not_has_into_usage()
+  { // Tạo voucher
+    $voucher = Voucher::create([
+      'code' => 'DISCOUNT50',
+      'discount_type' => 'percentage',
+      'discount_value' => 50,
+      'applied_count' => 1,
+      'usage_limit' => 10,
+    ]);
+    //Tạo order
+    $order = Order::factory()->create([
+      'order_status'  =>  OrderStatus::PENDING,
+      'voucher_id' => $voucher->id,
+      'voucher_code' => $voucher->code
+    ]);
+    //Không tạo VoucherUsage liên quan
+
+    $result = $this->voucherService->restoreVoucherUsage($order);
+
+    $this->assertFalse($result['success']);
+    $this->assertEquals($order->getMsgVoucherNotFound(), $result['message']);
+  }
+
+  /** @test */
   public function it_successfully_restores_voucher_usage_into_order()
   {
     // Tạo voucher
@@ -616,18 +652,21 @@ class VoucherServiceTest extends TestCase
     //Tạo order
     $order = Order::factory()->create([
       'order_status'  =>  OrderStatus::PENDING,
-      'voucher_id' => $voucher->id
+      'voucher_id' => $voucher->id,
+      'voucher_code' => $voucher->code
     ]);
     // Tạo bản ghi sử dụng voucher
-    $voucherUsage = VoucherUsage::factory()->create([
+    VoucherUsage::factory()->create([
       'voucher_id' => $voucher->id,
       'order_id' => $order->id,  // Giả định đơn hàng có ID 123
       'discount_amount' => 10000
     ]);
 
-
     // Gọi hàm restoreVoucherUsage()
     $result = $this->voucherService->restoreVoucherUsage($order);
+
+    //Làm mới dữ liệu order
+    $order->fresh();
 
     // Kiểm tra kết quả trả về
     $this->assertTrue($result['success']);
@@ -637,6 +676,67 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals(0, $voucher->fresh()->applied_count);
 
     // Kiểm tra bản ghi `VoucherUsage` đã bị xóa
-    $this->assertDatabaseMissing('voucher_usages', ['id' => $voucherUsage->id]);
+    $this->assertDatabaseMissing('voucher_usages', [
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,
+    ]);
+
+    //Kiểm tra voucher_id đã được xóa trong order
+    $this->assertNull($order->voucher_id);
+
+    //Đảm bảo mã voucher vẫn được giữ lại để dễ ra soát
+    $this->assertEquals($voucher->code, $order->voucher_code);
+  }
+
+  /** @test */
+  public function it_rollback_order_and_voucher_if_transaction_faild()
+  {
+    DB::shouldReceive('transaction')->once()->andThrow(new \Exception('Fake error'));
+
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('Fake error');
+
+
+    // Tạo voucher
+    $voucher = Voucher::create([
+      'code' => 'DISCOUNT50',
+      'discount_type' => 'percentage',
+      'discount_value' => 50,
+      'applied_count' => 1,
+      'usage_limit' => 10,
+    ]);
+    //Tạo order
+    $order = Order::factory()->create([
+      'order_status'  =>  OrderStatus::PENDING,
+      'voucher_id' => $voucher->id,
+      'voucher_code' => $voucher->code
+    ]);
+    // Tạo bản ghi sử dụng voucher
+    VoucherUsage::factory()->create([
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,  // Giả định đơn hàng có ID 123
+      'discount_amount' => 10000
+    ]);
+
+    // Gọi hàm restoreVoucherUsage()
+    $result = $this->voucherService->restoreVoucherUsage($order);
+
+    //Làm mới dữ liệu order
+    $order->fresh();
+
+    // Kiểm tra voucher không giảm `applied_count`
+    $this->assertEquals(1, $voucher->fresh()->applied_count);
+
+    // Kiểm tra bản ghi `VoucherUsage` không bị xóa
+    $this->assertDatabaseHas('voucher_usages', [
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,
+    ]);
+
+    //Kiểm tra voucher_id vẫn được giữ trong order
+    $this->assertEquals($voucher->id, $order->voucher_id);
+
+    //Đảm bảo mã voucher vẫn được giữ lại
+    $this->assertEquals($voucher->code, $order->voucher_code);
   }
 }

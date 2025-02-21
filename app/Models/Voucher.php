@@ -33,6 +33,7 @@ class Voucher extends Model
   ];
 
   protected $casts = [
+    'applied_count' => 'integer',
     'applicable_membership_levels' => 'array',
     'valid_days_of_week' => 'array',
     'valid_weeks_of_month' => 'array',
