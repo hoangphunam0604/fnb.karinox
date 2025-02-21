@@ -18,10 +18,7 @@ class SystemSettingServiceTest extends TestCase
     $this->systemSettingService = new SystemSettingService();
   }
 
-  /**
-   * @testdox Lấy giá trị từ cache nếu cache đã có dữ liệu
-   * @test
-   */
+
   public function it_fetches_value_from_cache_if_available()
   {
     // Đặt sẵn dữ liệu trong cache
@@ -34,10 +31,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals('cached_value', $result);
   }
 
-  /**
-   * @testdox Lấy giá trị từ database nếu cache không có dữ liệu
-   * @test
-   */
+
   public function it_fetches_value_from_database_if_not_in_cache()
   {
     // Xóa cache trước để đảm bảo nó không có dữ liệu
@@ -61,10 +55,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
-  /**
-   * @testdox Trả về giá trị mặc định nếu không được cache và không có trong database
-   * @test
-   */
+
   public function it_returns_default_value_if_not_in_cache_and_database()
   {
     // Xóa cache trước để đảm bảo nó không có dữ liệu
@@ -77,10 +68,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals('default_value', $result);
   }
 
-  /**
-   * @testdox Cập nhật giá trị và xóa cache sau khi cập nhật
-   * @test
-   */
+
   public function it_sets_value_and_clears_cache()
   {
     // Xóa cache để đảm bảo không có dữ liệu cũ
@@ -110,10 +98,7 @@ class SystemSettingServiceTest extends TestCase
     ]);
   }
 
-  /**
-   * @testdox Trả về tỷ lệ quy đổi điểm tích luỹ mặc định nếu chưa có thiết lập
-   * @test
-   */
+
   public function it_returns_default_point_conversion_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -126,10 +111,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals(25000, $result);
   }
 
-  /**
-   * @testdox Trả về tỷ lệ quy đổi điểm tích luỹ đã được thiết lập
-   * @test
-   */
+
   public function it_returns_saved_point_conversion_rate()
   {
     // Xóa cache 
@@ -142,10 +124,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals(10000, $result);
   }
 
-  /**
-   * @testdox Trả về tỷ lệ quy đổi điểm thưởng thành tiền mặc định nếu chưa có thiết lập
-   * @test
-   */
+
   public function it_returns_default_reward_point_conversion_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -158,10 +137,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals(1000, $result);
   }
 
-  /**
-   * @testdox Trả về tỷ lệ quy đổi điểm thưởng thành tiền đã được thiết lập
-   * @test
-   */
+
   public function it_returns_saved_reward_point_conversion_rate()
   {
     // Xóa cache 
@@ -174,10 +150,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals(1500, $result);
   }
 
-  /**
-   * @testdox Trả về phần trăm thuế mặc định nếu chưa có thiết lập
-   * @test
-   */
+
   public function it_returns_default_tax_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -190,10 +163,7 @@ class SystemSettingServiceTest extends TestCase
     $this->assertEquals(10, $result);
   }
 
-  /**
-   * @testdox Trả về phần trăm thuế đã được thiết lập
-   * @test
-   */
+
   public function it_returns_saved_tax_rate()
   {
     // Xóa cache 

@@ -20,9 +20,6 @@ class TableAndRoomServiceTest extends TestCase
     $this->tableAndRoomService = new TableAndRoomService();
   }
 
-  /**
-   * Test tạo phòng/bàn mới
-   */
   public function test_create_table_or_room()
   {
     $area = Area::factory()->create();
@@ -40,9 +37,6 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertEquals('reserved', $tableOrRoom->status);
   }
 
-  /**
-   * Test cập nhật phòng/bàn
-   */
   public function test_update_table_or_room()
   {
     $tableOrRoom = TableAndRoom::factory()->create();
@@ -55,9 +49,6 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertDatabaseHas('tables_and_rooms', ['id' => $tableOrRoom->id, 'name' => 'Bàn số 5', 'status' => 'occupied']);
   }
 
-  /**
-   * Test tìm kiếm phòng/bàn theo tên
-   */
   public function test_find_table_or_room_by_name()
   {
     $tableOrRoom = TableAndRoom::factory()->create(['name' => 'Bàn ngoài trời']);
@@ -68,9 +59,6 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertEquals('Bàn ngoài trời', $foundTableOrRoom->name);
   }
 
-  /**
-   * Test xóa phòng/bàn
-   */
   public function test_delete_table_or_room()
   {
     $tableOrRoom = TableAndRoom::factory()->create();

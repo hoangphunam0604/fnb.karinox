@@ -9,17 +9,11 @@ use App\Models\Customer;
 use App\Models\MembershipLevel;
 use App\Jobs\Tasks\AnnualPointsAndMembershipProcess;
 
-/**
- * @testdox Kiểm tra xử lý reset điểm và cập nhật cấp độ thành viên
- */
+
 class AnnualPointsAndMembershipProcessTest extends TestCase
 {
   use RefreshDatabase;
 
-  /**
-   * @testdox Reset điểm 
-   * @test
-   */
   public function it_resets_points()
   {
     // Tạo cấp độ thành viên
@@ -45,10 +39,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
     $this->assertEquals(0, $customer->used_reward_points);
   }
 
-  /**
-   * @testdox Không thay đổi hạng nếu điểm tích lũy vẫn đủ duy trì cấp bậc hiện tại
-   * @test
-   */
+
   public function it_does_not_change_membership_if_loyalty_points_are_sufficient_to_maintain_level()
   {
     $gold = MembershipLevel::factory()->create(['name' => 'Gold', 'min_spent' => 500000, 'rank' => 2]);
@@ -72,10 +63,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
     $this->assertEquals($gold->id, $customer->membership_level_id);
   }
 
-  /**
-   * @testdox Nếu điểm tích luỹ không đủ trụ hạng sẽ bị tụt hạng
-   * @test
-   */
+
   public function it_downgrades_membership_if_loyalty_points_are_not_sufficient()
   {
     // Tạo cấp độ thành viên
@@ -99,10 +87,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
     $this->assertEquals($silver->id, $customer->membership_level_id);
   }
 
-  /**
-   * @testdox Nếu điểm tích luỹ có thể tăng hạng thì tăng hạng
-   * @test
-   */
+
   public function it_upgrades_membership_if_loyalty_points_are_sufficient()
   {
     // Tạo cấp độ thành viên
@@ -128,10 +113,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
   }
 
 
-  /**
-   * @testdox Nếu thứ hạng đang ở cao nhất thì không thay đổi thứ hạng
-   * @test
-   */
+
   public function it_does_not_change_rank_if_already_at_highest_level()
   {
     // Tạo cấp độ cao nhất
@@ -153,10 +135,7 @@ class AnnualPointsAndMembershipProcessTest extends TestCase
     $customer->refresh();
     $this->assertEquals($diamond->id, $customer->membership_level_id);
   }
-  /**
-   * @testdox Xử lý nhiều khách hàng trong một lần chạy
-   * @test
-   */
+
   public function it_processes_multiple_customers_in_one_job()
   {
     // Tạo cấp độ thành viên

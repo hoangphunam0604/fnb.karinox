@@ -55,10 +55,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals($order->id, $foundOrder->id);
   }
 
-  /** 
-   * @testdox Lấy danh sách đơn đặt hàng có phân trang
-   * @test 
-   */
+
   public function it_can_get_paginated_orders()
   {
     Order::factory()->count(15)->create();
@@ -69,10 +66,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(15, $orders->total());
   }
 
-  /** 
-   * @testdox Tạo đơn hàng với sản phẩm không có topping thành công
-   * @test 
-   */
+
   public function it_can_create_order_without_toppings()
   {
     $product = Product::factory()->create(['price' => 50000]);
@@ -87,10 +81,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(50000, $order->total_price);
   }
 
-  /** 
-   * @testdox Tạo đơn hàng với sản phẩm có topping thành công
-   * @test 
-   */
+
   public function it_can_create_order_with_toppings()
   {
     $product = Product::factory()->create(['price' => 50000, 'is_topping' => false]);
@@ -111,10 +102,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(60000, $order->total_price);
   }
 
-  /** 
-   * @testdox Cập nhật đơn hàng từ sản phẩm không có topping thành sản phẩm có topping thành công
-   * @test 
-   */
+
   public function it_can_update_order_from_no_toppings_to_with_toppings()
   {
     $product1 = Product::factory()->create(['price' => 30000, 'is_topping' => false]);
@@ -143,10 +131,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(90000, $updatedOrder->total_price);
   }
 
-  /** 
-   * @testdox Cập nhật đơn hàng từ sản phẩm có topping thành sản phẩm không có topping thành công
-   * @test 
-   */
+
   public function it_can_update_order_from_with_toppings_to_no_toppings()
   {
     $order = Order::factory()->create();
@@ -184,10 +169,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(80000, $updatedOrder->total_price);
   }
 
-  /** 
-   * @testdox Tạo đơn hàng với mã giảm giá hợp lệ thành công
-   * @test 
-   */
+
   public function it_can_create_order_with_valid_voucher()
   {
     $product = Product::factory()->create(['price' => 100000]);
@@ -214,10 +196,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(90000, $order->total_price); // 10% giảm từ 100000
   }
 
-  /** 
-   * @testdox Tạo đơn hàng với mã giảm giá không hợp lệ thành công
-   * @test 
-   */
+
   public function it_can_create_order_with_invalid_voucher()
   {
     $product = Product::factory()->create(['price' => 100000]);
@@ -246,10 +225,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(0, $order->discount_amount);
     $this->assertEquals(100000, $order->total_price); // Không áp dụng giảm giá
   }
-  /**
-   * @testdox Tạo đơn hàng sử dụng điểm thưởng thành công
-   * @test
-   */
+
   public function it_can_create_order_with_reward_points()
   {
     $customer = Customer::factory()->create(['reward_points' => 2000]);
@@ -281,10 +257,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(20000, $order->reward_discount);
     $this->assertEquals(80000, $order->total_price);
   }
-  /**
-   * @testdox Tính tiền đơn hàng thành công
-   * @test
-   */
+
   public function it_can_update_total_price()
   {
     $order = Order::factory()->create();
@@ -311,10 +284,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(2000, $order->reward_discount);
     $this->assertEquals(93000, $order->total_price); // 100000 - 5000 - 2000
   }
-  /** 
-   * @testdox Xác nhận đơn hàng thành công
-   * @test 
-   */
+
   public function it_can_confirm_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -324,10 +294,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CONFIRMED, $confirmedOrder->order_status);
   }
 
-  /** 
-   * @testdox Hủy đơn hàng thành công
-   * @test 
-   */
+
   public function it_can_cancel_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -337,10 +304,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CANCELED, $cancelledOrder->order_status);
   }
 
-  /** 
-   * @testdox Hủy đơn hàng thất bại khi đơn hàng đã hoàn tất
-   * @test 
-   */
+
   public function it_cannot_cancel_completed_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED]);
@@ -351,10 +315,7 @@ class OrderServiceTest extends TestCase
     $this->orderService->cancelOrder($order->id);
   }
 
-  /** 
-   * @testdox Hoàn tất đơn hàng thành công
-   * @test 
-   */
+
   public function it_can_mark_order_as_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
@@ -370,10 +331,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::COMPLETED, $completedOrder->order_status);
   }
 
-  /** 
-   * @testdox Hoàn tất đơn hàng thất bại khi đã hoàn tất trước đó
-   * @test 
-   */
+
   public function it_cannot_complete_order_already_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED, 'total_price' => 50000]);
@@ -384,10 +342,7 @@ class OrderServiceTest extends TestCase
     $this->orderService->markAsCompleted($order->id, 50000);
   }
 
-  /** 
-   * @testdox Hoàn tất đơn hàng thất bại khi số tiền thanh toán không đủ
-   * @test 
-   */
+
   public function it_cannot_complete_order_with_insufficient_payment()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
@@ -397,10 +352,7 @@ class OrderServiceTest extends TestCase
 
     $this->orderService->markAsCompleted($order->id, 30000);
   }
-  /** 
-   * @testdox Cập nhật trạng thái đơn hàng thành công
-   * @test 
-   */
+
   public function it_can_update_order_status()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -410,10 +362,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CONFIRMED, $updatedOrder->order_status);
   }
 
-  /** 
-   * @testdox Kiểm tra và áp dụng điểm thưởng thành công
-   * @test 
-   */
+
   public function it_can_apply_reward_points()
   {
     $customer = Customer::factory()->create(['reward_points' => 2000]);
@@ -428,10 +377,7 @@ class OrderServiceTest extends TestCase
     $this->assertNotNull($updatedOrder);
   }
 
-  /** 
-   * @testdox Kiểm tra và áp dụng điểm thưởng thất bại khi không có khách hàng
-   * @test 
-   */
+
   public function it_cannot_apply_reward_points_without_customer()
   {
     $order = Order::factory()->create(['customer_id' => null, 'total_price' => 100000]);

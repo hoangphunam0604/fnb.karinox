@@ -38,7 +38,7 @@ class InvoiceServiceTest extends TestCase
 
     $this->invoiceService = app(InvoiceService::class);
   }
-  /** @test */
+
   public function it_paginates_invoice_list()
   {
     Invoice::factory()->count(5)->create();
@@ -48,7 +48,7 @@ class InvoiceServiceTest extends TestCase
     $this->assertEquals(5, $invoices->count());
   }
 
-  /** @test */
+
   public function it_creates_invoice_from_completed_order_with_toppings()
   {
     $customer = Customer::factory()->create();
@@ -143,7 +143,7 @@ class InvoiceServiceTest extends TestCase
     ]);
   }
 
-  /** @test */
+
   public function it_throws_exception_if_order_is_not_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -154,7 +154,7 @@ class InvoiceServiceTest extends TestCase
     $this->invoiceService->createInvoiceFromOrder($order->id);
   }
 
-  /** @test */
+
   public function it_updates_invoice_payment_method_correctly()
   {
     $invoice = Invoice::factory()->create(['payment_method' => 'cash']);
@@ -168,7 +168,7 @@ class InvoiceServiceTest extends TestCase
     ]);
   }
 
-  /** @test */
+
   public function it_updates_invoice_payment_status_correctly()
   {
     $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::UNPAID]);
@@ -182,7 +182,7 @@ class InvoiceServiceTest extends TestCase
     ]);
   }
 
-  /** @test */
+
   public function it_finds_invoice_by_code()
   {
     $invoice = Invoice::factory()->create(['code' => 'INV123']);
