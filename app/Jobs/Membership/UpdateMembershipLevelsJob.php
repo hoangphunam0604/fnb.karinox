@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Membership;
 
 use App\Models\Customer;
 use Illuminate\Bus\Queueable;

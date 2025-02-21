@@ -1,27 +1,6 @@
 <?php
 
-/**
- * - Tìm kiếm đơn đặt hàng theo mã
- * - Lấy danh sách đơn đặt hàng có phân trang
- * - Tạo đơn hàng với sản phẩm không có topping thành công
- * - Tạo đơn hàng với sản phẩm có topping thành công
- * - Cập nhật đơn hàng từ sản phẩm không có toppping thành sản phẩm có topping thành công
- * - Cập nhật đơn hàng từ sản phẩm có toppping thành sản phẩm không có topping thành công
- * - Tạo đơn hàng với mã giảm giá hợp lệ thành công
- * - Tạo đơn hàng với mã giảm giá không hợp lệ thành công
- * - Tạo đơn hàng sử dụng điểm thưởng thành công
- * - Tính tiền từ đơn hàng có sản phẩm không có topping
- * - Xác nhận đơn hàng thành công
- * - Huỷ đơn hàng thành công
- * - Huỷ đơn hàng thất bại
- * - Hoàn tất đơn hàng thành công
- * - Hoàn tất đơn hàng thất bại
- * - Cập nhật trạng thái đơn hàng thành công
- * - Áp dụng điểm thưởng cho đơn hàng thành công
- * - Áp dụng điểm thưởng cho đơn hàng thất bại
- */
-
-namespace Tests\Unit;
+namespace Tests\Unit\Services;
 
 use App\Enums\OrderStatus;
 use App\Models\Customer;
