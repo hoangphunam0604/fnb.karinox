@@ -2,14 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\AreaService;
-use App\Services\CustomerService;
-use App\Services\InvoiceService;
-use App\Services\OrderService;
-use App\Services\PointService;
-use App\Services\SystemSettingService;
-use App\Services\TaxService;
-use App\Services\VoucherService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Vite;
 
@@ -20,13 +12,23 @@ class AppServiceProvider extends ServiceProvider
    */
   public function register(): void
   {
-    $this->app->singleton(OrderService::class);
-    $this->app->singleton(InvoiceService::class);
-    $this->app->singleton(PointService::class);
-    $this->app->singleton(CustomerService::class);
-    $this->app->singleton(SystemSettingService::class);
-    $this->app->singleton(VoucherService::class);
-    $this->app->singleton(TaxService::class);
+    $this->app->singleton(\App\Services\AreaService::class);
+    $this->app->singleton(\App\Services\AttributeService::class);
+    $this->app->singleton(\App\Services\BranchService::class);
+    $this->app->singleton(\App\Services\CategoryService::class);
+    $this->app->singleton(\App\Services\CustomerService::class);
+    $this->app->singleton(\App\Services\InventoryService::class);
+    $this->app->singleton(\App\Services\InvoiceService::class);
+    $this->app->singleton(\App\Services\KitchenService::class);
+    $this->app->singleton(\App\Services\MembershipUpgradeService::class);
+    $this->app->singleton(\App\Services\OrderService::class);
+    $this->app->singleton(\App\Services\PointService::class);
+    $this->app->singleton(\App\Services\ProductService::class);
+    $this->app->singleton(\App\Services\StockDeductionService::class);
+    $this->app->singleton(\App\Services\SystemSettingService::class);
+    $this->app->singleton(\App\Services\TableAndRoomService::class);
+    $this->app->singleton(\App\Services\TaxService::class);
+    $this->app->singleton(\App\Services\VoucherService::class);
   }
 
   /**

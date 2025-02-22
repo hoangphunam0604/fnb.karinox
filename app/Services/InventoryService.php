@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\InventoryTransaction;
 use App\Models\InventoryTransactionItem;
+use App\Models\Invoice;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductBranch;
 use App\Models\ProductTopping;
 use App\Models\ProductFormula;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService
@@ -168,5 +171,183 @@ class InventoryService
         $ingredientBranch->save();
       }
     }
+  }
+  /**
+   * Cập nhật tồn kho khi hoá đơn hoàn tất
+   */
+  public function deductStockForCompletedInvoice(Invoice $invoice)
+  {
+    if ($invoice->status !== 'completed') {
+      throw new Exception("Chỉ có thể trừ kho khi hóa đơn hoàn tất.");
+    }
+
+    DB::transaction(function () use ($invoice) {
+      $transaction = InventoryTransaction::create([
+        'transaction_type' => 'sale',
+        'reference_id' => $invoice->id,
+        'branch_id' => $invoice->branch_id,
+        'user_id' => auth()->id(),
+      ]);
+
+      // Lấy danh sách các món trong đơn hàng
+      $orderItems = $invoice->order->items;
+
+      // Lấy danh sách tất cả sản phẩm và topping trong đơn hàng
+      $productIds = $orderItems->pluck('product_id')->merge(
+        $orderItems->flatMap->toppings->pluck('product_id')
+      )->unique();
+
+      // Kiểm tra sản phẩm nào đã được trừ kho trước đó khi bếp chế biến
+      $alreadyDeductedProducts = InventoryTransactionItem::whereHas('inventoryTransaction', function ($query) use ($invoice) {
+        $query->where('transaction_type', 'preparation')
+          ->where('reference_id', $invoice->order->id);
+      })->whereIn('product_id', $productIds)
+        ->pluck('product_id')
+        ->toArray();
+
+      foreach ($orderItems as $orderItem) {
+        // Nếu món chính đã được trừ kho trước đó, bỏ qua
+        if (in_array($orderItem->product_id, $alreadyDeductedProducts)) {
+          continue;
+        }
+
+        // Trừ kho cho sản phẩm chính
+        $productBranch = ProductBranch::where('product_id', $orderItem->product_id)
+          ->where('branch_id', $invoice->branch_id)
+          ->first();
+
+        if ($productBranch) {
+          $productBranch->decrement('stock_quantity', $orderItem->quantity);
+        }
+
+        InventoryTransactionItem::create([
+          'inventory_transaction_id' => $transaction->id,
+          'product_id' => $orderItem->product_id,
+          'quantity' => -$orderItem->quantity,
+          'sale_price' => $orderItem->unit_price,
+        ]);
+
+        // Trừ kho cho topping nếu có
+        foreach ($orderItem->toppings as $topping) {
+          // Nếu topping đã được trừ kho trước đó, bỏ qua
+          if (in_array($topping->product_id, $alreadyDeductedProducts)) {
+            continue;
+          }
+
+          $toppingBranch = ProductBranch::where('product_id', $topping->product_id)
+            ->where('branch_id', $invoice->branch_id)
+            ->first();
+
+          if ($toppingBranch) {
+            $toppingBranch->decrement('stock_quantity', $topping->quantity);
+          }
+
+          InventoryTransactionItem::create([
+            'inventory_transaction_id' => $transaction->id,
+            'product_id' => $topping->product_id,
+            'quantity' => -$topping->quantity,
+            'sale_price' => $topping->unit_price,
+          ]);
+        }
+      }
+    });
+  }
+
+  /**
+   * Nếu đơn hàng bị hoàn tiền (refunded), hệ thống nhập lại kho.
+   */
+  public function restoreStockForRefundedInvoice(Invoice $invoice)
+  {
+    if ($invoice->status !== 'refunded') {
+      throw new Exception("Chỉ có thể nhập kho khi hóa đơn bị hoàn tiền.");
+    }
+
+    DB::transaction(function () use ($invoice) {
+      $transaction = InventoryTransaction::create([
+        'transaction_type' => 'return',
+        'reference_id' => $invoice->id,
+        'branch_id' => $invoice->branch_id,
+        'user_id' => auth()->id(),
+      ]);
+
+      foreach ($invoice->order->items as $orderItem) {
+        ProductBranch::where('product_id', $orderItem->product_id)
+          ->where('branch_id', $invoice->branch_id)
+          ->increment('stock_quantity', $orderItem->quantity);
+
+        InventoryTransactionItem::create([
+          'inventory_transaction_id' => $transaction->id,
+          'product_id' => $orderItem->product_id,
+          'quantity' => $orderItem->quantity,
+          'sale_price' => null,
+        ]);
+
+        // Hoàn lại kho topping nếu có
+        foreach ($orderItem->toppings as $topping) {
+          ProductBranch::where('product_id', $topping->product_id)
+            ->where('branch_id', $invoice->branch_id)
+            ->increment('stock_quantity', $topping->quantity);
+
+          InventoryTransactionItem::create([
+            'inventory_transaction_id' => $transaction->id,
+            'product_id' => $topping->product_id,
+            'quantity' => $topping->quantity,
+            'sale_price' => null,
+          ]);
+        }
+      }
+    });
+  }
+
+  //Kiểm tra kho trước khi chế biến
+
+  public function checkStockForPreparation(OrderItem $orderItem): bool
+  {
+    foreach ($orderItem->product->formulas as $formula) {
+      $productBranch = ProductBranch::where('product_id', $formula->ingredient_id)
+        ->where('branch_id', $orderItem->order->branch_id)
+        ->first();
+
+      if (!$productBranch || $productBranch->stock_quantity < ($formula->quantity * $orderItem->quantity)) {
+        return false; // Không đủ nguyên liệu
+      }
+    }
+    return true; // Đủ nguyên liệu
+  }
+
+  //Trừ kho khi bếp đã nhận chế biến
+  public function deductStockForPreparation(OrderItem $orderItem)
+  {
+    if ($orderItem->status === 'prepared') {
+      return; // Món đã chế biến, không cần trừ kho nữa
+    }
+
+    DB::transaction(function () use ($orderItem) {
+      $transaction = InventoryTransaction::create([
+        'transaction_type' => 'preparation',
+        'reference_id' => $orderItem->order_id,
+        'branch_id' => $orderItem->order->branch_id,
+        'user_id' => auth()->id(),
+      ]);
+
+      foreach ($orderItem->product->formulas as $formula) {
+        $quantityToDeduct = $formula->quantity * $orderItem->quantity;
+
+        InventoryTransactionItem::create([
+          'inventory_transaction_id' => $transaction->id,
+          'product_id' => $formula->ingredient_id,
+          'quantity' => -$quantityToDeduct,
+          'sale_price' => null,
+        ]);
+
+        // Trừ tồn kho thực tế
+        ProductBranch::where('product_id', $formula->ingredient_id)
+          ->where('branch_id', $orderItem->order->branch_id)
+          ->decrement('stock_quantity', $quantityToDeduct);
+      }
+
+      // Đánh dấu món đã được chế biến
+      $orderItem->update(['status' => 'prepared']);
+    });
   }
 }

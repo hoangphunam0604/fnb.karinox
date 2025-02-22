@@ -2,53 +2,83 @@
 
 namespace App\Services;
 
+use App\Enums\KitchenTicketStatus;
+use App\Enums\UserRole;
 use App\Models\KitchenTicket;
 use App\Models\KitchenTicketItem;
 use App\Models\User;
-use App\Notifications\KitchenOrderReadyNotification;
-use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
+use App\Events\KitchenOrderReady;
+use App\Models\Order;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class KitchenService
 {
+
   /**
-   * Tạo vé bếp cho đơn hàng
+   * Lấy danh sách vé bếp theo chi nhánh và trạng thái
    */
-  public function createTicket($order)
+  public function getTickets(int $branchId, ?KitchenTicketStatus $status = null, int $perPage = 10): LengthAwarePaginator
+  {
+    $query = KitchenTicket::where('branch_id', $branchId)
+      ->with('items');
+
+    // Mặc định chỉ hiển thị vé chưa hoàn thành
+    if ($status) {
+      $query->where('status', $status);
+    } else {
+      $query->where('status', '!=', KitchenTicketStatus::COMPLETED);
+    }
+
+    return $query->paginate($perPage);
+  }
+
+  public function addItemsToKitchen(Order $order)
   {
     return DB::transaction(function () use ($order) {
-      $ticket = KitchenTicket::create([
+      // Kiểm tra nếu đơn hàng không có món => Không tạo vé bếp
+      if ($order->items()->count() === 0) {
+        return null;
+      }
+
+
+      // Tìm vé bếp hiện tại của bàn, nếu chưa có thì tạo mới
+      $ticket = KitchenTicket::firstOrCreate([
         'order_id' => $order->id,
         'branch_id' => $order->branch_id,
         'table_id' => $order->table_id,
+      ], [
         'status' => 'waiting',
-        'created_by' => auth()->id(),
+        'created_by' => Auth::id(),
       ]);
 
-      $order->items->each(function ($item) use ($ticket) {
-        KitchenTicketItem::create([
+      // Lọc ra các món mới chưa có trong vé bếp
+      $existingItemIds = $ticket->items()->pluck('order_item_id')->toArray();
+      $newItems = $order->items->reject(fn($item) => in_array($item->id, $existingItemIds));
+
+      if ($newItems->isEmpty()) {
+        return $ticket; // Không có món mới
+      }
+
+      // Thêm món mới vào vé bếp
+      $itemsData = $newItems->map(function ($item) use ($ticket) {
+        return [
           'kitchen_ticket_id' => $ticket->id,
           'order_item_id' => $item->id,
           'product_id' => $item->product_id,
           'quantity' => $item->quantity,
           'note' => $item->note,
           'status' => 'waiting',
-        ]);
+          'created_at' => now(),
+          'updated_at' => now(),
+        ];
       });
+
+      KitchenTicketItem::insert($itemsData->toArray());
 
       return $ticket;
     });
-  }
-
-  /**
-   * Lấy danh sách vé bếp theo chi nhánh và trạng thái
-   */
-  public function getTickets(int $branchId, ?string $status = null)
-  {
-    return KitchenTicket::where('branch_id', $branchId)
-      ->when($status, fn($query) => $query->where('status', $status))
-      ->with('items')
-      ->get();
   }
 
   /**
@@ -64,51 +94,79 @@ class KitchenService
    */
   public function deleteTicket(int $ticketId): bool
   {
-    return KitchenTicket::findOrFail($ticketId)->delete();
+    return KitchenTicket::where('id', $ticketId)->delete();
   }
+
 
   /**
    * Cập nhật trạng thái món ăn trong vé bếp
    */
-  public function updateItemStatus(int $itemId, string $status): void
+  public function updateItemStatus(int $itemId, KitchenTicketStatus $status): void
   {
-    $item = KitchenTicketItem::findOrFail($itemId);
+    $item = KitchenTicketItem::select('id', 'kitchen_ticket_id')
+      ->where('id', $itemId)
+      ->where('status', '!=', KitchenTicketStatus::COMPLETED)
+      ->first();
+
+    //Bỏ qua nếu không có vé hoặc trùng trạng thái
+    if (!$item || $item->status === $status) {
+      return;
+    }
+
     $item->update(['status' => $status]);
 
-    // Nếu tất cả món đã hoàn tất, cập nhật vé bếp
-    $this->updateTicketStatus($item->kitchen_ticket_id);
+    // Kiểm tra nếu tất cả món đã hoàn tất, cập nhật trạng thái vé bếp
+    if (!KitchenTicketItem::where('kitchen_ticket_id', $item->kitchen_ticket_id)
+      ->where('status', '!=', KitchenTicketStatus::COMPLETED)
+      ->exists()) {
+      KitchenTicket::where('id', $item->kitchen_ticket_id)
+        ->update(['status' => KitchenTicketStatus::COMPLETED]);
+    }
   }
+
 
   /**
    * Nhận món (Cập nhật nhân viên tiếp nhận)
    */
   public function acceptTicket(int $ticketId, int $userId): void
   {
-    KitchenTicket::findOrFail($ticketId)->update([
+    $user = User::where('id', $userId)->firstOrFail();
+
+    if (!$user->hasRole(UserRole::KITCHEN_STAFF)) {
+      throw new \Exception("Chỉ nhân viên bếp mới có thể nhận món.");
+    }
+    $ticket = KitchenTicket::where('id', $ticketId)->firstOrFail();
+
+    $ticket->update([
       'accepted_by' => $userId,
-      'status' => 'processing',
+      'status' => KitchenTicketStatus::PROCESSING,
     ]);
   }
 
-  /**
-   * Cập nhật trạng thái vé bếp nếu tất cả món đã hoàn tất
-   */
-  private function updateTicketStatus(int $ticketId): void
-  {
-    $ticket = KitchenTicket::with('items')->findOrFail($ticketId);
-    if ($ticket->items->every(fn($item) => $item->status === 'completed')) {
-      $ticket->update(['status' => 'completed']);
-    }
-  }
 
   /**
    * Gửi thông báo cho nhân viên phục vụ khi món đã sẵn sàng
    */
   public function notifyWaiter(int $ticketId): void
   {
-    $ticket = KitchenTicket::findOrFail($ticketId);
-    $waiters = User::where('role', 'waiter')->get();
+    $ticket = KitchenTicket::where('id', $ticketId)
+      ->where('status', '!=', KitchenTicketStatus::COMPLETED)
+      ->first();
 
-    Notification::send($waiters, new KitchenOrderReadyNotification($ticket));
+    if (!$ticket) {
+      return;
+    }
+    // Lấy danh sách waiter đang online (chỉ lấy ID)
+    $waiterIds = User::role(UserRole::WAITER)
+      ->where('is_active', true)
+      ->whereNotNull('last_seen_at')
+      ->pluck('id')
+      ->toArray();
+
+    if (empty($waiterIds)) {
+      return;
+    }
+
+    broadcast(new KitchenOrderReady($ticket, $waiterIds));
   }
 }

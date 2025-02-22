@@ -23,6 +23,14 @@ class EventServiceProvider extends ServiceProvider
     \App\Events\InvoiceCancelled::class => [
       \App\Listeners\InvoiceCancelledProcess::class,
     ],
+    \App\Events\OrderUpdated::class => [
+      \App\Listeners\SendNewOrderItemsToKitchen::class,
+    ],
+    \App\Events\OrderCompleted::class => [
+      \App\Listeners\SendNewOrderItemsToKitchen::class,
+      \App\Listeners\CreateInvoiceListener::class,
+    ],
+
   ];
 
   /**

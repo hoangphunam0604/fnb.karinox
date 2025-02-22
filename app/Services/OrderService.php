@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Events\OrderUpdated;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
@@ -133,7 +134,7 @@ class OrderService
   /**
    * Hoàn tất đơn hàng
    */
-  public function markAsCompleted($orderId, $paidAmount = 0)
+  public function markAsCompleted($orderId, $paidAmount = 0): Order
   {
     return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = Order::findOrFail($orderId);
@@ -145,10 +146,9 @@ class OrderService
       if ($order->total_price > 0 && $paidAmount < $order->total_price) {
         throw new Exception('Số tiền thanh toán không đủ.');
       }
+      $order->markAsCompleted();
 
-      $order = $this->updateOrderStatus($orderId, OrderStatus::COMPLETED);
-      $this->invoiceService->createInvoiceFromOrder($orderId, $paidAmount);
-      return $order;
+      return $order->refresh();
     });
   }
 

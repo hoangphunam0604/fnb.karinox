@@ -15,9 +15,11 @@ use App\Models\Branch;
 use App\Models\Product;
 use App\Services\InvoiceService;
 use App\Services\PointService;
+use App\Services\StockDeductionService;
 use App\Services\TaxService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use PHPUnit\Framework\Attributes\Test;
 use Mockery;
 
 class InvoiceServiceTest extends TestCase
@@ -27,6 +29,7 @@ class InvoiceServiceTest extends TestCase
   protected $taxServiceMock;
   protected $pointServiceMock;
   protected $invoiceService;
+  protected $stockDeductionServiceMock;
   protected function setUp(): void
   {
     parent::setUp();
@@ -36,9 +39,25 @@ class InvoiceServiceTest extends TestCase
     $this->pointServiceMock = Mockery::spy(PointService::class);
     $this->app->instance(PointService::class, $this->pointServiceMock);
 
+
+    $this->stockDeductionServiceMock = Mockery::spy(StockDeductionService::class);
+    $this->app->instance(StockDeductionService::class, $this->stockDeductionServiceMock);
+
     $this->invoiceService = app(InvoiceService::class);
   }
 
+  #[Test]
+  public function it_finds_invoice_by_code()
+  {
+    $invoice = Invoice::factory()->create(['code' => 'INV123']);
+
+    $foundInvoice = $this->invoiceService->findInvoiceByCode('inv123');
+
+    $this->assertNotNull($foundInvoice);
+    $this->assertEquals($invoice->id, $foundInvoice->id);
+  }
+
+  #[Test]
   public function it_paginates_invoice_list()
   {
     Invoice::factory()->count(5)->create();
@@ -49,6 +68,7 @@ class InvoiceServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_creates_invoice_from_completed_order_with_toppings()
   {
     $customer = Customer::factory()->create();
@@ -144,6 +164,7 @@ class InvoiceServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_throws_exception_if_order_is_not_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -155,6 +176,7 @@ class InvoiceServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_updates_invoice_payment_method_correctly()
   {
     $invoice = Invoice::factory()->create(['payment_method' => 'cash']);
@@ -169,6 +191,7 @@ class InvoiceServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_updates_invoice_payment_status_correctly()
   {
     $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::UNPAID]);
@@ -183,13 +206,59 @@ class InvoiceServiceTest extends TestCase
   }
 
 
-  public function it_finds_invoice_by_code()
+  #[Test]
+  public function it_returns_true_if_invoice_can_be_refunded(): void
   {
-    $invoice = Invoice::factory()->create(['code' => 'INV123']);
+    // Tạo một hóa đơn đã thanh toán
+    $invoice = Invoice::factory()->make(['payment_status' => PaymentStatus::PAID]);
 
-    $foundInvoice = $this->invoiceService->findInvoiceByCode('inv123');
+    // Gọi hàm kiểm tra
+    $result = $this->invoiceService->canBeRefunded($invoice);
 
-    $this->assertNotNull($foundInvoice);
-    $this->assertEquals($invoice->id, $foundInvoice->id);
+    // Đảm bảo kết quả đúng
+    self::assertTrue($result);
+  }
+
+
+  #[Test]
+  public function it_returns_false_if_invoice_cannot_be_refunded(): void
+  {
+    // Tạo một hóa đơn chưa thanh toán
+    $invoice = Invoice::factory()->make(['payment_status' => PaymentStatus::UNPAID]);
+
+    // Gọi hàm kiểm tra
+    $result = $this->invoiceService->canBeRefunded($invoice);
+
+    // Đảm bảo kết quả đúng
+    self::assertFalse($result);
+  }
+
+
+  #[Test]
+  public function it_successfully_refunds_a_paid_invoice(): void
+  {
+    // Tạo một hóa đơn đã thanh toán
+    $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::PAID]);
+
+    // Gọi hàm hoàn tiền
+    $refundedInvoice = $this->invoiceService->refunded($invoice->id);
+
+    // Kiểm tra hóa đơn đã chuyển sang trạng thái REFUNDED
+    self::assertEquals(PaymentStatus::REFUNDED, $refundedInvoice->payment_status);
+  }
+
+
+  #[Test]
+  public function it_throws_exception_if_invoice_cannot_be_refunded(): void
+  {
+    // Tạo một hóa đơn chưa thanh toán
+    $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::UNPAID]);
+
+    // Mong đợi Exception xảy ra
+    self::expectException(\Exception::class);
+    self::expectExceptionMessage("Đơn hàng chưa thanh toán, không thể hoàn tiền.");
+
+    // Gọi hàm hoàn tiền (nên ném lỗi)
+    $this->invoiceService->refunded($invoice->id);
   }
 }

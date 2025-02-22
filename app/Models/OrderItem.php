@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderItemStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +17,7 @@ class OrderItem extends Model
     'unit_price',
     'total_price',
     'total_price_with_topping',
+    'status'
   ];
 
   protected $casts = [
@@ -25,6 +27,7 @@ class OrderItem extends Model
     'unit_price' => 'integer',
     'total_price' => 'integer',
     'total_price_with_topping' => 'integer',
+    'status' => OrderItemStatus::class,
   ];
 
   /**

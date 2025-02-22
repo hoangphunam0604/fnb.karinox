@@ -17,11 +17,16 @@ class InvoiceService
 {
   protected TaxService $taxService;
   protected PointService $pointService;
+  protected StockDeductionService $stockDeductionService;
 
-  public function __construct(TaxService $taxService, PointService $pointService)
-  {
+  public function __construct(
+    TaxService $taxService,
+    PointService $pointService,
+    StockDeductionService $stockDeductionService
+  ) {
     $this->taxService = $taxService;
     $this->pointService = $pointService;
+    $this->stockDeductionService = $stockDeductionService;
   }
   public function findInvoiceByCode(string $code): ?Invoice
   {
@@ -38,6 +43,7 @@ class InvoiceService
 
   public function createInvoiceFromOrder(int $orderId, float $paidAmount = 0): Invoice
   {
+
     return DB::transaction(function () use ($orderId, $paidAmount) {
       $order = Order::findOrFail($orderId);
 
@@ -144,6 +150,19 @@ class InvoiceService
 
   public function canBeRefunded(Invoice $invoice): bool
   {
-    return $invoice->customer && $invoice->payment_status === PaymentStatus::PAID;
+    return $invoice->payment_status === PaymentStatus::PAID;
+  }
+
+  public function refunded(int $invoiceId): Invoice
+  {
+    return DB::transaction(function () use ($invoiceId) {
+      $invoice = Invoice::findOrFail($invoiceId);
+      if (!$this->canBeRefunded($invoice)) {
+        throw new \Exception("Đơn hàng chưa thanh toán, không thể hoàn tiền.");
+      }
+      $invoice = $this->updatePaymentStatus($invoice->id, PaymentStatus::REFUNDED);
+      $this->stockDeductionService->restoreStockForRefundedInvoice($invoice);
+      return $invoice;
+    });
   }
 }

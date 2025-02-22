@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\KitchenTicketStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +16,10 @@ class KitchenTicketItem extends Model
     'quantity',
     'status',
     'note'
+  ];
+
+  protected $casts = [
+    'status' => KitchenTicketStatus::class,
   ];
 
   public function ticket()
