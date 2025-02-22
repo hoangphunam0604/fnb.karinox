@@ -7,6 +7,7 @@ use App\Models\MembershipLevel;
 use App\Services\CustomerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CustomerServiceTest extends TestCase
 {
@@ -20,7 +21,7 @@ class CustomerServiceTest extends TestCase
     $this->customerService = new CustomerService();
   }
 
-
+  #[Test]
   public function it_can_create_a_customer()
   {
     $data = [
@@ -36,7 +37,7 @@ class CustomerServiceTest extends TestCase
     $this->assertInstanceOf(Customer::class, $customer);
   }
 
-
+  #[Test]
   public function it_can_update_a_customer()
   {
     $customer = Customer::factory()->create([
@@ -52,7 +53,7 @@ class CustomerServiceTest extends TestCase
     $this->assertDatabaseHas('customers', ['id' => $customer->id, 'fullname' => 'Trần Thị C']);
   }
 
-
+  #[Test]
   public function it_can_delete_a_customer()
   {
     $customer = Customer::factory()->create([
@@ -64,7 +65,7 @@ class CustomerServiceTest extends TestCase
     $this->assertDatabaseMissing('customers', ['id' => $customer->id]);
   }
 
-
+  #[Test]
   public function it_can_find_customer_by_phone_or_email_or_loyalty_card()
   {
     $customer = Customer::factory()->create([
@@ -83,7 +84,7 @@ class CustomerServiceTest extends TestCase
     $this->assertEquals($customer->id, $foundByCard->id);
   }
 
-
+  #[Test]
   public function it_can_get_customer_membership_level()
   {
     // Tạo hạng thành viên với hệ số nhân điểm thưởng
@@ -100,7 +101,7 @@ class CustomerServiceTest extends TestCase
 
     $this->assertEquals($membershipLevel->id, $customerMembershipLevel->id);
   }
-
+  #[Test]
   public function it_returns_next_level_if_available()
   {
     $level1 = MembershipLevel::factory()->create(['rank' => 1, 'name' => 'Silver', 'min_spent' => 100000]);
@@ -116,7 +117,7 @@ class CustomerServiceTest extends TestCase
     $this->assertNotNull($nextLevel);
     $this->assertEquals('Gold', $nextLevel->name);
   }
-
+  #[Test]
   public function it_returns_null_if_no_next_level()
   {
     $level = MembershipLevel::factory()->create(['rank' => 3, 'name' => 'Platinum', 'min_spent' => 1000000]);
@@ -130,7 +131,7 @@ class CustomerServiceTest extends TestCase
 
     $this->assertNull($nextLevel);
   }
-
+  #[Test]
   public function it_returns_points_needed_for_next_level()
   {
     $level1 = MembershipLevel::factory()->create(['rank' => 1, 'name' => 'Silver', 'min_spent' => 100000]);
@@ -147,7 +148,7 @@ class CustomerServiceTest extends TestCase
     $this->assertEquals('Gold', $nextLevelInfo['next_level']);
     $this->assertEquals(300000, $nextLevelInfo['points_needed']);
   }
-
+  #[Test]
   public function it_returns_null_for_next_level_if_no_more_upgrades()
   {
     $level = MembershipLevel::factory()->create(['rank' => 3, 'name' => 'Platinum', 'min_spent' => 1000000]);

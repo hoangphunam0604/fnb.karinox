@@ -9,6 +9,8 @@ use App\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+use PHPUnit\Framework\Attributes\Test;
+
 class ProductServiceTest extends TestCase
 {
   use RefreshDatabase;
@@ -21,7 +23,7 @@ class ProductServiceTest extends TestCase
     $this->productService = new ProductService();
   }
 
-
+  #[Test]
   public function test_create_product()
   {
     $branch = Branch::factory()->create();
@@ -61,7 +63,7 @@ class ProductServiceTest extends TestCase
     $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $toppingProduct->id]);
   }
 
-
+  #[Test]
   public function test_update_product()
   {
     $branch = Branch::factory()->create();
@@ -111,7 +113,7 @@ class ProductServiceTest extends TestCase
     $this->assertDatabaseHas('product_toppings', ['product_id' => $product->id, 'topping_id' => $toppingProduct->id]);
   }
 
-
+  #[Test]
   public function test_only_valid_toppings_are_added()
   {
     $product = Product::factory()->create(['is_topping' => false, 'product_type' => 'goods']);
@@ -135,7 +137,7 @@ class ProductServiceTest extends TestCase
     ]);
   }
 
-
+  #[Test]
   public function test_delete_product()
   {
     $product = Product::factory()->create(['code' => 'PROD002', 'product_type' => 'service']);
@@ -145,7 +147,7 @@ class ProductServiceTest extends TestCase
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
   }
 
-
+  #[Test]
   public function test_find_product()
   {
     Product::factory()->create(['code' => 'FIND123', 'name' => 'Trà sữa', 'product_type' => 'combo']);
@@ -159,7 +161,7 @@ class ProductServiceTest extends TestCase
     $this->assertEquals('FIND123', $foundByName->code);
   }
 
-
+  #[Test]
   public function test_get_products()
   {
     Product::factory()->count(15)->create();

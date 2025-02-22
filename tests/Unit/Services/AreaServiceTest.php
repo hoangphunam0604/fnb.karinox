@@ -7,6 +7,7 @@ use App\Models\Area;
 use App\Models\Branch;
 use App\Services\AreaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class AreaServiceTest extends TestCase
 {
@@ -23,6 +24,7 @@ class AreaServiceTest extends TestCase
   /**
    * Test tạo khu vực mới
    */
+  #[Test]
   public function test_create_area()
   {
     $branch = Branch::factory()->create();
@@ -41,6 +43,7 @@ class AreaServiceTest extends TestCase
   /**
    * Test cập nhật khu vực
    */
+  #[Test]
   public function test_update_area()
   {
     $area = Area::factory()->create();
@@ -55,6 +58,7 @@ class AreaServiceTest extends TestCase
   /**
    * Test tìm kiếm khu vực theo tên
    */
+  #[Test]
   public function test_find_area_by_name()
   {
     $area = Area::factory()->create(['name' => 'Khu sân thượng']);
@@ -68,6 +72,7 @@ class AreaServiceTest extends TestCase
   /**
    * Test xóa khu vực
    */
+  #[Test]
   public function test_delete_area()
   {
     $area = Area::factory()->create();

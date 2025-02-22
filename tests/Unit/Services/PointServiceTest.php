@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PointServiceTest extends TestCase
@@ -40,7 +41,7 @@ class PointServiceTest extends TestCase
     $this->pointService = new PointService($this->orderService, $this->systemSettingService);
   }
 
-
+  #[Test]
   public function test_get_customer_point_history_returns_paginated_data()
   {
     $customer = Customer::factory()->create();
@@ -51,7 +52,7 @@ class PointServiceTest extends TestCase
     $this->assertInstanceOf(LengthAwarePaginator::class, $result);
   }
 
-
+  #[Test]
   public function test_update_points_increases_or_decreases_points_correctly()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 5]);
@@ -67,7 +68,7 @@ class PointServiceTest extends TestCase
     $this->assertInstanceOf(PointHistory::class, $history);
   }
 
-
+  #[Test]
   public function test_earn_points_adds_points_correctly()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 0]);
@@ -79,7 +80,7 @@ class PointServiceTest extends TestCase
     $this->assertInstanceOf(PointHistory::class, $history);
   }
 
-
+  #[Test]
   public function test_redeem_points_deducts_points_correctly()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 5]);
@@ -91,7 +92,7 @@ class PointServiceTest extends TestCase
     $this->assertInstanceOf(PointHistory::class, $history);
   }
 
-
+  #[Test]
   public function test_transfer_used_points_to_invoice_updates_point_history()
   {
     $customer = Customer::factory()->create();
@@ -111,7 +112,7 @@ class PointServiceTest extends TestCase
     $this->assertEquals($invoice->id, $pointHistory->source_id);
   }
 
-
+  #[Test]
   public function test_calculate_points_from_transaction_returns_correct_points()
   {
     $transaction = Mockery::mock(PointEarningTransaction::class);
@@ -127,7 +128,7 @@ class PointServiceTest extends TestCase
     $this->assertGreaterThanOrEqual(0, $rewardPoints);
   }
 
-
+  #[Test]
   public function test_earn_points_on_transaction_completion_applies_correct_points()
   {
     $transaction = Mockery::mock(PointEarningTransaction::class);
@@ -154,7 +155,7 @@ class PointServiceTest extends TestCase
     $this->assertEquals(110, $customer->loyalty_points); //Nhận được 10 điểm
     $this->assertEquals(120, $customer->reward_points); //Nhận được x2 tích điểm thưởng =  20đ
   }
-
+  #[Test]
   public function test_use_reward_points_applies_discount_correctly()
   {
     $transaction = Mockery::mock(RewardPointUsable::class);
@@ -172,7 +173,7 @@ class PointServiceTest extends TestCase
     $this->assertEquals(30, $customer->reward_points);
   }
 
-
+  #[Test]
   public function test_restore_transaction_reward_points_restores_correctly()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 10, 'reward_points' => 50]);
@@ -186,7 +187,7 @@ class PointServiceTest extends TestCase
     $this->assertEquals(0, $transaction->reward_points_used);
   }
 
-
+  #[Test]
   public function test_restore_transaction_earned_points_restores_correctly()
   {
     $customer = Customer::factory()->create(['loyalty_points' => 100, 'reward_points' => 50]);

@@ -7,6 +7,7 @@ use App\Models\TableAndRoom;
 use App\Models\Area;
 use App\Services\TableAndRoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class TableAndRoomServiceTest extends TestCase
 {
@@ -20,6 +21,7 @@ class TableAndRoomServiceTest extends TestCase
     $this->tableAndRoomService = new TableAndRoomService();
   }
 
+  #[Test]
   public function test_create_table_or_room()
   {
     $area = Area::factory()->create();
@@ -37,6 +39,7 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertEquals('reserved', $tableOrRoom->status);
   }
 
+  #[Test]
   public function test_update_table_or_room()
   {
     $tableOrRoom = TableAndRoom::factory()->create();
@@ -49,6 +52,7 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertDatabaseHas('tables_and_rooms', ['id' => $tableOrRoom->id, 'name' => 'Bàn số 5', 'status' => 'occupied']);
   }
 
+  #[Test]
   public function test_find_table_or_room_by_name()
   {
     $tableOrRoom = TableAndRoom::factory()->create(['name' => 'Bàn ngoài trời']);
@@ -59,6 +63,7 @@ class TableAndRoomServiceTest extends TestCase
     $this->assertEquals('Bàn ngoài trời', $foundTableOrRoom->name);
   }
 
+  #[Test]
   public function test_delete_table_or_room()
   {
     $tableOrRoom = TableAndRoom::factory()->create();
@@ -70,7 +75,8 @@ class TableAndRoomServiceTest extends TestCase
 
   /**
    * Test lấy danh sách phòng/bàn theo trạng thái
-   */
+  
+  #[Test] */
   public function test_get_tables_and_rooms_by_status()
   {
     TableAndRoom::factory()->count(3)->create(['status' => 'available']);
@@ -83,7 +89,8 @@ class TableAndRoomServiceTest extends TestCase
 
   /**
    * Test cập nhật trạng thái phòng/bàn
-   */
+  
+  #[Test] */
   public function test_update_table_or_room_status()
   {
     $tableOrRoom = TableAndRoom::factory()->create(['status' => 'available']);
@@ -96,7 +103,8 @@ class TableAndRoomServiceTest extends TestCase
 
   /**
    * Test kiểm tra phòng/bàn có thể sử dụng không
-   */
+  
+  #[Test] */
   public function test_can_use_table_or_room()
   {
     $availableTable = TableAndRoom::factory()->create(['status' => 'available']);

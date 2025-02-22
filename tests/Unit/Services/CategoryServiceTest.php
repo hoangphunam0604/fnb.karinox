@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\Category;
 use App\Services\CategoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CategoryServiceTest extends TestCase
 {
@@ -22,6 +23,7 @@ class CategoryServiceTest extends TestCase
   /**
    * Test tạo danh mục mới
    */
+  #[Test]
   public function test_create_category()
   {
     $categoryData = [
@@ -37,6 +39,7 @@ class CategoryServiceTest extends TestCase
   /**
    * Test cập nhật thông tin danh mục
    */
+  #[Test]
   public function test_update_category()
   {
     $category = Category::factory()->create();
@@ -51,6 +54,7 @@ class CategoryServiceTest extends TestCase
   /**
    * Test tìm kiếm danh mục theo tên
    */
+  #[Test]
   public function test_find_category_by_name()
   {
     $category = Category::factory()->create(['name' => 'Bánh ngọt']);
@@ -64,6 +68,7 @@ class CategoryServiceTest extends TestCase
   /**
    * Test xóa danh mục
    */
+  #[Test]
   public function test_delete_category()
   {
     $category = Category::factory()->create();

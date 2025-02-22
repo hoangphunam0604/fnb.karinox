@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use Tests\TestCase;
 use App\Models\Branch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class BranchServiceTest extends TestCase
 {
@@ -21,6 +22,7 @@ class BranchServiceTest extends TestCase
   /**
    * Test tạo chi nhánh mới
    */
+  #[Test]
   public function test_create_branch()
   {
     $branchData = [
@@ -38,6 +40,7 @@ class BranchServiceTest extends TestCase
   /**
    * Test cập nhật thông tin chi nhánh
    */
+  #[Test]
   public function test_update_branch()
   {
     $branch = Branch::factory()->create();
@@ -52,6 +55,7 @@ class BranchServiceTest extends TestCase
   /**
    * Test tìm kiếm chi nhánh theo tên
    */
+  #[Test]
   public function test_find_branch_by_name()
   {
     $branch = Branch::factory()->create(['name' => 'Chi nhánh Đà Nẵng']);
@@ -65,6 +69,7 @@ class BranchServiceTest extends TestCase
   /**
    * Test xóa chi nhánh mà KHÔNG cần kiểm tra sản phẩm hoặc đơn hàng
    */
+  #[Test]
   public function test_delete_branch_without_checking_products_or_orders()
   {
     $branch = Branch::factory()->create();

@@ -9,6 +9,8 @@ use App\Models\MembershipLevel;
 use App\Models\Customer;
 use App\Services\MembershipUpgradeService;
 
+use PHPUnit\Framework\Attributes\Test;
+
 class MembershipUpgradeServiceTest extends TestCase
 {
   use RefreshDatabase;
@@ -21,7 +23,7 @@ class MembershipUpgradeServiceTest extends TestCase
     $this->upgradeService = new MembershipUpgradeService();
   }
 
-
+  #[Test]
   public function it_can_upgrade_customer_membership_and_save_reward()
   {
     $customer = Customer::factory()->create();
@@ -40,7 +42,7 @@ class MembershipUpgradeServiceTest extends TestCase
     ]);
   }
 
-
+  #[Test]
   public function it_does_not_allow_duplicate_upgrades()
   {
     $this->expectException(\Exception::class);
@@ -52,7 +54,7 @@ class MembershipUpgradeServiceTest extends TestCase
     $this->upgradeService->upgradeMembership($customer, $newLevel); // Gây lỗi
   }
 
-
+  #[Test]
   public function it_can_claim_reward_once()
   {
     $customer = Customer::factory()->create();
@@ -65,7 +67,7 @@ class MembershipUpgradeServiceTest extends TestCase
     $this->assertTrue($history->refresh()->reward_claimed);
   }
 
-
+  #[Test]
   public function it_does_not_allow_duplicate_rewards()
   {
     $this->expectException(\Exception::class);

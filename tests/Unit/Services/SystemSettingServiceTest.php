@@ -6,7 +6,7 @@ use App\Models\SystemSetting;
 use App\Services\SystemSettingService;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
-use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 
 class SystemSettingServiceTest extends TestCase
 {
@@ -19,6 +19,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_fetches_value_from_cache_if_available()
   {
     // Đặt sẵn dữ liệu trong cache
@@ -32,6 +33,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_fetches_value_from_database_if_not_in_cache()
   {
     // Xóa cache trước để đảm bảo nó không có dữ liệu
@@ -56,6 +58,7 @@ class SystemSettingServiceTest extends TestCase
 
 
 
+  #[Test]
   public function it_returns_default_value_if_not_in_cache_and_database()
   {
     // Xóa cache trước để đảm bảo nó không có dữ liệu
@@ -69,6 +72,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_sets_value_and_clears_cache()
   {
     // Xóa cache để đảm bảo không có dữ liệu cũ
@@ -99,6 +103,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_default_point_conversion_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -112,6 +117,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_saved_point_conversion_rate()
   {
     // Xóa cache 
@@ -125,6 +131,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_default_reward_point_conversion_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -138,6 +145,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_saved_reward_point_conversion_rate()
   {
     // Xóa cache 
@@ -151,6 +159,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_default_tax_rate_if_not_set()
   {
     // Xóa cache và đảm bảo database không có dữ liệu
@@ -164,6 +173,7 @@ class SystemSettingServiceTest extends TestCase
   }
 
 
+  #[Test]
   public function it_returns_saved_tax_rate()
   {
     // Xóa cache 

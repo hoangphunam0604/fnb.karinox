@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\Attribute;
 use App\Services\AttributeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class AttributeServiceTest extends TestCase
 {
@@ -22,6 +23,7 @@ class AttributeServiceTest extends TestCase
   /**
    * Test tạo thuộc tính mới
    */
+  #[Test]
   public function test_create_attribute()
   {
     $attributeData = [
@@ -37,6 +39,7 @@ class AttributeServiceTest extends TestCase
   /**
    * Test cập nhật thông tin thuộc tính
    */
+  #[Test]
   public function test_update_attribute()
   {
     $attribute = Attribute::factory()->create();
@@ -51,6 +54,7 @@ class AttributeServiceTest extends TestCase
   /**
    * Test tìm kiếm thuộc tính theo tên
    */
+  #[Test]
   public function test_find_attribute_by_name()
   {
     $attribute = Attribute::factory()->create(['name' => 'Chất liệu']);
@@ -64,6 +68,7 @@ class AttributeServiceTest extends TestCase
   /**
    * Test xóa thuộc tính
    */
+  #[Test]
   public function test_delete_attribute()
   {
     $attribute = Attribute::factory()->create();

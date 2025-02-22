@@ -15,6 +15,7 @@ use Tests\TestCase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 
 
 class VoucherServiceTest extends TestCase
@@ -29,6 +30,7 @@ class VoucherServiceTest extends TestCase
     $this->voucherService = new VoucherService();
   }
 
+  #[Test]
   public function it_can_create_a_voucher()
   {
     $voucherData = [
@@ -48,7 +50,7 @@ class VoucherServiceTest extends TestCase
     $this->assertDatabaseHas('vouchers', ['code' => 'TEST50']);
     $this->assertEquals(10, $voucher->discount_value);
   }
-
+  #[Test]
   public function it_can_update_a_voucher()
   {
     $voucher = Voucher::factory()->create(['code' => 'UPDATE50']);
@@ -58,7 +60,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertDatabaseHas('vouchers', ['code' => 'UPDATE50', 'discount_value' => 20]);
   }
-
+  #[Test]
   public function it_can_delete_a_voucher()
   {
     $voucher = Voucher::factory()->create();
@@ -66,7 +68,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
   }
-
+  #[Test]
   public function it_can_find_voucher_by_code()
   {
     $voucher = Voucher::factory()->create(['code' => 'FINDME']);
@@ -76,7 +78,7 @@ class VoucherServiceTest extends TestCase
     $this->assertNotNull($foundVoucher);
     $this->assertEquals('FINDME', $foundVoucher->code);
   }
-
+  #[Test]
   public function it_can_get_paginated_vouchers()
   {
     Voucher::factory()->count(15)->create();
@@ -85,7 +87,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertCount(10, $paginatedVouchers); // Kiểm tra có 10 voucher được lấy ra
   }
-
+  #[Test]
   public function it_can_get_valid_vouchers()
   {
     $validVoucher = Voucher::factory()->create([
@@ -105,7 +107,7 @@ class VoucherServiceTest extends TestCase
     $this->assertCount(1, $validVouchers);
     $this->assertEquals($validVoucher->id, $validVouchers->first()->id);
   }
-
+  #[Test]
   public function it_checks_if_a_voucher_is_valid()
   {
     $voucher = Voucher::factory()->create([
@@ -123,7 +125,7 @@ class VoucherServiceTest extends TestCase
     $result = $this->voucherService->isValid($voucher, 50); // Đơn hàng 50 (nhỏ hơn min_order_value)
     $this->assertFalse($result);
   }
-
+  #[Test]
   public function it_does_not_allow_voucher_exceeding_usage_limit()
   {
     $voucher = Voucher::factory()->create([
@@ -135,7 +137,7 @@ class VoucherServiceTest extends TestCase
     $result = $this->voucherService->isValid($voucher, 200);
     $this->assertFalse($result);
   }
-
+  #[Test]
   public function it_applies_a_voucher_and_updates_usage()
   {
     $voucher = Voucher::factory()->create([
@@ -159,7 +161,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'applied_count' => 6]);
   }
-
+  #[Test]
   public function it_does_not_apply_invalid_voucher()
   {
     $voucher = Voucher::factory()->create([
@@ -173,7 +175,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertFalse($result['success']);
   }
-
+  #[Test]
   public function it_checks_voucher_valid_for_membership_level()
   {
     $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
@@ -189,7 +191,7 @@ class VoucherServiceTest extends TestCase
     $result = $this->voucherService->isValid($voucher, 200, $customer->id);
     $this->assertTrue($result); // Không kiểm tra hạng thành viên
   }
-
+  #[Test]
   public function it_fails_if_membership_level_not_allowed()
   {
     $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
@@ -206,7 +208,7 @@ class VoucherServiceTest extends TestCase
     $result = $this->voucherService->isValid($voucher, 200,  $customer->id);
     $this->assertFalse($result);
   }
-
+  #[Test]
   public function it_checks_voucher_valid_for_today()
   {
     $voucher = Voucher::factory()->create([
@@ -218,7 +220,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_fails_if_voucher_not_valid_today()
   {
 
@@ -236,7 +238,7 @@ class VoucherServiceTest extends TestCase
     ]);
     $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_checks_voucher_valid_for_current_week_of_month()
   {
     $voucher = Voucher::factory()->create([
@@ -248,7 +250,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_fails_if_voucher_not_valid_this_week()
   {
     $voucher = Voucher::factory()->create([
@@ -262,7 +264,7 @@ class VoucherServiceTest extends TestCase
       $this->assertFalse($this->voucherService->isValid($voucher, 200));
     }
   }
-
+  #[Test]
   public function it_checks_voucher_valid_for_current_month()
   {
     $voucher = Voucher::factory()->create([
@@ -274,7 +276,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_fails_if_voucher_not_valid_this_month()
   {
     $currentMonth = now()->format('m');
@@ -290,7 +292,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_checks_voucher_valid_for_current_time_range()
   {
     $currentTime = now()->format('H:i');
@@ -305,7 +307,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_fails_if_voucher_not_valid_for_current_time()
   {
     $currentTime = now()->format('H:i');
@@ -319,7 +321,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_fails_if_today_is_excluded_date()
   {
     $voucher = Voucher::factory()->create([
@@ -331,7 +333,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertFalse($this->voucherService->isValid($voucher, 200));
   }
-
+  #[Test]
   public function it_checks_if_voucher_is_valid_when_not_excluded_today()
   {
     $voucher = Voucher::factory()->create([
@@ -344,7 +346,7 @@ class VoucherServiceTest extends TestCase
     $this->assertTrue($this->voucherService->isValid($voucher, 200));
   }
 
-
+  #[Test]
   public function it_excludes_vouchers_exceeding_per_customer_limit()
   {
     $customer = Customer::factory()->create();
@@ -363,7 +365,7 @@ class VoucherServiceTest extends TestCase
     $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
     $this->assertFalse($isValid);
   }
-
+  #[Test]
   public function it_excludes_vouchers_exceeding_per_customer_daily_limit()
   {
     $customer = Customer::factory()->create();
@@ -383,7 +385,7 @@ class VoucherServiceTest extends TestCase
     $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
     $this->assertFalse($isValid);
   }
-
+  #[Test]
   public function it_allows_voucher_usage_if_within_per_customer_daily_limit()
   {
     $customer = Customer::factory()->create();
@@ -403,7 +405,7 @@ class VoucherServiceTest extends TestCase
     $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
     $this->assertTrue($isValid);
   }
-
+  #[Test]
   public function it_excludes_voucher_if_per_customer_limit_exists_but_customer_is_null()
   {
     $voucher = Voucher::factory()->create([
@@ -415,7 +417,7 @@ class VoucherServiceTest extends TestCase
     $isValid = $this->voucherService->isValid($voucher, 500000, null);
     $this->assertFalse($isValid);
   }
-
+  #[Test]
   public function it_excludes_voucher_if_per_customer_daily_limit_exists_but_customer_is_null()
   {
     $voucher = Voucher::factory()->create([
@@ -427,7 +429,7 @@ class VoucherServiceTest extends TestCase
     $isValid = $this->voucherService->isValid($voucher, 500000, null);
     $this->assertFalse($isValid);
   }
-
+  #[Test]
   public function it_returns_valid_vouchers_excluding_those_exceeding_daily_limits()
   {
     $customer = Customer::factory()->create();
@@ -461,7 +463,7 @@ class VoucherServiceTest extends TestCase
     $this->assertFalse($validVouchers->contains($exceededDailyLimitVoucher));
   }
 
-
+  #[Test]
   public function it_returns_error_if_voucher_cannot_be_restored()
   {
     $transaction = Mockery::mock(\App\Contracts\VoucherApplicable::class);
@@ -474,7 +476,7 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals(Msg::VOUCHER_CANNOT_RESTORE_FROM_INVOICE, $result['message']);
   }
 
-
+  #[Test]
   public function it_returns_error_if_voucher_usage_not_found()
   {
     $transaction = Mockery::mock(\App\Contracts\VoucherApplicable::class);
@@ -489,7 +491,7 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals(Msg::VOUCHER_RESTORE_NOT_FOUND, $result['message']);
   }
 
-
+  #[Test]
   public function it_fails_if_order_completed_or_not_use_voucher()
   {
     $order = Order::factory()->create(['voucher_id' => null]); // Không có voucher
@@ -500,7 +502,7 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals($order->getMsgVoucherCanNotRestore(), $result['message']);
   }
 
-
+  #[Test]
   public function it_fails_if_order_has_voucher_not_has_into_usage()
   { // Tạo voucher
     $voucher = Voucher::create([
@@ -524,7 +526,7 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals($order->getMsgVoucherNotFound(), $result['message']);
   }
 
-
+  #[Test]
   public function it_successfully_restores_voucher_usage_into_order()
   {
     // Tạo voucher
@@ -574,7 +576,7 @@ class VoucherServiceTest extends TestCase
     $this->assertEquals($voucher->code, $order->voucher_code);
   }
 
-
+  #[Test]
   public function it_rollback_order_and_voucher_if_transaction_faild()
   {
     DB::shouldReceive('transaction')->once()->andThrow(new \Exception('Fake error'));

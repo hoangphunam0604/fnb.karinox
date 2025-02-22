@@ -55,7 +55,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals($order->id, $foundOrder->id);
   }
 
-
+  #[Test]
   public function it_can_get_paginated_orders()
   {
     Order::factory()->count(15)->create();
@@ -66,7 +66,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(15, $orders->total());
   }
 
-
+  #[Test]
   public function it_can_create_order_without_toppings()
   {
     $product = Product::factory()->create(['price' => 50000]);
@@ -81,7 +81,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(50000, $order->total_price);
   }
 
-
+  #[Test]
   public function it_can_create_order_with_toppings()
   {
     $product = Product::factory()->create(['price' => 50000, 'is_topping' => false]);
@@ -102,7 +102,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(60000, $order->total_price);
   }
 
-
+  #[Test]
   public function it_can_update_order_from_no_toppings_to_with_toppings()
   {
     $product1 = Product::factory()->create(['price' => 30000, 'is_topping' => false]);
@@ -131,7 +131,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(90000, $updatedOrder->total_price);
   }
 
-
+  #[Test]
   public function it_can_update_order_from_with_toppings_to_no_toppings()
   {
     $order = Order::factory()->create();
@@ -169,7 +169,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(80000, $updatedOrder->total_price);
   }
 
-
+  #[Test]
   public function it_can_create_order_with_valid_voucher()
   {
     $product = Product::factory()->create(['price' => 100000]);
@@ -196,7 +196,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(90000, $order->total_price); // 10% giảm từ 100000
   }
 
-
+  #[Test]
   public function it_can_create_order_with_invalid_voucher()
   {
     $product = Product::factory()->create(['price' => 100000]);
@@ -225,7 +225,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(0, $order->discount_amount);
     $this->assertEquals(100000, $order->total_price); // Không áp dụng giảm giá
   }
-
+  #[Test]
   public function it_can_create_order_with_reward_points()
   {
     $customer = Customer::factory()->create(['reward_points' => 2000]);
@@ -257,7 +257,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(20000, $order->reward_discount);
     $this->assertEquals(80000, $order->total_price);
   }
-
+  #[Test]
   public function it_can_update_total_price()
   {
     $order = Order::factory()->create();
@@ -284,7 +284,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(2000, $order->reward_discount);
     $this->assertEquals(93000, $order->total_price); // 100000 - 5000 - 2000
   }
-
+  #[Test]
   public function it_can_confirm_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -294,7 +294,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CONFIRMED, $confirmedOrder->order_status);
   }
 
-
+  #[Test]
   public function it_can_cancel_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -304,7 +304,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CANCELED, $cancelledOrder->order_status);
   }
 
-
+  #[Test]
   public function it_cannot_cancel_completed_order()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED]);
@@ -315,7 +315,7 @@ class OrderServiceTest extends TestCase
     $this->orderService->cancelOrder($order->id);
   }
 
-
+  #[Test]
   public function it_can_mark_order_as_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
@@ -331,7 +331,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::COMPLETED, $completedOrder->order_status);
   }
 
-
+  #[Test]
   public function it_cannot_complete_order_already_completed()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED, 'total_price' => 50000]);
@@ -342,7 +342,7 @@ class OrderServiceTest extends TestCase
     $this->orderService->markAsCompleted($order->id, 50000);
   }
 
-
+  #[Test]
   public function it_cannot_complete_order_with_insufficient_payment()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
@@ -352,7 +352,7 @@ class OrderServiceTest extends TestCase
 
     $this->orderService->markAsCompleted($order->id, 30000);
   }
-
+  #[Test]
   public function it_can_update_order_status()
   {
     $order = Order::factory()->create(['order_status' => OrderStatus::PENDING]);
@@ -362,7 +362,7 @@ class OrderServiceTest extends TestCase
     $this->assertEquals(OrderStatus::CONFIRMED, $updatedOrder->order_status);
   }
 
-
+  #[Test]
   public function it_can_apply_reward_points()
   {
     $customer = Customer::factory()->create(['reward_points' => 2000]);
@@ -377,7 +377,7 @@ class OrderServiceTest extends TestCase
     $this->assertNotNull($updatedOrder);
   }
 
-
+  #[Test]
   public function it_cannot_apply_reward_points_without_customer()
   {
     $order = Order::factory()->create(['customer_id' => null, 'total_price' => 100000]);
