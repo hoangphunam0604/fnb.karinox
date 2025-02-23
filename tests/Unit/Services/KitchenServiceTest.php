@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Enums\KitchenTicketStatus;
+use App\Enums\OrderItemStatus;
 use App\Enums\UserRole;
 use App\Models\KitchenTicket;
 use App\Models\Order;
@@ -16,19 +17,22 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Tests\TestCase;
 use App\Events\KitchenOrderReady;
 use App\Models\Branch;
+use App\Models\KitchenTicketItem;
 use App\Models\OrderItem;
 use Spatie\Permission\Models\Role;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 
 class KitchenServiceTest extends TestCase
 {
   use RefreshDatabase;
 
-  private KitchenService $service;
+  private KitchenService $kitchenService;
 
   protected function setUp(): void
   {
     parent::setUp();
-    $this->service = new KitchenService();
+    $this->kitchenService = new KitchenService();
   }
   #[Test]
   #[TestDox('Tạo vé bếp mới nếu chưa có vé cho đơn hàng')]
@@ -39,7 +43,7 @@ class KitchenServiceTest extends TestCase
 
     $order = Order::factory()->hasItems(3)->create();
 
-    $ticket = $this->service->addItemsToKitchen($order);
+    $ticket = $this->kitchenService->addItemsToKitchen($order);
 
     $this->assertDatabaseHas('kitchen_tickets', ['order_id' => $order->id]);
     $this->assertDatabaseCount('kitchen_ticket_items', 3);
@@ -55,13 +59,13 @@ class KitchenServiceTest extends TestCase
     $order = Order::factory()->hasItems(2)->create();
 
     // Tạo vé bếp đầu tiên
-    $this->service->addItemsToKitchen($order);
+    $this->kitchenService->addItemsToKitchen($order);
 
     // Thêm món mới vào đơn hàng
     $newItems = OrderItem::factory()->count(2)->create(['order_id' => $order->id]);
 
     $order->refresh();
-    $this->service->addItemsToKitchen($order);
+    $this->kitchenService->addItemsToKitchen($order);
     $this->assertDatabaseCount('kitchen_ticket_items', 4); // 2 cũ + 2 mới
   }
 
@@ -75,10 +79,10 @@ class KitchenServiceTest extends TestCase
     $order = Order::factory()->hasItems(2)->create();
 
     // Tạo vé bếp ban đầu
-    $this->service->addItemsToKitchen($order);
+    $this->kitchenService->addItemsToKitchen($order);
 
     // Gọi lại `addItemsToKitchen` mà không thêm món mới
-    $this->service->addItemsToKitchen($order);
+    $this->kitchenService->addItemsToKitchen($order);
 
     $this->assertDatabaseCount('kitchen_ticket_items', 2); // Không tăng số lượng
   }
@@ -92,7 +96,7 @@ class KitchenServiceTest extends TestCase
 
     $order = Order::factory()->create(); // Không có món
 
-    $ticket = $this->service->addItemsToKitchen($order);
+    $ticket = $this->kitchenService->addItemsToKitchen($order);
     $this->assertNull($ticket); // ✅ Kiểm tra giá trị trả về là null
     $this->assertDatabaseCount('kitchen_tickets', 0); // ✅ Không có vé bếp nào được tạo
   }
@@ -106,7 +110,7 @@ class KitchenServiceTest extends TestCase
     KitchenTicket::factory()->create(['branch_id' => $branch->id, 'status' => KitchenTicketStatus::PROCESSING]);
     KitchenTicket::factory()->create(['branch_id' => $branch->id, 'status' => KitchenTicketStatus::COMPLETED]);
 
-    $tickets = $this->service->getTickets($branch->id);
+    $tickets = $this->kitchenService->getTickets($branch->id);
 
     $this->assertCount(2, $tickets->items());
 
@@ -124,7 +128,7 @@ class KitchenServiceTest extends TestCase
     KitchenTicket::factory()->create(['branch_id' => $branch->id, 'status' => KitchenTicketStatus::PROCESSING]);
     KitchenTicket::factory()->create(['branch_id' => $branch->id, 'status' => KitchenTicketStatus::COMPLETED]);
 
-    $tickets = $this->service->getTickets($branch->id, KitchenTicketStatus::WAITING);
+    $tickets = $this->kitchenService->getTickets($branch->id, KitchenTicketStatus::WAITING);
     $this->assertCount(1, $tickets->items());
     $this->assertEquals(KitchenTicketStatus::WAITING, $tickets->items()[0]->status);
   }
@@ -136,7 +140,7 @@ class KitchenServiceTest extends TestCase
     $branch = Branch::factory()->create();
     KitchenTicket::factory()->count(15)->create(['branch_id' => $branch->id, 'status' => KitchenTicketStatus::WAITING]);
 
-    $tickets = $this->service->getTickets($branch->id, null, 10);
+    $tickets = $this->kitchenService->getTickets($branch->id, null, 10);
 
     $this->assertCount(10, $tickets->items());
     $this->assertEquals(15, $tickets->total());
@@ -146,7 +150,7 @@ class KitchenServiceTest extends TestCase
   #[TestDox('Trả về danh sách rỗng nếu không có vé trong chi nhánh')]
   public function test_it_returns_empty_if_no_tickets_in_branch()
   {
-    $tickets = $this->service->getTickets(2);
+    $tickets = $this->kitchenService->getTickets(2);
 
     $this->assertCount(0, $tickets->items());
   }
@@ -159,7 +163,7 @@ class KitchenServiceTest extends TestCase
 
     $this->assertDatabaseHas('kitchen_tickets', ['id' => $ticket->id]);
 
-    $this->service->deleteTicket($ticket->id);
+    $this->kitchenService->deleteTicket($ticket->id);
 
     $this->assertDatabaseMissing('kitchen_tickets', ['id' => $ticket->id]);
   }
@@ -171,7 +175,7 @@ class KitchenServiceTest extends TestCase
     $ticket = KitchenTicket::factory()->hasItems(1)->create(['status' => KitchenTicketStatus::WAITING]);
     $item = $ticket->items->first();
 
-    $this->service->updateItemStatus($item->id, KitchenTicketStatus::PROCESSING);
+    $this->kitchenService->updateItemStatus($item->id, KitchenTicketStatus::PROCESSING);
 
     $this->assertDatabaseHas('kitchen_ticket_items', [
       'id' => $item->id,
@@ -180,24 +184,98 @@ class KitchenServiceTest extends TestCase
   }
 
   #[Test]
-  #[TestDox('Nhân viên bếp có thể nhận vé bếp')]
-  public function test_it_can_accept_a_ticket()
+  #[TestDox("Nhân viên bếp có thể nhận vé bếp thành công")]
+  public function test_kitchen_staff_can_accept_ticket()
   {
+    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $ticket = KitchenTicket::factory()->create([
+      'status' => KitchenTicketStatus::WAITING,
+      'accepted_by' => null
+    ]);
 
-    // ✅ Tạo role nếu chưa có
-    Role::firstOrCreate(['name' => UserRole::KITCHEN_STAFF, 'guard_name' => 'web']);
-
-    $user = User::factory()->create();
-    $user->assignRole(UserRole::KITCHEN_STAFF); // Spatie Role
-
-    $ticket = KitchenTicket::factory()->create();
-
-    $this->service->acceptTicket($ticket->id, $user->id);
+    $this->kitchenService->acceptTicket($ticket->id, $user->id);
 
     $this->assertDatabaseHas('kitchen_tickets', [
       'id' => $ticket->id,
       'accepted_by' => $user->id,
-      'status' => KitchenTicketStatus::PROCESSING->value, // Đảm bảo là string nếu Enum
+      'status' => KitchenTicketStatus::PROCESSING->value
+    ]);
+  }
+
+  #[Test]
+  #[TestDox("Ném lỗi nếu người dùng không tồn tại")]
+  public function test_throws_error_when_user_not_found()
+  {
+    $this->expectException(ModelNotFoundException::class);
+    $this->kitchenService->acceptTicket(1, 999); // User ID không tồn tại
+  }
+
+  #[Test]
+  #[TestDox("Ném lỗi nếu người dùng không phải là nhân viên bếp")]
+  public function test_throws_error_if_user_is_not_kitchen_staff()
+  {
+    $user = User::factory()->create(['role' => UserRole::WAITER]); // Không phải nhân viên bếp
+    $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::WAITING]);
+
+    $this->expectExceptionCode(403);
+    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+  }
+
+  #[Test]
+  #[TestDox("Ném lỗi nếu vé bếp đã có người nhận")]
+  public function test_throws_error_if_ticket_is_already_accepted()
+  {
+    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $otherUser = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $ticket = KitchenTicket::factory()->create([
+      'status' => KitchenTicketStatus::WAITING,
+      'accepted_by' => $otherUser->id
+    ]);
+
+    $this->expectExceptionCode(403);
+    $this->expectExceptionMessage("Vé bếp này không thể được nhận vì đã được tiếp nhận bởi");
+
+    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+  }
+
+  #[Test]
+  #[TestDox("Ném lỗi nếu vé bếp không ở trạng thái WAITING")]
+  public function test_throws_error_if_ticket_status_is_not_waiting()
+  {
+    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::PROCESSING]);
+
+    $this->expectExceptionCode(400);
+    $this->expectExceptionMessage("Vé bếp này không thể được nhận vì đang ở trạng thái");
+
+    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+  }
+
+  #[Test]
+  #[TestDox("Khi nhận vé bếp, trạng thái món ăn và đơn hàng được cập nhật")]
+  public function test_updates_order_items_status_when_ticket_is_accepted()
+  {
+    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $ticket = KitchenTicket::factory()->create([
+      'status' => KitchenTicketStatus::WAITING,
+      'accepted_by' => null
+    ]);
+    $orderItem = OrderItem::factory()->create(['status' => OrderItemStatus::PENDING]);
+    KitchenTicketItem::factory()->create([
+      'kitchen_ticket_id' => $ticket->id,
+      'order_item_id' => $orderItem->id
+    ]);
+
+    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+
+    $this->assertDatabaseHas('kitchen_tickets', [
+      'id' => $ticket->id,
+      'status' => KitchenTicketStatus::PROCESSING->value
+    ]);
+
+    $this->assertDatabaseHas('order_items', [
+      'id' => $orderItem->id,
+      'status' => OrderItemStatus::ACCEPTED->value
     ]);
   }
 
@@ -216,7 +294,7 @@ class KitchenServiceTest extends TestCase
     $waiters = User::factory()->count(2)->create(['is_active' => true, 'last_seen_at' => now()]);
     $waiters->each(fn($user) => $user->assignRole(UserRole::WAITER));
 
-    $this->service->notifyWaiter($ticket->id);
+    $this->kitchenService->notifyWaiter($ticket->id);
 
     Event::assertDispatched(KitchenOrderReady::class);
   }

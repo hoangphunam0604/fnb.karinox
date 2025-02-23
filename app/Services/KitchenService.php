@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Enums\KitchenTicketStatus;
+use App\Enums\OrderItemStatus;
 use App\Enums\UserRole;
 use App\Models\KitchenTicket;
 use App\Models\KitchenTicketItem;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Events\KitchenOrderReady;
+use App\Events\KitchenTicketUpdated;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
@@ -77,6 +80,9 @@ class KitchenService
 
       KitchenTicketItem::insert($itemsData->toArray());
 
+      $ticket->load('items'); // Load lại các món mới vào vé bếp
+      // 🔴 **Phát sự kiện sau khi cập nhật vé bếp**
+      broadcast(new KitchenTicketUpdated($ticket))->toOthers();
       return $ticket;
     });
   }
@@ -130,17 +136,38 @@ class KitchenService
    */
   public function acceptTicket(int $ticketId, int $userId): void
   {
-    $user = User::where('id', $userId)->firstOrFail();
 
-    if (!$user->hasRole(UserRole::KITCHEN_STAFF)) {
-      throw new \Exception("Chỉ nhân viên bếp mới có thể nhận món.");
-    }
-    $ticket = KitchenTicket::where('id', $ticketId)->firstOrFail();
+    $user = User::findOrFail($userId);
+    abort_if(!$user->hasRole(UserRole::KITCHEN_STAFF), 403, "Chỉ nhân viên bếp mới có thể nhận món.");
+    DB::transaction(function () use ($ticketId, $userId) {
 
-    $ticket->update([
-      'accepted_by' => $userId,
-      'status' => KitchenTicketStatus::PROCESSING,
-    ]);
+      $ticket = KitchenTicket::where('id', $ticketId)->firstOrFail();
+      if ($ticket->ticket) {
+        abort(403, "Vé bếp này không thể được nhận vì đã được tiếp nhận bởi: {$ticket->ticket->fullname}.");
+      }
+      if ($ticket->status !== KitchenTicketStatus::WAITING) {
+        abort(400, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
+      }
+
+      if ($ticket->status !== KitchenTicketStatus::WAITING) {
+        abort(400, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
+      }
+
+
+      $ticket->update([
+        'accepted_by' => $userId,
+        'status' => KitchenTicketStatus::PROCESSING,
+      ]);
+
+      $orderItemIds = $ticket->items->pluck('order_item_id');
+
+      KitchenTicketItem::where('kitchen_ticket_id', $ticket->id)
+        ->update(['status' => KitchenTicketStatus::PROCESSING]);
+      if ($orderItemIds->isNotEmpty()) {
+        OrderItem::whereIn('id', $orderItemIds)
+          ->update(['status' => OrderItemStatus::ACCEPTED]);
+      }
+    });
   }
 
 
