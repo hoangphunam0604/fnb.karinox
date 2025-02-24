@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\ProductBranch;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -105,7 +106,7 @@ class StockDeductionService
       'transaction_type' => $type,
       'reference_id' => $referenceId,
       'branch_id' => $branchId,
-      'user_id' => auth()->id(),
+      'user_id' =>  Auth::id(),
     ]);
   }
 

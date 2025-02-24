@@ -15,22 +15,6 @@ enum OrderItemStatus: string
   case CANCELED = 'canceled';     // Đã hủy trước khi chế biến
   case REFUNDED = 'refunded';     // Hoàn tiền sau khi phục vụ
 
-  /**
-   * Lấy mô tả cho từng trạng thái
-   */
-  public function description(): string
-  {
-    return match ($this) {
-      self::PENDING   => 'Món vừa được đặt, chưa gửi vào bếp.',
-      self::ACCEPTED  => 'Nhân viên đã xác nhận đơn hàng.',
-      self::PREPARING => 'Bếp đang chế biến món ăn.',
-      self::PREPARED  => 'Món đã nấu xong, sẵn sàng phục vụ.',
-      self::SERVING   => 'Nhân viên đang mang món đến cho khách.',
-      self::SERVED    => 'Khách đã nhận món, hoàn tất.',
-      self::CANCELED  => 'Món đã bị hủy trước khi chế biến.',
-      self::REFUNDED  => 'Món bị hoàn tiền sau khi phục vụ.',
-    };
-  }
 
   /**
    * Lấy danh sách tất cả trạng thái dưới dạng mảng key-value
@@ -54,5 +38,22 @@ enum OrderItemStatus: string
   public static function fake(): self
   {
     return Arr::random(self::cases());
+  }
+
+  /**
+   * Lấy mô tả cho từng trạng thái
+   */
+  public function description(): string
+  {
+    return match ($this) {
+      self::PENDING   => 'Món vừa được đặt, chưa gửi vào bếp.',
+      self::ACCEPTED  => 'Nhân viên bếp đã xác nhận đơn hàng.',
+      self::PREPARING => 'Bếp đang chế biến món ăn.',
+      self::PREPARED  => 'Món đã nấu xong, sẵn sàng phục vụ.',
+      self::SERVING   => 'Nhân viên đang mang món đến cho khách.',
+      self::SERVED    => 'Khách đã nhận món, hoàn tất.',
+      self::CANCELED  => 'Món đã bị hủy trước khi chế biến.',
+      self::REFUNDED  => 'Món bị hoàn tiền sau khi phục vụ.',
+    };
   }
 }
