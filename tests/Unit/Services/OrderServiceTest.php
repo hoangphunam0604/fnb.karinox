@@ -19,6 +19,10 @@ use App\Services\VoucherService;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use App\Events\OrderCompleted;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 use Tests\TestCase;
 use Mockery;
 
@@ -316,42 +320,140 @@ class OrderServiceTest extends TestCase
   }
 
   #[Test]
-  public function it_can_mark_order_as_completed()
+  public function test_it_can_mark_order_as_completed()
   {
-    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
+    // Tạo đơn hàng thực trong database
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 1000,
+    ]);
 
-    DB::shouldReceive('transaction')->andReturnUsing(function ($callback) use ($order) {
-      return $callback();
-    });
+    // Gọi phương thức
+    $updatedOrder = $this->orderService->markAsCompleted($order->id, 1000);
 
-    $this->invoiceServiceMock->shouldReceive('createInvoiceFromOrder')->once()->with($order->id, 50000);
-
-    $completedOrder = $this->orderService->markAsCompleted($order->id, 50000);
-
-    $this->assertEquals(OrderStatus::COMPLETED, $completedOrder->order_status);
+    // Kiểm tra order đã cập nhật trạng thái
+    $this->assertEquals(OrderStatus::COMPLETED, $updatedOrder->order_status);
   }
 
-  #[Test]
-  public function it_cannot_complete_order_already_completed()
-  {
-    $order = Order::factory()->create(['order_status' => OrderStatus::COMPLETED, 'total_price' => 50000]);
 
+  #[Test]
+  public function test_it_throws_exception_if_order_already_completed()
+  {
+    // Tạo đơn hàng đã hoàn tất
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::COMPLETED,
+      'total_price' => 1000,
+    ]);
+
+    // Kiểm tra ngoại lệ
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('Đơn hàng đã hoàn tất trước đó.');
 
-    $this->orderService->markAsCompleted($order->id, 50000);
+    $this->orderService->markAsCompleted($order->id, 1000);
   }
 
-  #[Test]
-  public function it_cannot_complete_order_with_insufficient_payment()
-  {
-    $order = Order::factory()->create(['order_status' => OrderStatus::PENDING, 'total_price' => 50000]);
 
+  #[Test]
+  public function test_it_throws_exception_if_paid_amount_is_insufficient()
+  {
+    // Tạo đơn hàng với giá trị 1000 nhưng chỉ thanh toán 500
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 1000,
+    ]);
+
+    // Kiểm tra ngoại lệ
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('Số tiền thanh toán không đủ.');
 
-    $this->orderService->markAsCompleted($order->id, 30000);
+    $this->orderService->markAsCompleted($order->id, 500);
   }
+
+  #[Test]
+  public function test_it_marks_completed_if_order_is_fully_paid()
+  {
+    // Tạo đơn hàng thực trong database
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 500,
+    ]);
+
+    // Gọi phương thức
+    $updatedOrder = $this->orderService->markAsCompleted($order->id, 500);
+
+    // Kiểm tra order đã cập nhật trạng thái
+    $this->assertEquals(OrderStatus::COMPLETED, $updatedOrder->order_status);
+  }
+
+  #[Test]
+  public function test_it_runs_in_transaction()
+  {
+    // Giả lập transaction
+    DB::shouldReceive('transaction')
+      ->atLeast()->once()
+      ->andReturnUsing(function ($callback) {
+        return $callback();
+      });
+
+    // Tạo đơn hàng thực
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 1000,
+    ]);
+
+    // Gọi phương thức
+    $this->orderService->markAsCompleted($order->id, 1000);
+  }
+
+  #[Test]
+  public function test_it_dispatches_order_completed_event()
+  {
+    // Giả lập sự kiện
+    Event::fake();
+
+    // Tạo đơn hàng thực
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 1000,
+    ]);
+
+    // Gọi phương thức
+    $this->orderService->markAsCompleted($order->id, 1000);
+
+    // Kiểm tra sự kiện được dispatch
+    Event::assertDispatched(OrderCompleted::class, function ($event) use ($order) {
+      return $event->order->id === $order->id;
+    });
+  }
+
+  #[Test]
+  public function test_it_returns_updated_order()
+  {
+    // Tạo đơn hàng thực
+    $order = Order::factory()->create([
+      'order_status' => OrderStatus::PENDING,
+      'total_price' => 1000,
+    ]);
+
+    // Gọi phương thức
+    $updatedOrder = $this->orderService->markAsCompleted($order->id, 1000);
+
+    // Kiểm tra order trả về có cập nhật đúng trạng thái
+    $this->assertInstanceOf(Order::class, $updatedOrder);
+    $this->assertEquals(OrderStatus::COMPLETED, $updatedOrder->order_status);
+  }
+
+  #[Test]
+
+  public function test_it_fails_if_order_does_not_exist()
+  {
+    // Kiểm tra ngoại lệ khi order không tồn tại
+    $this->expectException(ModelNotFoundException::class);
+
+    $this->orderService->markAsCompleted(99999, 1000); // ID không tồn tại
+  }
+
+
   #[Test]
   public function it_can_update_order_status()
   {

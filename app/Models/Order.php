@@ -121,7 +121,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   public function markAsCompleted()
   {
-    $this->update(['status' => 'completed']);
+    $this->update(['order_status' => OrderStatus::COMPLETED]);
     event(new OrderCompleted($this));
   }
   /**
@@ -129,7 +129,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
    */
   public function isCompleted()
   {
-    return $this->order_status === 'completed';
+    return $this->order_status === OrderStatus::COMPLETED;
   }
 
 
@@ -190,7 +190,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   public function canNotRestoreVoucher(): bool
   {
-    return $this->order_status === 'completed' || !$this->voucher_id;
+    return $this->order_status === OrderStatus::COMPLETED || !$this->voucher_id;
   }
 
   public function getMsgVoucherCanNotRestore(): Msg
