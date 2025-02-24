@@ -142,15 +142,15 @@ class KitchenService
     DB::transaction(function () use ($ticketId, $userId) {
 
       $ticket = KitchenTicket::where('id', $ticketId)->firstOrFail();
-      if ($ticket->ticket) {
-        abort(403, "Vé bếp này không thể được nhận vì đã được tiếp nhận bởi: {$ticket->ticket->fullname}.");
+      if ($ticket->accepted_by) {
+        abort(403, "Vé bếp này không thể được nhận vì đã được tiếp nhận bởi: {$ticket->acceptedBy->fullname}.");
       }
       if ($ticket->status !== KitchenTicketStatus::WAITING) {
-        abort(400, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
+        abort(403, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
       }
 
       if ($ticket->status !== KitchenTicketStatus::WAITING) {
-        abort(400, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
+        abort(403, "Vé bếp này không thể được nhận vì đang ở trạng thái: {$ticket->status->value}.");
       }
 
 

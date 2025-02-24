@@ -19,9 +19,10 @@ use App\Events\KitchenOrderReady;
 use App\Models\Branch;
 use App\Models\KitchenTicketItem;
 use App\Models\OrderItem;
+use Illuminate\Auth\Access\AuthorizationException;
 use Spatie\Permission\Models\Role;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class KitchenServiceTest extends TestCase
 {
@@ -33,6 +34,9 @@ class KitchenServiceTest extends TestCase
   {
     parent::setUp();
     $this->kitchenService = new KitchenService();
+    // ✅ Tạo role nếu chưa có
+    Role::firstOrCreate(['name' => UserRole::WAITER, 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => UserRole::KITCHEN_STAFF, 'guard_name' => 'web']);
   }
   #[Test]
   #[TestDox('Tạo vé bếp mới nếu chưa có vé cho đơn hàng')]
@@ -187,7 +191,10 @@ class KitchenServiceTest extends TestCase
   #[TestDox("Nhân viên bếp có thể nhận vé bếp thành công")]
   public function test_kitchen_staff_can_accept_ticket()
   {
-    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    // ✅ Tạo role nếu chưa có
+    $user = User::factory()->create();
+    $user->assignRole(UserRole::KITCHEN_STAFF);
+
     $ticket = KitchenTicket::factory()->create([
       'status' => KitchenTicketStatus::WAITING,
       'accepted_by' => null
@@ -214,48 +221,94 @@ class KitchenServiceTest extends TestCase
   #[TestDox("Ném lỗi nếu người dùng không phải là nhân viên bếp")]
   public function test_throws_error_if_user_is_not_kitchen_staff()
   {
-    $user = User::factory()->create(['role' => UserRole::WAITER]); // Không phải nhân viên bếp
+    $user = User::factory()->create();
+    $user->assignRole(UserRole::WAITER); // Không phải nhân viên bếp
     $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::WAITING]);
 
-    $this->expectExceptionCode(403);
-    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+    // Chặn xử lý lỗi mặc định để test abort
+    $this->withoutExceptionHandling();
+    // Bắt ngoại lệ
+    try {
+      $this->kitchenService->acceptTicket($ticket->id, $user->id);
+    } catch (HttpException | AuthorizationException $e) {
+      $this->assertEquals(403, $e->getStatusCode());
+      $this->assertEquals("Chỉ nhân viên bếp mới có thể nhận món.", $e->getMessage());
+      return;
+    }
+
+    $this->fail('Expected HttpException (403) was not thrown.');
   }
 
   #[Test]
   #[TestDox("Ném lỗi nếu vé bếp đã có người nhận")]
   public function test_throws_error_if_ticket_is_already_accepted()
   {
-    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
-    $otherUser = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $user = User::factory()->create();
+    $user->assignRole(UserRole::KITCHEN_STAFF);
+
+    $acceptedBy = User::factory()->create();
+    $acceptedBy->assignRole(UserRole::KITCHEN_STAFF);
+
     $ticket = KitchenTicket::factory()->create([
       'status' => KitchenTicketStatus::WAITING,
-      'accepted_by' => $otherUser->id
+      'accepted_by' => $acceptedBy->id
     ]);
-
-    $this->expectExceptionCode(403);
-    $this->expectExceptionMessage("Vé bếp này không thể được nhận vì đã được tiếp nhận bởi");
-
-    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+    // Chặn xử lý lỗi mặc định để test abort
+    $this->withoutExceptionHandling();
+    // Bắt ngoại lệ
+    try {
+      $this->kitchenService->acceptTicket($ticket->id, $user->id);
+    } catch (HttpException | AuthorizationException $e) {
+      $this->assertEquals(403, $e->getStatusCode());
+      $this->assertEquals("Vé bếp này không thể được nhận vì đã được tiếp nhận bởi: {$acceptedBy->fullname}.", $e->getMessage());
+      return;
+    }
+    $this->fail('Expected HttpException (403) was not thrown.');
   }
 
   #[Test]
   #[TestDox("Ném lỗi nếu vé bếp không ở trạng thái WAITING")]
   public function test_throws_error_if_ticket_status_is_not_waiting()
   {
-    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
-    $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::PROCESSING]);
+    $user = User::factory()->create();
+    $user->assignRole(UserRole::KITCHEN_STAFF);
+    // Các trạng thái không hợp lệ (không phải WAITING)
+    $invalidStatuses = [
+      KitchenTicketStatus::PROCESSING,
+      KitchenTicketStatus::COMPLETED,
+      KitchenTicketStatus::CANCELED,
+    ];
 
-    $this->expectExceptionCode(400);
-    $this->expectExceptionMessage("Vé bếp này không thể được nhận vì đang ở trạng thái");
+    foreach ($invalidStatuses as $status) {
+      // Tạo vé bếp với trạng thái không phải WAITING
+      $ticket = KitchenTicket::factory()->create([
+        'status' => $status,
+      ]);
 
-    $this->kitchenService->acceptTicket($ticket->id, $user->id);
+      // Chặn xử lý exception mặc định để kiểm tra abort
+      $this->withoutExceptionHandling();
+
+      // Bắt ngoại lệ do abort(403)
+      try {
+        $this->kitchenService->acceptTicket($ticket->id, $user->id);
+      } catch (HttpException $e) {
+        $this->assertEquals(403, $e->getStatusCode());
+        $this->assertEquals("Vé bếp này không thể được nhận vì đang ở trạng thái: {$status->value}.", $e->getMessage());
+        continue; // Kiểm tra tiếp với các trạng thái khác
+      }
+
+      // Nếu không ném lỗi, test sẽ fail
+      $this->fail("Expected HttpException (403) was not thrown for status: {$status->value}");
+    }
   }
 
   #[Test]
   #[TestDox("Khi nhận vé bếp, trạng thái món ăn và đơn hàng được cập nhật")]
   public function test_updates_order_items_status_when_ticket_is_accepted()
   {
-    $user = User::factory()->create(['role' => UserRole::KITCHEN_STAFF]);
+    $user = User::factory()->create();
+    $user->assignRole(UserRole::KITCHEN_STAFF);
+
     $ticket = KitchenTicket::factory()->create([
       'status' => KitchenTicketStatus::WAITING,
       'accepted_by' => null
@@ -285,8 +338,6 @@ class KitchenServiceTest extends TestCase
   {
     Event::fake();
 
-    // ✅ Tạo role nếu chưa có
-    Role::firstOrCreate(['name' => UserRole::WAITER, 'guard_name' => 'web']);
 
     $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::WAITING]);
 
