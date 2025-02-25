@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\DTO\ValidationResult;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use App\Enums\OrderStatus;
@@ -193,6 +194,7 @@ class OrderServiceTest extends TestCase
           'discount_amount' => 10000,
           'total_price' => 90000
         ]);
+        return ValidationResult::success(config('messages.voucher.used'));
       });
 
     $order = $this->orderService->createOrder($orderData);
@@ -218,7 +220,7 @@ class OrderServiceTest extends TestCase
         return $arg instanceof Order;
       }), 'INVALIDCODE')
       ->andReturnUsing(function ($order) {
-        // Không cập nhật giá trị đơn hàng nếu voucher không hợp lệ
+        return ValidationResult::fail(config('messages.voucher.not_found'));
       });
 
     $order = $this->orderService->createOrder($orderData);
