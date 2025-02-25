@@ -137,6 +137,7 @@ class VoucherServiceTest extends TestCase
     $result = $this->voucherService->isValid($voucher, 200);
     $this->assertFalse($result);
   }
+
   #[Test]
   public function it_applies_a_voucher_and_updates_usage()
   {
@@ -155,12 +156,16 @@ class VoucherServiceTest extends TestCase
 
     $result = $this->voucherService->applyVoucher($voucher->code, $order);
 
+    dump($result);
+
     $this->assertTrue($result['success']);
     $this->assertEquals(20, $result['discount']);
     $this->assertEquals(180, $result['final_total']);
 
     $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'applied_count' => 6]);
   }
+
+
   #[Test]
   public function it_does_not_apply_invalid_voucher()
   {
