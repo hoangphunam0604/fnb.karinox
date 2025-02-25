@@ -184,7 +184,7 @@ class OrderServiceTest extends TestCase
       'voucher_code' => $validVoucher->code
     ];
     // Mock applyVoucherToOrder để không gọi thực tế
-    $this->voucherServiceMock->shouldReceive('applyVoucherToOrder')
+    $this->voucherServiceMock->shouldReceive('applyVoucher')
       ->once()
       ->with(\Mockery::type(Order::class), 'DISCOUNT10')
       ->andReturnUsing(function ($order) {
@@ -210,9 +210,9 @@ class OrderServiceTest extends TestCase
       'voucher_code' => 'INVALIDCODE'
     ];
 
-    // Kiểm tra xem applyVoucherToOrder có được gọi không
-    // Mock applyVoucherToOrder để không gọi thực tế
-    $this->voucherServiceMock->shouldReceive('applyVoucherToOrder')
+    // Kiểm tra xem applyVoucher có được gọi không
+    // Mock applyVoucher để không gọi thực tế
+    $this->voucherServiceMock->shouldReceive('applyVoucher')
       ->once()
       ->with(\Mockery::on(function ($arg) {
         return $arg instanceof Order;

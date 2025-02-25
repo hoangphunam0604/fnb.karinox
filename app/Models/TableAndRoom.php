@@ -40,6 +40,6 @@ class TableAndRoom extends Model
    */
   public function isAvailable()
   {
-    return $this->status === 'available';
+    return $this->status === TableAndRoomStatus::AVAILABLE;
   }
 }
