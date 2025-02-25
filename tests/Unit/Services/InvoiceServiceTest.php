@@ -87,7 +87,8 @@ class InvoiceServiceTest extends TestCase
       'order_status' => OrderStatus::COMPLETED,
       'subtotal_price' => 70000, //sản phẩm 50k, 2 topping 20k
       'discount_amount' => 20000, // Dùng mã giảm giá 20k
-      'reward_discount' =>  10000 // Dùng điểm giảm 10k
+      'reward_discount' =>  10000, // Dùng điểm giảm 10k
+      'total_price' =>  40000 // Dùng điểm giảm 10k
     ]);
 
     // Tạo sản phẩm trong đơn hàng
