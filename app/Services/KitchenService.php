@@ -109,13 +109,12 @@ class KitchenService
    */
   public function updateItemStatus(int $itemId, KitchenTicketStatus $status): void
   {
-    $item = KitchenTicketItem::select('id', 'kitchen_ticket_id')
+    $item = KitchenTicketItem::select('id', 'kitchen_ticket_id', 'status')
       ->where('id', $itemId)
       ->where('status', '!=', KitchenTicketStatus::COMPLETED)
       ->first();
 
-    //Bỏ qua nếu không có vé hoặc trùng trạng thái
-    if (!$item || $item->status === $status) {
+    if (!$item || $item->status->value  === $status->value) {
       return;
     }
 

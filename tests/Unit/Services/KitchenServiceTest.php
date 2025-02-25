@@ -176,10 +176,13 @@ class KitchenServiceTest extends TestCase
   #[TestDox('Cập nhật trạng thái món ăn trong vé bếp')]
   public function test_it_can_update_item_status()
   {
-    $ticket = KitchenTicket::factory()->hasItems(1)->create(['status' => KitchenTicketStatus::WAITING]);
-    $item = $ticket->items->first();
+    $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::WAITING]);
+    $item = KitchenTicketItem::factory()->create([
+      'kitchen_ticket_id' => $ticket->id,
+      'status'  =>  KitchenTicketStatus::PROCESSING
+    ]);
 
-    $this->kitchenService->updateItemStatus($item->id, KitchenTicketStatus::PROCESSING);
+    $this->kitchenService->updateItemStatus($item->id, KitchenTicketStatus::WAITING);
 
     $this->assertDatabaseHas('kitchen_ticket_items', [
       'id' => $item->id,
