@@ -558,7 +558,6 @@ class VoucherServiceTest extends TestCase
     $mock->shouldReceive('create')->andThrow(new \Exception('Fake DB error'));
     $this->app->instance(VoucherUsage::class, $mock);
     $result = $this->voucherService->applyVoucher($order, $voucher->code);
-    dump($result);
     $this->assertFalse($result->success);
     $this->assertSame(config('messages.voucher.apply_error'), $result->message);
   }
