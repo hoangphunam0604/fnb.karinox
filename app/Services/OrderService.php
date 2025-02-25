@@ -278,7 +278,7 @@ class OrderService
     // 2️⃣ Áp dụng voucher nếu có
     if (!empty($data['voucher_code'])) {
       $order->refresh();
-      $this->voucherService->applyVoucherToOrder($order, $data['voucher_code']);
+      $this->voucherService->applyVoucher($order, $data['voucher_code']);
     }
     // 3️⃣ Áp dụng điểm thưởng nếu có
     if (!empty($data['reward_points_used'])) {

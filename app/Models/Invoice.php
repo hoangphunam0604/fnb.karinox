@@ -229,7 +229,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
 
   public function canNotRestoreVoucher(): bool
   {
-    return $this->order_status === 'completed' || !$this->voucher_id;;
+    return false;
   }
 
   public function getMsgVoucherCanNotRestore(): Msg

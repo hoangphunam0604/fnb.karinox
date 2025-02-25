@@ -12,6 +12,7 @@ use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class VoucherService
 {
@@ -276,29 +277,14 @@ class VoucherService
     return ValidationResult::success(config('messages.voucher.valid'));
   }
 
-
-  public function applyVoucherToOrder(Order $order, string $voucherCode): void
-  {
-    $result = $this->applyVoucher($voucherCode, $order);
-
-    if ($result['success']) {
-      $order->update([
-        'voucher_id' => $result['voucher_id'],
-        'voucher_code' => $result['voucher_code'],
-        'discount_amount' => $result['discount'],
-        'total_price' => $result['final_total']
-      ]);
-    }
-  }
-
   /**
    * Sử dụng voucher
    */
-  public function applyVoucher(string $voucherCode, $order): array
+  public function applyVoucher(Order $order, string $voucherCode): ValidationResult
   {
     $voucher = Voucher::where('code', $voucherCode)->first();
     if (!$voucher) {
-      return ['success' => false];
+      return ValidationResult::fail(config('messages.voucher.not_found'));
     }
     $checkValid = $this->isValid($voucher, $order->total_price, $order->customer_id);
 
@@ -313,7 +299,7 @@ class VoucherService
     ])->exists();
 
     if ($voucherUsed) {
-      return ['success' => false, 'message' => 'Voucher đã được sử dụng trên đơn hàng này.'];
+      return ValidationResult::fail(config('messages.voucher.used'));
     }
 
     // Tính toán giảm giá
@@ -342,24 +328,22 @@ class VoucherService
         'discount_amount' => $discount,
         'used_at' => now(),
       ]);
+      $order->update([
+        'voucher_id' => $voucher->id,
+        'voucher_code' => $voucher->code,
+        'discount_amount' => $discount,
+        'total_price' => $totalBeforeDiscount - $discount
+      ]);
 
       DB::commit(); // Xác nhận transaction
 
-      return [
-        'success' => true,
-        'discount' => $discount,
-        'final_total' => $totalBeforeDiscount - $discount,
-        'voucher_id'  =>  $voucher->id,
-        'voucher_code'  =>  $voucher->code,
-      ];
+      return ValidationResult::success(config('messages.voucher.applied_success'));
     } catch (\Throwable $e) {
       DB::rollBack(); // Rollback nếu có lỗi
 
-      return [
-        'success' => false,
-        'message' => 'Có lỗi xảy ra khi áp dụng voucher. Vui lòng thử lại!',
-        'error' => $e->getMessage(), // Để debug, có thể ẩn trong môi trường production
-      ];
+      return ValidationResult::success(config('messages.voucher.apply_error'));
+      Log::error(config('messages.voucher.apply_error'));
+      Log::error($e->getMessage());
     }
   }
 

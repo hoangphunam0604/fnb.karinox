@@ -11,6 +11,7 @@ use App\Models\InvoiceItem;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\Order;
+use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceService
@@ -53,6 +54,16 @@ class InvoiceService
       if (!$paidAmount)
         $paidAmount = $order->total_price;
 
+      $totalPrice = $order->total_price;
+      // Tính toán thuế bằng TaxService
+      $taxData = $this->taxService->calculateTax($totalPrice) ?: [
+        'tax_rate' => null,
+        'tax_amount' => 0,
+        'total_price_without_vat' => $totalPrice
+      ];
+
+
+
       $invoice = Invoice::create([
         'order_id' => $order->id,
         'customer_id' => $order->customer_id,
@@ -62,19 +73,22 @@ class InvoiceService
         'discount_amount' => $order->discount_amount,
         'reward_points_used' => $order->reward_points_used,
         'reward_discount' => $order->reward_discount,
+        'total_price' => $order->total_price,
+
+        'tax_rate' => $taxData['tax_rate'],
+        'tax_amount' => $taxData['tax_amount'],
+        'total_price_without_vat' => $taxData['total_price_without_vat'],
 
         'paid_amount' => $paidAmount,
-        'invoice_status' => 'pending',
-        'payment_status' => 'unpaid',
+        'invoice_status' => InvoiceStatus::PENDING,
+        'payment_status' => PaymentStatus::UNPAID,
         'note' => $order->note,
       ]);
 
-      $order->loadMissing(['items', 'items.toppings']);
-      $this->copyOrderItemsToInvoice($order, $invoice);
-      $invoice->refresh();
-      $this->updateInvoiceTotal($invoice);
       $this->pointService->earnPointsOnTransactionCompletion($invoice);
 
+      $order->loadMissing(['items', 'items.toppings']);
+      $this->copyOrderItemsToInvoice($order, $invoice);
       return $invoice;
     });
   }
@@ -107,24 +121,6 @@ class InvoiceService
     }
   }
 
-  private function updateInvoiceTotal(Invoice $invoice): void
-  {
-    $total = $invoice->items->sum(fn($item) => $item->total_price_with_topping);
-    $totalPrice = max($total - $invoice->discount_amount - $invoice->reward_discount, 0);
-
-    // Tính toán thuế bằng TaxService
-    $taxData = $this->taxService->calculateTax($totalPrice) ?: [
-      'tax_rate' => null,
-      'tax_amount' => 0,
-      'total_price_without_vat' => $totalPrice
-    ];
-
-    $invoice->total_price = $totalPrice;
-    $invoice->tax_rate = $taxData['tax_rate'];
-    $invoice->tax_amount = $taxData['tax_amount'];
-    $invoice->total_price_without_vat = $taxData['total_price_without_vat'];
-    $invoice->save();
-  }
 
   public function updatePaymentMethod(int $invoiceId, string $method): Invoice
   {

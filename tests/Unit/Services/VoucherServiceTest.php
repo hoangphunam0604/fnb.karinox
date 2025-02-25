@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\DiscountType;
 use App\Enums\Msg;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
@@ -498,47 +499,163 @@ class VoucherServiceTest extends TestCase
   }
 
   #[Test]
-  public function it_applies_a_voucher_and_updates_usage()
+  #[TestDox('Không thể áp dụng voucher nếu mã voucher không tồn tại')]
+  public function testApplyVoucherWithInvalidCode()
+  {
+    $order = Order::factory()->create([
+      'total_price' => 50000,
+      'customer_id' => 1,
+    ]);
+
+    $result = $this->voucherService->applyVoucher($order, 'INVALID_CODE');
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.not_found'), $result->message);
+  }
+  #[Test]
+  #[TestDox('Không thể áp dụng voucher nếu đã được sử dụng trên đơn hàng này')]
+  public function testApplyVoucherAlreadyUsed()
   {
     $voucher = Voucher::factory()->create([
       'is_active' => true,
-      'discount_type' => 'fixed',
-      'discount_value' => 20,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'usage_limit' => 10,
-      'applied_count' => 5,
+      'code' => 'TESTVOUCHER',
+      'discount_type' => DiscountType::FIXED,
+      'discount_value' => 10000,
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    // Tạo đơn hàng nhưng chưa dùng voucher
-    $order = Order::factory()->create(['order_status' => 'confirmed', 'total_price' => 200]);
+    $order = Order::factory()->create([
+      'total_price' => 50000,
+      'customer_id' => 1,
+    ]);
 
-    $result = $this->voucherService->applyVoucher($voucher->code, $order);
+    // Giả lập voucher đã được sử dụng trên đơn hàng này
+    VoucherUsage::factory()->create([
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,
+      'customer_id' => $order->customer_id,
+    ]);
 
-    dump($result);
+    $result = $this->voucherService->applyVoucher($order, 'TESTVOUCHER');
 
-    $this->assertTrue($result['success']);
-    $this->assertEquals(20, $result['discount']);
-    $this->assertEquals(180, $result['final_total']);
-
-    $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'applied_count' => 6]);
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.used'), $result->message);
   }
-
 
   #[Test]
-  public function it_does_not_apply_invalid_voucher()
+  #[TestDox('Trả về lỗi nếu có ngoại lệ khi áp dụng voucher')]
+  public function testApplyVoucherWithException()
   {
     $voucher = Voucher::factory()->create([
-      'is_active' => false, // Voucher không hợp lệ
+      'is_active' => true,
+      'code' => 'TESTVOUCHER',
+      'discount_type' => DiscountType::FIXED,
+      'discount_value' => 10000,
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    // Tạo đơn hàng nhưng chưa dùng voucher
-    $order = Order::factory()->create(['order_status' => 'confirmed']);
+    $order = Order::factory()->create([
+      'total_price' => 50000,
+      'customer_id' => 1,
+    ]);
 
-    $result = $this->voucherService->applyVoucher($voucher, $order);
+    // Mock DB để giả lập lỗi trong transaction
+    DB::shouldReceive('beginTransaction')->once();
+    DB::shouldReceive('commit')->never();
+    DB::shouldReceive('rollBack')->once();
 
-    $this->assertFalse($result['success']);
+    // Giả lập lỗi khi lưu voucher usage
+    VoucherUsage::shouldReceive('create')->andThrow(new \Exception('Fake DB error'));
+
+    $result = $this->voucherService->applyVoucher($order, 'TESTVOUCHER');
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.apply_error'), $result->message);
   }
+  #[Test]
+  #[TestDox('Có thể áp dụng voucher thành công nếu hợp lệ')]
+  public function testApplyVoucherSuccessfully()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'code' => 'TESTVOUCHER',
+      'discount_type' => DiscountType::FIXED,
+      'discount_value' => 10000,
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+      'usage_limit' => 5,
+      'applied_count' => 0,
+    ]);
+
+    $order = Order::factory()->create([
+      'total_price' => 50000,
+      'customer_id' => 1,
+    ]);
+
+    $result = $this->voucherService->applyVoucher($order, 'TESTVOUCHER');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.applied_success'), $result->message);
+
+    // Kiểm tra giá trị giảm giá có chính xác không
+    $this->assertEquals(10000, $order->refresh()->discount_amount);
+    $this->assertEquals(40000, $order->refresh()->total_price);
+
+    // Kiểm tra số lần sử dụng voucher có tăng không
+    $this->assertEquals(1, $voucher->refresh()->applied_count);
+
+    // Kiểm tra có tạo bản ghi `VoucherUsage` hay không
+    $this->assertDatabaseHas('voucher_usages', [
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,
+      'customer_id' => $order->customer_id,
+      'discount_amount' => 10000,
+    ]);
+  }
+  #[Test]
+  #[TestDox('Có thể áp dụng voucher giảm giá theo phần trăm')]
+  public function testApplyVoucherWithPercentageDiscount()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'code' => 'PERCENTVOUCHER',
+      'discount_type' => DiscountType::PERCENTAGE,
+      'discount_value' => 20, // Giảm 20%
+      'max_discount' => 15000, // Giảm tối đa 15k
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+      'usage_limit' => 5,
+      'applied_count' => 0,
+    ]);
+
+    $order = Order::factory()->create([
+      'total_price' => 80000, // Đơn hàng 80k, giảm 20% là 16k, nhưng bị giới hạn tối đa 15k
+      'customer_id' => 1,
+    ]);
+
+    $result = $this->voucherService->applyVoucher($order, 'PERCENTVOUCHER');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.applied_success'), $result->message);
+
+    // Kiểm tra giá trị giảm giá có chính xác không
+    $this->assertEquals(15000, $order->refresh()->discount_amount); // Chỉ giảm tối đa 15k
+    $this->assertEquals(65000, $order->refresh()->total_price); // Tổng còn lại: 80k - 15k
+
+    // Kiểm tra số lần sử dụng voucher có tăng không
+    $this->assertEquals(1, $voucher->refresh()->applied_count);
+
+    // Kiểm tra có tạo bản ghi `VoucherUsage` hay không
+    $this->assertDatabaseHas('voucher_usages', [
+      'voucher_id' => $voucher->id,
+      'order_id' => $order->id,
+      'customer_id' => $order->customer_id,
+      'discount_amount' => 15000,
+    ]);
+  }
+
 
   #[Test]
   public function it_returns_valid_vouchers_excluding_those_exceeding_daily_limits()

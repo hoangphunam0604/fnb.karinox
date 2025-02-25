@@ -2,7 +2,11 @@
 
 return [
   'voucher' => [
+    'applied_success' => 'Voucher đã được áp dụng thành công.',
+    'apply_error' => 'Có lỗi xảy ra khi áp dụng voucher. Vui lòng thử lại!',
+    'not_found' =>  'Mã voucher không hợp lệ',
     'valid' => 'Voucher hợp lệ và có thể sử dụng.',
+    'used' => 'Voucher đã được sử dụng trên đơn hàng này.',
     'inactive_or_expired' => 'Voucher không hợp lệ hoặc đã hết hạn.',
     'min_order_value' => 'Đơn hàng không đạt giá trị tối thiểu để sử dụng voucher.',
     'usage_limit_exceeded' => 'Voucher đã đạt giới hạn sử dụng.',

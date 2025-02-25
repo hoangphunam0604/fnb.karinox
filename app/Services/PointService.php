@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Contracts\PointEarningTransaction;
 use App\Contracts\RewardPointUsable;
 use App\Enums\PointHistoryNote;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use App\Models\PointHistory;
 use App\Models\Customer;
