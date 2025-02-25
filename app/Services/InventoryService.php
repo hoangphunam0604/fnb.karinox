@@ -11,6 +11,7 @@ use App\Models\ProductBranch;
 use App\Models\ProductTopping;
 use App\Models\ProductFormula;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService
@@ -186,7 +187,7 @@ class InventoryService
         'transaction_type' => 'sale',
         'reference_id' => $invoice->id,
         'branch_id' => $invoice->branch_id,
-        'user_id' => auth()->id(),
+        'user_id' => Auth::id(),
       ]);
 
       // Lấy danh sách các món trong đơn hàng
@@ -267,7 +268,7 @@ class InventoryService
         'transaction_type' => 'return',
         'reference_id' => $invoice->id,
         'branch_id' => $invoice->branch_id,
-        'user_id' => auth()->id(),
+        'user_id' => Auth::id(),
       ]);
 
       foreach ($invoice->order->items as $orderItem) {
@@ -327,7 +328,7 @@ class InventoryService
         'transaction_type' => 'preparation',
         'reference_id' => $orderItem->order_id,
         'branch_id' => $orderItem->order->branch_id,
-        'user_id' => auth()->id(),
+        'user_id' => Auth::id(),
       ]);
 
       foreach ($orderItem->product->formulas as $formula) {
