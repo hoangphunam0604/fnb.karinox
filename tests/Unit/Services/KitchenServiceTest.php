@@ -179,10 +179,10 @@ class KitchenServiceTest extends TestCase
     $ticket = KitchenTicket::factory()->create(['status' => KitchenTicketStatus::WAITING]);
     $item = KitchenTicketItem::factory()->create([
       'kitchen_ticket_id' => $ticket->id,
-      'status'  =>  KitchenTicketStatus::PROCESSING
+      'status'  =>  KitchenTicketStatus::WAITING
     ]);
 
-    $this->kitchenService->updateItemStatus($item->id, KitchenTicketStatus::WAITING);
+    $this->kitchenService->updateItemStatus($item->id, KitchenTicketStatus::PROCESSING);
 
     $this->assertDatabaseHas('kitchen_ticket_items', [
       'id' => $item->id,
