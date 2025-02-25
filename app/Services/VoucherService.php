@@ -3,13 +3,14 @@
 namespace App\Services;
 
 use App\Contracts\VoucherApplicable;
+use App\Enums\DiscountType;
 use App\Enums\Msg;
 use App\Models\Customer;
-use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
+use App\DTO\ValidationResult;
 use Illuminate\Support\Facades\DB;
 
 class VoucherService
@@ -165,43 +166,49 @@ class VoucherService
   /**
    * Kiểm tra voucher hợp lệ
    */
-  public function isValid(Voucher $voucher, $totalOrder, $customerId = null): bool
+  /**
+   * Kiểm tra voucher có hợp lệ hay không.
+   *
+   * @param Voucher $voucher
+   * @param float $totalOrder
+   * @param int|null $customerId
+   * @return ValidationResult
+   */
+  public function isValid(Voucher $voucher, float $totalOrder, ?int $customerId = null): ValidationResult
   {
     $now = Carbon::now();
-    $dayOfWeek = $now->dayOfWeek; // 0 = Chủ Nhật, 6 = Thứ Bảy
+    $dayOfWeek = $now->dayOfWeek;
     $weekOfMonth = ceil($now->day / 7);
     $month = $now->month;
     $currentTime = $now->format('H:i');
 
+    // Kiểm tra trạng thái voucher
     if (!$voucher->is_active || ($voucher->start_date && $voucher->start_date > $now) || ($voucher->end_date && $voucher->end_date < $now)) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.inactive_or_expired'));
     }
 
-    // Kiểm tra giá trị tối thiểu của order
+    // Kiểm tra giá trị tối thiểu của đơn hàng
     if ($voucher->min_order_value && $totalOrder < $voucher->min_order_value) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.min_order_value'));
     }
-
 
     // Kiểm tra giới hạn số lần sử dụng
     if ($voucher->usage_limit !== null && $voucher->applied_count >= $voucher->usage_limit) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.usage_limit_exceeded'));
     }
 
-
     if ($customerId) {
-
+      // Kiểm tra số lần sử dụng của khách hàng
       $usedCount = DB::table('voucher_usages')
         ->where('voucher_id', $voucher->id)
         ->where('customer_id', $customerId)
         ->count();
 
       if ($voucher->per_customer_limit !== null && $usedCount >= $voucher->per_customer_limit) {
-        return false;
+        return ValidationResult::fail(config('messages.voucher.per_customer_limit_exceeded'));
       }
 
-
-
+      // Kiểm tra số lần sử dụng trong ngày
       $dailyUsedCount = DB::table('voucher_usages')
         ->where('voucher_id', $voucher->id)
         ->where('customer_id', $customerId)
@@ -209,10 +216,8 @@ class VoucherService
         ->count();
 
       if ($voucher->per_customer_daily_limit !== null && $dailyUsedCount >= $voucher->per_customer_daily_limit) {
-        return false;
+        return ValidationResult::fail(config('messages.voucher.per_customer_daily_limit_exceeded'));
       }
-
-
 
       // Kiểm tra hạng thành viên hợp lệ
       if (!empty($voucher->applicable_membership_levels)) {
@@ -221,30 +226,28 @@ class VoucherService
         $customerMembershipId = $customerMembership->id;
 
         if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
-          return false;
+          return ValidationResult::fail(config('messages.voucher.invalid_membership_level'));
         }
       }
     } else {
-
       if ($voucher->per_customer_daily_limit !== null || $voucher->per_customer_limit !== null || $voucher->applicable_membership_levels !== null) {
-        return false;
+        return ValidationResult::fail(config('messages.voucher.customer_required'));
       }
     }
 
-
     // Kiểm tra ngày trong tuần hợp lệ
     if (!empty($voucher->valid_days_of_week) && !in_array($dayOfWeek, json_decode($voucher->valid_days_of_week, true))) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.invalid_day_of_week'));
     }
 
     // Kiểm tra tuần trong tháng hợp lệ
     if (!empty($voucher->valid_weeks_of_month) && !in_array($weekOfMonth, json_decode($voucher->valid_weeks_of_month, true))) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.invalid_week_of_month'));
     }
 
     // Kiểm tra tháng hợp lệ
     if (!empty($voucher->valid_months) && !in_array($month, json_decode($voucher->valid_months, true))) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.invalid_month'));
     }
 
     // Kiểm tra khung giờ hợp lệ
@@ -261,16 +264,16 @@ class VoucherService
       }
 
       if (!$isValidTime) {
-        return false;
+        return ValidationResult::fail(config('messages.voucher.invalid_time_range'));
       }
     }
 
     // Kiểm tra ngày bị loại trừ
     if (!empty($voucher->excluded_dates) && in_array($now->toDateString(), json_decode($voucher->excluded_dates, true))) {
-      return false;
+      return ValidationResult::fail(config('messages.voucher.excluded_date'));
     }
 
-    return true;
+    return ValidationResult::success(config('messages.voucher.valid'));
   }
 
 
@@ -291,14 +294,16 @@ class VoucherService
   /**
    * Sử dụng voucher
    */
-  public function applyVoucher(string $voucherCode, $order)
+  public function applyVoucher(string $voucherCode, $order): array
   {
     $voucher = Voucher::where('code', $voucherCode)->first();
     if (!$voucher) {
       return ['success' => false];
     }
-    if (!$this->isValid($voucher, $order->total_price, $order->customer_id)) {
-      return ['success' => false, 'message' => 'Voucher không hợp lệ.'];
+    $checkValid = $this->isValid($voucher, $order->total_price, $order->customer_id);
+
+    if ($checkValid['success'] == false) {
+      return $checkValid;
     }
 
     // Kiểm tra xem voucher đã được sử dụng trên đơn hàng này chưa
@@ -315,16 +320,19 @@ class VoucherService
     $totalBeforeDiscount = $order->total_price;
     $discount = 0;
 
-    if ($voucher->discount_type === 'fixed') {
+    if ($voucher->discount_type === DiscountType::FIXED) {
       $discount = min($voucher->discount_value, $totalBeforeDiscount);
-    } elseif ($voucher->discount_type === 'percentage') {
+    } elseif ($voucher->discount_type === DiscountType::PERCENTAGE) {
       $discount = min($totalBeforeDiscount * ($voucher->discount_value / 100), $voucher->max_discount ?? $totalBeforeDiscount);
     }
 
-    // Cập nhật số lần sử dụng voucher
-    DB::transaction(function () use ($voucher, $order, $totalBeforeDiscount, $discount) {
+    try {
+      DB::beginTransaction(); // Bắt đầu transaction
+
+      // Tăng số lần sử dụng voucher
       $voucher->increment('applied_count');
 
+      // Lưu thông tin voucher đã sử dụng
       VoucherUsage::create([
         'voucher_id' => $voucher->id,
         'customer_id' => $order->customer_id,
@@ -334,15 +342,25 @@ class VoucherService
         'discount_amount' => $discount,
         'used_at' => now(),
       ]);
-    });
 
-    return [
-      'success' => true,
-      'discount' => $discount,
-      'final_total' => $totalBeforeDiscount - $discount,
-      'voucher_id'  =>  $voucher->id,
-      'voucher_code'  =>  $voucher->code,
-    ];
+      DB::commit(); // Xác nhận transaction
+
+      return [
+        'success' => true,
+        'discount' => $discount,
+        'final_total' => $totalBeforeDiscount - $discount,
+        'voucher_id'  =>  $voucher->id,
+        'voucher_code'  =>  $voucher->code,
+      ];
+    } catch (\Throwable $e) {
+      DB::rollBack(); // Rollback nếu có lỗi
+
+      return [
+        'success' => false,
+        'message' => 'Có lỗi xảy ra khi áp dụng voucher. Vui lòng thử lại!',
+        'error' => $e->getMessage(), // Để debug, có thể ẩn trong môi trường production
+      ];
+    }
   }
 
   /**

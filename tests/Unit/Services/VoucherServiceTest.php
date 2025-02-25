@@ -5,10 +5,10 @@ namespace Tests\Unit\Services;
 use App\Enums\Msg;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
-use App\Models\MembershipLevel;
 use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
+use App\Services\CustomerService;
 use App\Services\VoucherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
 
 
 class VoucherServiceTest extends TestCase
@@ -87,6 +88,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertCount(10, $paginatedVouchers); // Kiểm tra có 10 voucher được lấy ra
   }
+
   #[Test]
   public function it_can_get_valid_vouchers()
   {
@@ -107,35 +109,392 @@ class VoucherServiceTest extends TestCase
     $this->assertCount(1, $validVouchers);
     $this->assertEquals($validVoucher->id, $validVouchers->first()->id);
   }
+
   #[Test]
-  public function it_checks_if_a_voucher_is_valid()
+  #[TestDox('Không thể sử dụng voucher khi bị vô hiệu hóa')]
+  public function testVoucherIsInactive()
+  {
+    // Tạo một voucher bị vô hiệu hóa
+    $voucher = Voucher::factory()->create([
+      'is_active' => false,
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(1),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.inactive_or_expired'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher khi đã hết hạn')]
+  public function testVoucherIsExpired()
+  {
+    // Tạo một voucher đã hết hạn
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'start_date' => Carbon::now()->subDays(10),
+      'end_date' => Carbon::now()->subDays(1), // Voucher đã hết hạn
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.inactive_or_expired'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher khi chưa đến ngày bắt đầu')]
+  public function testVoucherNotStartedYet()
+  {
+    // Tạo một voucher chưa có hiệu lực
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'start_date' => Carbon::now()->addDays(2), // Chưa đến ngày bắt đầu
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.inactive_or_expired'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu giá trị đơn hàng thấp hơn mức tối thiểu')]
+  public function testOrderBelowMinimumValue()
   {
     $voucher = Voucher::factory()->create([
       'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'min_order_value' => 100,
-      'usage_limit' => 10,
-      'applied_count' => 5,
+      'min_order_value' => 100000, // Giá trị tối thiểu 100k
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    $result = $this->voucherService->isValid($voucher, 150); // Đơn hàng 150
-    $this->assertTrue($result);
+    $result = $this->voucherService->isValid($voucher, 50000, 1); // Đơn hàng chỉ 50k
 
-    $result = $this->voucherService->isValid($voucher, 50); // Đơn hàng 50 (nhỏ hơn min_order_value)
-    $this->assertFalse($result);
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.min_order_value'), $result->message);
+  }
+
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu giá trị đơn hàng bằng hoặc cao hơn mức tối thiểu')]
+  public function testOrderMeetsMinimumValue()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'min_order_value' => 100000, // Giá trị tối thiểu 100k
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 100000, 1); // Đơn hàng đúng 100k
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher khi đã đạt giới hạn số lần sử dụng')]
+  public function testVoucherUsageLimitExceeded()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'usage_limit' => 3, // Giới hạn sử dụng tối đa 3 lần
+      'applied_count' => 3, // Đã đạt giới hạn
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.usage_limit_exceeded'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu khách hàng đã đạt giới hạn số lần sử dụng')]
+  public function testVoucherPerCustomerLimitExceeded()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'per_customer_limit' => 2, // Mỗi khách hàng chỉ được dùng tối đa 2 lần
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+    $customer = Customer::factory()->create();
+
+    // Giả lập khách hàng đã sử dụng voucher 2 lần
+    VoucherUsage::factory()->count(2)->create([
+      'voucher_id' => $voucher->id,
+      'customer_id' => $customer->id,
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.per_customer_limit_exceeded'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu khách hàng đã đạt giới hạn số lần sử dụng trong ngày')]
+  public function testVoucherPerCustomerDailyLimitExceeded()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'per_customer_daily_limit' => 1, // Mỗi khách hàng chỉ được dùng tối đa 1 lần/ngày
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    // Giả lập khách hàng đã sử dụng voucher hôm nay
+    VoucherUsage::factory()->create([
+      'voucher_id' => $voucher->id,
+      'customer_id' => 1,
+      'used_at' => Carbon::now(),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.per_customer_daily_limit_exceeded'), $result->message);
+  }
+
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu hạng thành viên không hợp lệ')]
+  public function testVoucherInvalidMembershipLevel()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'applicable_membership_levels' => json_encode([2, 3]), // Chỉ cho phép hạng 2, 3
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $customerServiceMock = $this->createMock(CustomerService::class);
+    $customerServiceMock->method('getCustomerMembershipLevel')->willReturn((object)['id' => 1]); // Hạng 1, không hợp lệ
+
+    $this->voucherService = new VoucherService($customerServiceMock);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.invalid_membership_level'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu hạng thành viên hợp lệ')]
+  public function testVoucherValidMembershipLevel()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'applicable_membership_levels' => json_encode([2, 3]), // Chỉ cho phép hạng 2, 3
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $customerServiceMock = $this->createMock(CustomerService::class);
+    $customerServiceMock->method('getCustomerMembershipLevel')->willReturn((object)['id' => 2]); // Hạng 2, hợp lệ
+
+    $this->voucherService = new VoucherService($customerServiceMock);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho ngày trong tuần hiện tại')]
+  public function testVoucherInvalidDayOfWeek()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_days_of_week' => json_encode([1, 2, 3]), // Chỉ áp dụng vào Thứ 2, Thứ 3, Thứ 4
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    Carbon::setTestNow(Carbon::now()->next(5)); // Giả lập hôm nay là Thứ 6 (5)
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.invalid_day_of_week'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu ngày trong tuần hợp lệ')]
+  public function testVoucherValidDayOfWeek()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_days_of_week' => json_encode([1, 2, 3]), // Chỉ áp dụng vào Thứ 2, Thứ 3, Thứ 4
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    Carbon::setTestNow(Carbon::now()->next(2)); // Giả lập hôm nay là Thứ 3 (2)
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
+  }
+
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho tuần hiện tại của tháng')]
+  public function testVoucherInvalidWeekOfMonth()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_weeks_of_month' => json_encode([1, 2]), // Chỉ áp dụng cho tuần 1 và 2 của tháng
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeeks(3)); // Giả lập hôm nay là tuần 4
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.invalid_week_of_month'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu tuần trong tháng hợp lệ')]
+  public function testVoucherValidWeekOfMonth()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_weeks_of_month' => json_encode([1, 2]), // Chỉ áp dụng cho tuần 1 và 2 của tháng
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeek(1)); // Giả lập hôm nay là tuần 2
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho tháng hiện tại')]
+  public function testVoucherInvalidMonth()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_months' => json_encode([1, 2, 3]), // Chỉ áp dụng cho tháng 1, 2, 3
+      'start_date' => Carbon::now()->subMonths(1),
+      'end_date' => Carbon::now()->addMonths(1),
+    ]);
+
+    Carbon::setTestNow(Carbon::create(null, 5, 1)); // Giả lập hôm nay là tháng 5
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.invalid_month'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu tháng hợp lệ')]
+  public function testVoucherValidMonth()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_months' => json_encode([1, 2, 3]), // Chỉ áp dụng cho tháng 1, 2, 3
+      'start_date' => Carbon::now()->subMonths(1),
+      'end_date' => Carbon::now()->addMonths(1),
+    ]);
+
+    Carbon::setTestNow(Carbon::create(null, 2, 1)); // Giả lập hôm nay là tháng 2
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
   }
   #[Test]
-  public function it_does_not_allow_voucher_exceeding_usage_limit()
+  #[TestDox('Không thể sử dụng voucher nếu không áp dụng trong khung giờ hiện tại')]
+  public function testVoucherInvalidTimeRange()
   {
     $voucher = Voucher::factory()->create([
       'is_active' => true,
-      'usage_limit' => 5,
-      'applied_count' => 5, // Đã đạt giới hạn
+      'valid_time_ranges' => json_encode(['08:00-10:00', '14:00-16:00']), // Chỉ áp dụng từ 08:00-10:00 và 14:00-16:00
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    $result = $this->voucherService->isValid($voucher, 200);
-    $this->assertFalse($result);
+    Carbon::setTestNow(Carbon::today()->setTime(11, 0)); // Giả lập hiện tại là 11:00
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.invalid_time_range'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu khung giờ hợp lệ')]
+  public function testVoucherValidTimeRange()
+  {
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'valid_time_ranges' => json_encode(['08:00-10:00', '14:00-16:00']), // Chỉ áp dụng từ 08:00-10:00 và 14:00-16:00
+      'start_date' => Carbon::now()->subDays(1),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    Carbon::setTestNow(Carbon::today()->setTime(9, 0)); // Giả lập hiện tại là 09:00
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Không thể sử dụng voucher nếu ngày hiện tại nằm trong danh sách ngày bị loại trừ')]
+  public function testVoucherExcludedDate()
+  {
+    $excludedDate = Carbon::now()->toDateString(); // Ngày hôm nay
+
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'excluded_dates' => json_encode([$excludedDate]), // Ngày hôm nay bị loại trừ
+      'start_date' => Carbon::now()->subDays(10),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertFalse($result->success);
+    $this->assertSame(config('messages.voucher.excluded_date'), $result->message);
+  }
+
+  #[Test]
+  #[TestDox('Có thể sử dụng voucher nếu ngày hiện tại không nằm trong danh sách ngày bị loại trừ')]
+  public function testVoucherNonExcludedDate()
+  {
+    $excludedDate = Carbon::now()->addDay()->toDateString(); // Ngày mai bị loại trừ
+
+    $voucher = Voucher::factory()->create([
+      'is_active' => true,
+      'excluded_dates' => json_encode([$excludedDate]), // Chỉ loại trừ ngày mai
+      'start_date' => Carbon::now()->subDays(10),
+      'end_date' => Carbon::now()->addDays(10),
+    ]);
+
+    $result = $this->voucherService->isValid($voucher, 50000, 1);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(config('messages.voucher.valid'), $result->message);
   }
 
   #[Test]
@@ -180,260 +539,7 @@ class VoucherServiceTest extends TestCase
 
     $this->assertFalse($result['success']);
   }
-  #[Test]
-  public function it_checks_voucher_valid_for_membership_level()
-  {
-    $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
-    $customer = Customer::factory()->create(['membership_level_id' => $membershipLevel->id]);
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'per_customer_limit'  =>  null,
-      'per_customer_daily_limit'  =>  null,
-      'applicable_membership_levels' => json_encode([$membershipLevel->id, 2]),
-    ]);
-    $result = $this->voucherService->isValid($voucher, 200, $customer->id);
-    $this->assertTrue($result); // Không kiểm tra hạng thành viên
-  }
-  #[Test]
-  public function it_fails_if_membership_level_not_allowed()
-  {
-    $membershipLevel = MembershipLevel::factory()->create(['id' => 1, 'name' => "Bronze"]);
-    $customer = Customer::factory()->create(['membership_level_id' => $membershipLevel->id]);
 
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'applicable_membership_levels' => json_encode([2, 3]),
-    ]);
-
-    // Khách hàng không thuộc hạng thành viên hợp lệ
-    $result = $this->voucherService->isValid($voucher, 200,  $customer->id);
-    $this->assertFalse($result);
-  }
-  #[Test]
-  public function it_checks_voucher_valid_for_today()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_days_of_week' => json_encode([now()->dayOfWeek]), // Chỉ hợp lệ hôm nay
-    ]);
-
-    $this->assertTrue($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_fails_if_voucher_not_valid_today()
-  {
-
-    $currentDayOfWeek = now()->dayOfWeek;
-    $valid_days_of_week = [0, 1, 2, 3, 4, 5, 6];
-
-    // Loại bỏ ngày hiện tại khỏi danh sách hợp lệ
-    $filtered_days = array_values(array_diff($valid_days_of_week, [$currentDayOfWeek]));
-
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_days_of_week' => json_encode($filtered_days), // Chỉ hợp lệ vào các ngày trong tuần, trừ ngày đang test
-    ]);
-    $this->assertFalse($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_checks_voucher_valid_for_current_week_of_month()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_weeks_of_month' => json_encode([ceil(now()->day / 7)]), // Hợp lệ trong tuần này
-    ]);
-
-    $this->assertTrue($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_fails_if_voucher_not_valid_this_week()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_weeks_of_month' => json_encode([1]), // Chỉ hợp lệ tuần đầu tiên
-    ]);
-
-    if (ceil(now()->day / 7) !== 1) {
-      $this->assertFalse($this->voucherService->isValid($voucher, 200));
-    }
-  }
-  #[Test]
-  public function it_checks_voucher_valid_for_current_month()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_months' => json_encode([now()->month]), // Hợp lệ trong tháng này
-    ]);
-
-    $this->assertTrue($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_fails_if_voucher_not_valid_this_month()
-  {
-    $currentMonth = now()->format('m');
-    $prevMonth = date('m', strtotime($currentMonth . ' -1 months'));
-    $nextMonth = date('m', strtotime($currentMonth . ' +1 months'));
-
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_months' => json_encode([$prevMonth, $nextMonth]), // Chỉ hợp lệ vào tháng trước và tháng sau, không bao gồm tháng đang test
-    ]);
-
-    $this->assertFalse($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_checks_voucher_valid_for_current_time_range()
-  {
-    $currentTime = now()->format('H:i');
-    $invalidTimeRange = date('H:i', strtotime($currentTime . ' -2 hours')) . '-' . date('H:i', strtotime($currentTime . ' +3 hours'));
-
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_time_ranges' => json_encode([$invalidTimeRange]), // Hợp lệ trong khoảng thời gian -2h -> +3h của hiện tại
-    ]);
-
-    $this->assertTrue($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_fails_if_voucher_not_valid_for_current_time()
-  {
-    $currentTime = now()->format('H:i');
-    $invalidTimeRange = date('H:i', strtotime($currentTime . ' +2 hours')) . '-' . date('H:i', strtotime($currentTime . ' +3 hours'));
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'valid_time_ranges' => json_encode([$invalidTimeRange]), // Chỉ hợp lệ từ +2h đến +3h từ hiện tại
-    ]);
-
-    $this->assertFalse($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_fails_if_today_is_excluded_date()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'excluded_dates' => json_encode([now()->toDateString()]), // Hôm nay bị loại trừ
-    ]);
-
-    $this->assertFalse($this->voucherService->isValid($voucher, 200));
-  }
-  #[Test]
-  public function it_checks_if_voucher_is_valid_when_not_excluded_today()
-  {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'start_date' => now()->subDay(),
-      'end_date' => now()->addDays(10),
-      'excluded_dates' => json_encode([now()->addDays(1)->toDateString()]), // Ngày mai bị loại trừ
-    ]);
-
-    $this->assertTrue($this->voucherService->isValid($voucher, 200));
-  }
-
-  #[Test]
-  public function it_excludes_vouchers_exceeding_per_customer_limit()
-  {
-    $customer = Customer::factory()->create();
-    $voucher = Voucher::factory()->create([
-      'code' => 'LIMITED_USE',
-      'is_active' => true,
-      'per_customer_limit' => 3,
-    ]);
-
-    // Khách hàng đã sử dụng voucher 3 lần (đạt giới hạn)
-    VoucherUsage::factory()->count(3)->create([
-      'voucher_id' => $voucher->id,
-      'customer_id' => $customer->id,
-    ]);
-
-    $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
-    $this->assertFalse($isValid);
-  }
-  #[Test]
-  public function it_excludes_vouchers_exceeding_per_customer_daily_limit()
-  {
-    $customer = Customer::factory()->create();
-    $voucher = Voucher::factory()->create([
-      'code' => 'DAILY_LIMIT',
-      'is_active' => true,
-      'per_customer_daily_limit' => 2,
-    ]);
-
-    // Giả lập khách hàng đã dùng voucher 2 lần trong ngày
-    VoucherUsage::factory()->count(2)->create([
-      'voucher_id' => $voucher->id,
-      'customer_id' => $customer->id,
-      'used_at' => Carbon::now(),
-    ]);
-
-    $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
-    $this->assertFalse($isValid);
-  }
-  #[Test]
-  public function it_allows_voucher_usage_if_within_per_customer_daily_limit()
-  {
-    $customer = Customer::factory()->create();
-    $voucher = Voucher::factory()->create([
-      'code' => 'DAILY_OK',
-      'is_active' => true,
-      'per_customer_daily_limit' => 3,
-    ]);
-
-    // Khách hàng mới chỉ dùng 2 lần hôm nay, vẫn hợp lệ
-    VoucherUsage::factory()->count(2)->create([
-      'voucher_id' => $voucher->id,
-      'customer_id' => $customer->id,
-      'used_at' => Carbon::now(),
-    ]);
-
-    $isValid = $this->voucherService->isValid($voucher, 500000, $customer->id);
-    $this->assertTrue($isValid);
-  }
-  #[Test]
-  public function it_excludes_voucher_if_per_customer_limit_exists_but_customer_is_null()
-  {
-    $voucher = Voucher::factory()->create([
-      'code' => 'CUSTOMER_LIMIT',
-      'is_active' => true,
-      'per_customer_limit' => 3,
-    ]);
-
-    $isValid = $this->voucherService->isValid($voucher, 500000, null);
-    $this->assertFalse($isValid);
-  }
-  #[Test]
-  public function it_excludes_voucher_if_per_customer_daily_limit_exists_but_customer_is_null()
-  {
-    $voucher = Voucher::factory()->create([
-      'code' => 'DAILY_CUSTOMER_LIMIT',
-      'is_active' => true,
-      'per_customer_daily_limit' => 2,
-    ]);
-
-    $isValid = $this->voucherService->isValid($voucher, 500000, null);
-    $this->assertFalse($isValid);
-  }
   #[Test]
   public function it_returns_valid_vouchers_excluding_those_exceeding_daily_limits()
   {
