@@ -11,11 +11,19 @@ use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
+use App\Enums\CustomerStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class VoucherService
 {
+  protected CustomerService $customerService;
+
+  public function __construct(CustomerService $customerService)
+  {
+    $this->customerService = $customerService;
+  }
+
   /**
    * Thêm voucher mới
    */
@@ -222,10 +230,8 @@ class VoucherService
 
       // Kiểm tra hạng thành viên hợp lệ
       if (!empty($voucher->applicable_membership_levels)) {
-        $customerService = new CustomerService();
-        $customerMembership = $customerService->getCustomerMembershipLevel($customerId);
+        $customerMembership = $this->customerService->getCustomerMembershipLevel($customerId);
         $customerMembershipId = $customerMembership->id;
-
         if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
           return ValidationResult::fail(config('messages.voucher.invalid_membership_level'));
         }
@@ -288,7 +294,7 @@ class VoucherService
     }
     $checkValid = $this->isValid($voucher, $order->total_price, $order->customer_id);
 
-    if ($checkValid['success'] == false) {
+    if ($checkValid->success == false) {
       return $checkValid;
     }
 

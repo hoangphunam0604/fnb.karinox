@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\CustomerStatus;
 use App\Enums\DiscountType;
 use App\Enums\Msg;
 use App\Enums\OrderStatus;
@@ -15,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -25,11 +27,16 @@ class VoucherServiceTest extends TestCase
   use RefreshDatabase; // Reset database trước mỗi test
 
   protected $voucherService;
+  protected $customerService;
 
   protected function setUp(): void
   {
     parent::setUp();
-    $this->voucherService = new VoucherService();
+
+    /** @var CustomerService $customerService */
+    $this->customerService = Mockery::mock(CustomerService::class);
+
+    $this->voucherService = new VoucherService($this->customerService);
   }
 
   #[Test]
@@ -249,15 +256,15 @@ class VoucherServiceTest extends TestCase
       'start_date' => Carbon::now()->subDays(1),
       'end_date' => Carbon::now()->addDays(10),
     ]);
-
+    $customer = Customer::factory()->create();
     // Giả lập khách hàng đã sử dụng voucher hôm nay
     VoucherUsage::factory()->create([
       'voucher_id' => $voucher->id,
-      'customer_id' => 1,
+      'customer_id' => $customer->id,
       'used_at' => Carbon::now(),
     ]);
 
-    $result = $this->voucherService->isValid($voucher, 50000, 1);
+    $result = $this->voucherService->isValid($voucher, 50000, $customer->id);
 
     $this->assertFalse($result->success);
     $this->assertSame(config('messages.voucher.per_customer_daily_limit_exceeded'), $result->message);
@@ -275,10 +282,7 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    $customerServiceMock = $this->createMock(CustomerService::class);
-    $customerServiceMock->method('getCustomerMembershipLevel')->willReturn((object)['id' => 1]); // Hạng 1, không hợp lệ
-
-    $this->voucherService = new VoucherService($customerServiceMock);
+    $this->customerService->shouldReceive('getCustomerMembershipLevel')->andReturn((object)['id' => 1]); // Hạng 1, không hợp lệ
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -297,10 +301,7 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    $customerServiceMock = $this->createMock(CustomerService::class);
-    $customerServiceMock->method('getCustomerMembershipLevel')->willReturn((object)['id' => 2]); // Hạng 2, hợp lệ
-
-    $this->voucherService = new VoucherService($customerServiceMock);
+    $this->customerService->shouldReceive('getCustomerMembershipLevel')->andReturn((object)['id' => 2]); // Hạng 2, hợp lệ
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -312,6 +313,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho ngày trong tuần hiện tại')]
   public function testVoucherInvalidDayOfWeek()
   {
+    Carbon::setTestNow(Carbon::now()->next(5)); // Giả lập hôm nay là Thứ 6 (5)
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_days_of_week' => json_encode([1, 2, 3]), // Chỉ áp dụng vào Thứ 2, Thứ 3, Thứ 4
@@ -319,7 +321,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    Carbon::setTestNow(Carbon::now()->next(5)); // Giả lập hôm nay là Thứ 6 (5)
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -331,6 +332,8 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Có thể sử dụng voucher nếu ngày trong tuần hợp lệ')]
   public function testVoucherValidDayOfWeek()
   {
+    Carbon::setTestNow(Carbon::now()->next(2)); // Giả lập hôm nay là Thứ 3 (2)
+
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_days_of_week' => json_encode([1, 2, 3]), // Chỉ áp dụng vào Thứ 2, Thứ 3, Thứ 4
@@ -338,7 +341,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    Carbon::setTestNow(Carbon::now()->next(2)); // Giả lập hôm nay là Thứ 3 (2)
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -351,6 +353,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho tuần hiện tại của tháng')]
   public function testVoucherInvalidWeekOfMonth()
   {
+    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeeks(3)); // Giả lập hôm nay là tuần 4
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_weeks_of_month' => json_encode([1, 2]), // Chỉ áp dụng cho tuần 1 và 2 của tháng
@@ -358,7 +361,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeeks(3)); // Giả lập hôm nay là tuần 4
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -370,6 +372,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Có thể sử dụng voucher nếu tuần trong tháng hợp lệ')]
   public function testVoucherValidWeekOfMonth()
   {
+    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeek(1)); // Giả lập hôm nay là tuần 2
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_weeks_of_month' => json_encode([1, 2]), // Chỉ áp dụng cho tuần 1 và 2 của tháng
@@ -377,7 +380,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    Carbon::setTestNow(Carbon::now()->startOfMonth()->addWeek(1)); // Giả lập hôm nay là tuần 2
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -389,6 +391,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Không thể sử dụng voucher nếu không áp dụng cho tháng hiện tại')]
   public function testVoucherInvalidMonth()
   {
+    Carbon::setTestNow(Carbon::create(null, 5, 1)); // Giả lập hôm nay là tháng 5
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_months' => json_encode([1, 2, 3]), // Chỉ áp dụng cho tháng 1, 2, 3
@@ -396,7 +399,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addMonths(1),
     ]);
 
-    Carbon::setTestNow(Carbon::create(null, 5, 1)); // Giả lập hôm nay là tháng 5
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -408,6 +410,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Có thể sử dụng voucher nếu tháng hợp lệ')]
   public function testVoucherValidMonth()
   {
+    Carbon::setTestNow(Carbon::create(null, 2, 1)); // Giả lập hôm nay là tháng 2
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_months' => json_encode([1, 2, 3]), // Chỉ áp dụng cho tháng 1, 2, 3
@@ -415,7 +418,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addMonths(1),
     ]);
 
-    Carbon::setTestNow(Carbon::create(null, 2, 1)); // Giả lập hôm nay là tháng 2
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -426,14 +428,13 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Không thể sử dụng voucher nếu không áp dụng trong khung giờ hiện tại')]
   public function testVoucherInvalidTimeRange()
   {
+    Carbon::setTestNow(Carbon::today()->setTime(11, 0)); // Giả lập hiện tại là 11:00
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_time_ranges' => json_encode(['08:00-10:00', '14:00-16:00']), // Chỉ áp dụng từ 08:00-10:00 và 14:00-16:00
       'start_date' => Carbon::now()->subDays(1),
       'end_date' => Carbon::now()->addDays(10),
     ]);
-
-    Carbon::setTestNow(Carbon::today()->setTime(11, 0)); // Giả lập hiện tại là 11:00
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -445,6 +446,7 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Có thể sử dụng voucher nếu khung giờ hợp lệ')]
   public function testVoucherValidTimeRange()
   {
+    Carbon::setTestNow(Carbon::today()->setTime(9, 0)); // Giả lập hiện tại là 09:00
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'valid_time_ranges' => json_encode(['08:00-10:00', '14:00-16:00']), // Chỉ áp dụng từ 08:00-10:00 và 14:00-16:00
@@ -452,7 +454,6 @@ class VoucherServiceTest extends TestCase
       'end_date' => Carbon::now()->addDays(10),
     ]);
 
-    Carbon::setTestNow(Carbon::today()->setTime(9, 0)); // Giả lập hiện tại là 09:00
 
     $result = $this->voucherService->isValid($voucher, 50000, 1);
 
@@ -502,9 +503,10 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Không thể áp dụng voucher nếu mã voucher không tồn tại')]
   public function testApplyVoucherWithInvalidCode()
   {
+    $customer = Customer::factory()->create();
     $order = Order::factory()->create([
       'total_price' => 50000,
-      'customer_id' => 1,
+      'customer_id' =>  $customer->id,
     ]);
 
     $result = $this->voucherService->applyVoucher($order, 'INVALID_CODE');
@@ -524,10 +526,10 @@ class VoucherServiceTest extends TestCase
       'start_date' => Carbon::now()->subDays(1),
       'end_date' => Carbon::now()->addDays(10),
     ]);
-
+    $customer = Customer::factory()->create();
     $order = Order::factory()->create([
       'total_price' => 50000,
-      'customer_id' => 1,
+      'customer_id' => $customer->id,
     ]);
 
     // Giả lập voucher đã được sử dụng trên đơn hàng này
@@ -547,33 +549,20 @@ class VoucherServiceTest extends TestCase
   #[TestDox('Trả về lỗi nếu có ngoại lệ khi áp dụng voucher')]
   public function testApplyVoucherWithException()
   {
-    $voucher = Voucher::factory()->create([
-      'is_active' => true,
-      'code' => 'TESTVOUCHER',
-      'discount_type' => DiscountType::FIXED,
-      'discount_value' => 10000,
-      'start_date' => Carbon::now()->subDays(1),
-      'end_date' => Carbon::now()->addDays(10),
-    ]);
+    Log::shouldReceive('error')->once()->with('Fake DB error');
 
-    $order = Order::factory()->create([
-      'total_price' => 50000,
-      'customer_id' => 1,
-    ]);
+    $voucher = Voucher::factory()->create(['is_active' => true]);
+    $order = Order::factory()->create(['total_price' => 5000]);
 
-    // Mock DB để giả lập lỗi trong transaction
-    DB::shouldReceive('beginTransaction')->once();
-    DB::shouldReceive('commit')->never();
-    DB::shouldReceive('rollBack')->once();
-
-    // Giả lập lỗi khi lưu voucher usage
-    VoucherUsage::shouldReceive('create')->andThrow(new \Exception('Fake DB error'));
-
-    $result = $this->voucherService->applyVoucher($order, 'TESTVOUCHER');
-
+    $mock = \Mockery::spy(VoucherUsage::class);
+    $mock->shouldReceive('create')->andThrow(new \Exception('Fake DB error'));
+    $this->app->instance(VoucherUsage::class, $mock);
+    $result = $this->voucherService->applyVoucher($order, $voucher->code);
+    dump($result);
     $this->assertFalse($result->success);
     $this->assertSame(config('messages.voucher.apply_error'), $result->message);
   }
+
   #[Test]
   #[TestDox('Có thể áp dụng voucher thành công nếu hợp lệ')]
   public function testApplyVoucherSuccessfully()
@@ -589,9 +578,10 @@ class VoucherServiceTest extends TestCase
       'applied_count' => 0,
     ]);
 
+    $customer = Customer::factory()->create();
     $order = Order::factory()->create([
       'total_price' => 50000,
-      'customer_id' => 1,
+      'customer_id' => $customer->id,
     ]);
 
     $result = $this->voucherService->applyVoucher($order, 'TESTVOUCHER');
@@ -629,10 +619,10 @@ class VoucherServiceTest extends TestCase
       'usage_limit' => 5,
       'applied_count' => 0,
     ]);
-
+    $customer = Customer::factory()->create();
     $order = Order::factory()->create([
       'total_price' => 80000, // Đơn hàng 80k, giảm 20% là 16k, nhưng bị giới hạn tối đa 15k
-      'customer_id' => 1,
+      'customer_id' => $customer->id,
     ]);
 
     $result = $this->voucherService->applyVoucher($order, 'PERCENTVOUCHER');
@@ -854,5 +844,10 @@ class VoucherServiceTest extends TestCase
 
     //Đảm bảo mã voucher vẫn được giữ lại
     $this->assertEquals($voucher->code, $order->voucher_code);
+  }
+  protected function tearDown(): void
+  {
+    parent::tearDown();
+    Carbon::setTestNow(); // Reset lại thời gian về mặc định
   }
 }
