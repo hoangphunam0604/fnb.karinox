@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CommonStatus;
+use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,6 +33,8 @@ class Product extends Model
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
     'is_topping' => 'boolean',
+    'product_type'  =>   ProductType::class,
+    'status'  => CommonStatus::class,
   ];
 
   public function categories()

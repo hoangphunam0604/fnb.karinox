@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DiscountType;
 use App\Models\Voucher;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ class VoucherFactory extends Factory
    */
   public function definition()
   {
-    $discountType = $this->faker->randomElement(['fixed', 'percentage']);
+    $discountType = DiscountType::fake()->value;
     $discountValue = $discountType === 'fixed'
       ? $this->faker->randomFloat(2, 10, 100)  // Giảm giá 10 - 100 nếu là cố định
       : $this->faker->randomFloat(2, 5, 50);   // 5% - 50% nếu là percentage

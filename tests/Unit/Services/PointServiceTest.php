@@ -3,13 +3,12 @@
 namespace Tests\Unit\Services;
 
 use App\Services\PointService;
-use App\Services\Interfaces\PointServiceInterface;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\Order;
 use App\Models\PointHistory;
 use App\Contracts\PointEarningTransaction;
 use App\Contracts\RewardPointUsable;
+use App\Enums\CustomerPointType;
 use App\Models\MembershipLevel;
 use App\Services\OrderService;
 use App\Services\SystemSettingService;
@@ -76,7 +75,7 @@ class PointServiceTest extends TestCase
 
     $this->assertEquals(15, $customer->loyalty_points);
     $this->assertEquals(3, $customer->reward_points);
-    $this->assertEquals('earn', $history->transaction_type);
+    $this->assertEquals(CustomerPointType::EARN, $history->type);
     $this->assertInstanceOf(PointHistory::class, $history);
   }
 
@@ -88,7 +87,7 @@ class PointServiceTest extends TestCase
 
     $this->assertEquals(7, $customer->loyalty_points);
     $this->assertEquals(3, $customer->reward_points);
-    $this->assertEquals('redeem', $history->transaction_type);
+    $this->assertEquals(CustomerPointType::REDEEM, $history->type);
     $this->assertInstanceOf(PointHistory::class, $history);
   }
 

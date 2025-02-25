@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DiscountType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +41,7 @@ class Voucher extends Model
     'valid_months' => 'array',
     'valid_time_ranges' => 'array',
     'excluded_dates' => 'array',
+    'discount_type' => DiscountType::class,
   ];
 
   public function branches()

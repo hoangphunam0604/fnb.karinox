@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerPointType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,7 +12,7 @@ class PointHistory extends Model
 
   protected $fillable = [
     'customer_id',
-    'transaction_type',
+    'type',
     'previous_loyalty_points',
     'previous_reward_points',
     'loyalty_points_changed',
@@ -23,6 +24,10 @@ class PointHistory extends Model
     'usage_type',
     'usage_id',
     'note'
+  ];
+
+  protected $casts = [
+    'type' => CustomerPointType::class,
   ];
 
   public function customer()

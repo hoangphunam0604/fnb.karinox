@@ -18,12 +18,7 @@ return new class extends Migration
       $table->string('name');
       $table->integer('capacity')->default(0);
       $table->text('note')->nullable();
-      /**
-       * available → Còn trống, sẵn sàng sử dụng.
-       * occupied → Đang có khách sử dụng.
-       * reserved → Đã đặt trước.
-       * maintenance → Đang bảo trì.
-       */
+
       $table->enum('status', ['available', 'occupied', 'reserved', 'maintenance'])->default('available'); // Trạng thái phòng/bàn
     });
   }

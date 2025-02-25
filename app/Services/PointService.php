@@ -57,7 +57,7 @@ class PointService implements PointServiceInterface
 
       return PointHistory::create(array_merge([
         'customer_id' => $customer->id,
-        'transaction_type' => $transactionType,
+        'type' => $transactionType,
         'previous_loyalty_points' => $previousLoyaltyPoints,
         'previous_reward_points' => $previousRewardPoints,
         'loyalty_points_changed' => $loyaltyPoints,

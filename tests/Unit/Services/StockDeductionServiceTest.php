@@ -243,7 +243,7 @@ class StockDeductionServiceTest extends TestCase
   #[TestDox("Không hoàn kho nếu hóa đơn không bị hoàn tiền")]
   public function restoreStockForRefundedInvoice_when_invoice_is_not_refunded(): void
   {
-    $invoice = Invoice::factory()->create(['status' => PaymentStatus::PAID]);
+    $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::PAID]);
 
     $this->expectException(\Exception::class);
     $this->service->restoreStockForRefundedInvoice($invoice);
@@ -253,7 +253,7 @@ class StockDeductionServiceTest extends TestCase
   #[TestDox("Hoàn kho topping khi đơn hàng bị hoàn tiền")]
   public function restoreStockForRefundedInvoice_restores_toppings(): void
   {
-    $invoice = Invoice::factory()->create(['status' => PaymentStatus::REFUNDED]);
+    $invoice = Invoice::factory()->create(['payment_status' => PaymentStatus::REFUNDED]);
     $branchId = $invoice->branch_id;
 
     foreach ($invoice->order->items as $orderItem) {

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\KitchenTicketStatus;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\User;
@@ -23,7 +24,7 @@ class KitchenTicketFactory extends Factory
       'order_id' => Order::factory(),
       'branch_id' => Branch::factory(),
       'table_id' => null, // Có thể là null nếu đơn hàng mang đi
-      'status' => $this->faker->randomElement(['waiting', 'processing', 'completed']),
+      'status' => KitchenTicketStatus::fake()->value,
       'priority' => $this->faker->numberBetween(0, 5),
       'note' => $this->faker->optional()->sentence(),
       'created_by' => User::factory(),

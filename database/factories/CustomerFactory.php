@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\CustomerStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Customer;
 use App\Models\MembershipLevel;
@@ -19,7 +20,7 @@ class CustomerFactory extends Factory
       'membership_level_id' => MembershipLevel::factory(),
       'loyalty_card_number' => $this->faker->unique()->numerify('CARD##########'),
       'last_purchase_at' => $this->faker->dateTimeThisYear(),
-      'status' => $this->faker->randomElement(['active', 'inactive', 'banned']),
+      'status' => CustomerStatus::fake()->value,
       'fullname' => $this->faker->name,
       'email' => $this->faker->unique()->safeEmail,
       'phone' => $this->faker->unique()->phoneNumber,

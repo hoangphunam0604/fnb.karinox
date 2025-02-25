@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerStatus;
+use App\Enums\Gender;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,6 +46,8 @@ class Customer extends Model
     'reward_points' => 'integer',
     'used_reward_points' => 'integer',
     'total_spent' => 'integer',
+    'status' => CustomerStatus::class,
+    'gender'  =>  Gender::class,
   ];
 
   public function membershipLevel()

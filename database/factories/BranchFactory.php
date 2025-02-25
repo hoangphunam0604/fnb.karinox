@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\CommonStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Branch;
 
@@ -24,7 +25,7 @@ class BranchFactory extends Factory
       'address' => $this->faker->address, // Tạo địa chỉ giả
       'phone_number' => $this->faker->unique()->phoneNumber, // Tạo số điện thoại giả
       'email' => $this->faker->unique()->safeEmail, // Email giả
-      'status' => $this->faker->randomElement(['active', 'inactive']), // Trạng thái ngẫu nhiên
+      'status' => CommonStatus::fake()->value, // Trạng thái ngẫu nhiên
     ];
   }
 }

@@ -31,7 +31,7 @@ return new class extends Migration
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
       $table->string('address')->nullable(); // Địa chỉ khách hàng
       $table->date('birthday')->nullable(); // Ngày sinh khách hàng
-      $table->enum('gender', ['male', 'female', 'other'])->nullable(); // Giới tính khách hàng
+      $table->enum('gender', ['male', 'female'])->nullable(); // Giới tính khách hàng
 
       $table->string('referral_code')->nullable(); // Mã giới thiệu khách hàng
       $table->string('avatar')->nullable(); // Ảnh đại diện khách hàng

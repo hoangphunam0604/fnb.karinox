@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TableAndRoomStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,7 +16,7 @@ class TableAndRoom extends Model
 
   protected $casts = [
     'capacity' => 'integer',
-    'status' => 'string',
+    'status' => TableAndRoomStatus::class,
   ];
 
 

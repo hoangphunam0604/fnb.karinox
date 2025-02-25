@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TableAndRoomStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\TableAndRoom;
 use App\Models\Area;
@@ -24,7 +25,7 @@ class TableAndRoomFactory extends Factory
       'name' => 'Bàn ' . $this->faker->numberBetween(1, 50),
       'area_id' => Area::factory(),
       'capacity' => $this->faker->numberBetween(2, 12),
-      'status' => $this->faker->randomElement(['available', 'occupied', 'reserved']),
+      'status' => TableAndRoomStatus::fake()->value,
       'note' => $this->faker->sentence,
     ];
   }

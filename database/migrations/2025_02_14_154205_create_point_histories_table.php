@@ -17,7 +17,7 @@ return new class extends Migration
       $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
 
       // Xác định loại giao dịch: cộng điểm hoặc sử dụng điểm
-      $table->enum('transaction_type', ['earn', 'redeem']);
+      $table->enum('type', ['earn', 'redeem']);
       // Số điểm trước khi thay đổi
       $table->integer('previous_loyalty_points')->default(0);
       $table->integer('previous_reward_points')->default(0);
