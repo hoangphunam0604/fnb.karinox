@@ -240,7 +240,7 @@ class VoucherServiceTest extends TestCase
       'customer_id' => $customer->id,
     ]);
 
-    $result = $this->voucherService->isValid($voucher, 50000, 1);
+    $result = $this->voucherService->isValid($voucher, 50000, $customer->id);
 
     $this->assertFalse($result->success);
     $this->assertSame(config('messages.voucher.per_customer_limit_exceeded'), $result->message);
