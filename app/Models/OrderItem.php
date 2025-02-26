@@ -39,6 +39,14 @@ class OrderItem extends Model
   }
 
   /**
+   * Mối quan hệ với đơn hàng
+   */
+  public function product()
+  {
+    return $this->belongsTo(Product::class);
+  }
+
+  /**
    * Mối quan hệ với topping
    */
   public function toppings()

@@ -6,7 +6,9 @@ use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Invoice;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\ProductBranch;
+use App\Models\ProductFormula;
 use App\Services\StockDeductionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,8 +31,19 @@ class StockDeductionServiceTest extends TestCase
   #[TestDox("Kiểm tra kho trước khi chế biến với đủ nguyên liệu và topping")]
   public function checkStockForPreparation_with_sufficient_stock(): void
   {
-    $orderItem = OrderItem::factory()->create();
-
+    $formula1 = Product::factory()->create();
+    $formula2 = Product::factory()->create();
+    $product = Product::factory()->create();
+    ProductFormula::factory()->create([
+      'product_id' => $product->id,
+      'ingredient_id' => $formula1->id
+    ]);
+    ProductFormula::factory()->create([
+      'product_id' => $product->id,
+      'ingredient_id' => $formula2->id
+    ]);
+    $orderItem = OrderItem::factory()->create(['product_id' => $product->id]);
+    $orderItem->loadMissing(['product', 'product.formulas']);
     foreach ($orderItem->product->formulas as $formula) {
       ProductBranch::factory()->create([
         'product_id' => $formula->ingredient_id,
