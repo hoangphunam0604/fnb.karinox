@@ -25,4 +25,32 @@ class ProductFactory extends Factory
       'product_group' => $this->faker->randomDigit, // Nhóm sản phẩm (0-9)
     ];
   }
+
+  public function asTopping()
+  {
+    return $this->state(fn() => ['is_topping' => true]);
+  }
+
+  public function withFormulas($count = 2)
+  {
+    return $this->afterCreating(function (Product $product) use ($count) {
+      $ingredients = Product::factory()->count($count)->create();
+      foreach ($ingredients as $ingredient) {
+        $product->formulas()->create([
+          'ingredient_id' => $ingredient->id,
+          'quantity' => rand(1, 3),
+        ]);
+      }
+    });
+  }
+
+  public function withToppings($count = 2)
+  {
+    return $this->afterCreating(function (Product $product) use ($count) {
+      $toppings = Product::factory()->asTopping()->count($count)->create();
+      foreach ($toppings as $topping) {
+        $product->toppings()->create(['topping_id' => $topping->id]);
+      }
+    });
+  }
 }

@@ -21,9 +21,11 @@ class OrderItemFactory extends Factory
    */
   public function definition(): array
   {
+    $product = Product::factory()->withFormulas()->withToppings()->create();
+
     return [
       'order_id' => Order::factory(),
-      'product_id' => Product::factory(),
+      'product_id' => $product->id,
       'quantity' => $this->faker->numberBetween(1, 5),
       'unit_price' => $this->faker->randomElement([20000, 50000, 100000]),
       'total_price' => fn(array $attributes) => $attributes['quantity'] * $attributes['unit_price'],
