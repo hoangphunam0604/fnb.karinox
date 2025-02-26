@@ -326,7 +326,7 @@ class VoucherService
       $voucher->increment('applied_count');
 
       // Lưu thông tin voucher đã sử dụng
-      $voucherUsage =  VoucherUsage::create([
+      VoucherUsage::create([
         'voucher_id' => $voucher->id,
         'customer_id' => $order->customer_id,
         'order_id' => $order->id,
@@ -335,7 +335,6 @@ class VoucherService
         'discount_amount' => $discount,
         'used_at' => now(),
       ]);
-      dump($voucherUsage);
       $order->update([
         'voucher_id' => $voucher->id,
         'voucher_code' => $voucher->code,
