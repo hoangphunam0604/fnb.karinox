@@ -17,6 +17,7 @@ use App\Services\InvoiceService;
 use App\Services\PointService;
 use App\Services\StockDeductionService;
 use App\Services\TaxService;
+use App\Services\VoucherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 use PHPUnit\Framework\Attributes\Test;
@@ -28,8 +29,9 @@ class InvoiceServiceTest extends TestCase
 
   protected $taxServiceMock;
   protected $pointServiceMock;
-  protected $invoiceService;
+  protected $voucherServiceMock;
   protected $stockDeductionServiceMock;
+  protected $invoiceService;
   protected function setUp(): void
   {
     parent::setUp();
@@ -39,6 +41,8 @@ class InvoiceServiceTest extends TestCase
     $this->pointServiceMock = Mockery::spy(PointService::class);
     $this->app->instance(PointService::class, $this->pointServiceMock);
 
+    $this->voucherServiceMock = Mockery::spy(VoucherService::class);
+    $this->app->instance(VoucherService::class, $this->voucherServiceMock);
 
     $this->stockDeductionServiceMock = Mockery::spy(StockDeductionService::class);
     $this->app->instance(StockDeductionService::class, $this->stockDeductionServiceMock);
@@ -118,6 +122,10 @@ class InvoiceServiceTest extends TestCase
           'total_price_without_vat' => 30000
         ];
       });
+    // Mock VoucherService::transferUsedPointsToInvoice để không gọi thực tế
+    $this->voucherServiceMock->shouldReceive('transferUsedPointsToInvoice')
+      ->once()
+      ->andReturn(true);
 
     // Mock earnPointsOnTransactionCompletion để không gọi thực tế
     $this->pointServiceMock->shouldReceive('earnPointsOnTransactionCompletion')

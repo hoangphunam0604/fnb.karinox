@@ -18,15 +18,18 @@ class InvoiceService
 {
   protected TaxService $taxService;
   protected PointService $pointService;
+  protected VoucherService $voucherService;
   protected StockDeductionService $stockDeductionService;
 
   public function __construct(
     TaxService $taxService,
     PointService $pointService,
+    VoucherService $voucherService,
     StockDeductionService $stockDeductionService
   ) {
     $this->taxService = $taxService;
     $this->pointService = $pointService;
+    $this->voucherService = $voucherService;
     $this->stockDeductionService = $stockDeductionService;
   }
   public function findInvoiceByCode(string $code): ?Invoice
@@ -84,7 +87,7 @@ class InvoiceService
         'payment_status' => PaymentStatus::UNPAID,
         'note' => $order->note,
       ]);
-
+      $this->voucherService->transferUsedPointsToInvoice($order->id, $invoice->id);
       $this->pointService->earnPointsOnTransactionCompletion($invoice);
 
       $order->loadMissing(['items', 'items.toppings']);

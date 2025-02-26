@@ -12,6 +12,7 @@ use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
 use App\Enums\CustomerStatus;
+use App\Models\Invoice;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -325,7 +326,7 @@ class VoucherService
       $voucher->increment('applied_count');
 
       // Lưu thông tin voucher đã sử dụng
-      VoucherUsage::create([
+      $voucherUsage =  VoucherUsage::create([
         'voucher_id' => $voucher->id,
         'customer_id' => $order->customer_id,
         'order_id' => $order->id,
@@ -334,6 +335,7 @@ class VoucherService
         'discount_amount' => $discount,
         'used_at' => now(),
       ]);
+      dump($voucherUsage);
       $order->update([
         'voucher_id' => $voucher->id,
         'voucher_code' => $voucher->code,
@@ -351,6 +353,14 @@ class VoucherService
       Log::error(config('messages.voucher.apply_error'));
       Log::error($e->getMessage());
     }
+  }
+
+  /**
+   * Hoá đơn thành công: Chuyển voucher đã sử dụng từ đơn hàng sang hóa đơn tương ứng.
+   */
+  public function transferUsedPointsToInvoice(int $orderId, int $invoiceId): void
+  {
+    VoucherUsage::where('order_id', $orderId)->update(['invoice_id' => $invoiceId]);
   }
 
   /**
