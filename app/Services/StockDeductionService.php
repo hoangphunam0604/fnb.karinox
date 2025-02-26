@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\InventoryTransactionType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Models\InventoryTransaction;
@@ -54,7 +55,7 @@ class StockDeductionService
     }
 
     DB::transaction(function () use ($orderItem) {
-      $transaction = $this->createInventoryTransaction('preparation', $orderItem->order_id, $orderItem->order->branch_id);
+      $transaction = $this->createInventoryTransaction(InventoryTransactionType::SALE, $orderItem->order_id, $orderItem->order->branch_id);
 
       // 🔹 Trừ kho nguyên liệu (product_formulas)
       foreach ($orderItem->product->formulas as $formula) {
@@ -85,7 +86,7 @@ class StockDeductionService
     }
 
     DB::transaction(function () use ($invoice) {
-      $transaction = $this->createInventoryTransaction('return', $invoice->id, $invoice->branch_id);
+      $transaction = $this->createInventoryTransaction(InventoryTransactionType::RETURN, $invoice->id, $invoice->branch_id);
 
       foreach ($invoice->order->items as $orderItem) {
         $this->restoreStock($transaction->id, $orderItem->product_id, $orderItem->quantity, $invoice->branch_id);
@@ -100,7 +101,7 @@ class StockDeductionService
   /**
    * Tạo giao dịch kho
    */
-  private function createInventoryTransaction(string $type, int $referenceId, int $branchId): InventoryTransaction
+  private function createInventoryTransaction(InventoryTransactionType $type, int $referenceId, int $branchId): InventoryTransaction
   {
     return InventoryTransaction::create([
       'transaction_type' => $type,
@@ -115,10 +116,9 @@ class StockDeductionService
    */
   private function deductStock(int $transactionId, int $productId, int $quantity, ?float $salePrice, int $branchId)
   {
-    $productBranch = ProductBranch::where('product_id', $productId)->where('branch_id', $branchId)->first();
-    if ($productBranch && $quantity > 0) {
-      $productBranch->decrement('stock_quantity', $quantity);
-    }
+    ProductBranch::where('product_id', $productId)
+      ->where('branch_id', $branchId)
+      ->decrement('stock_quantity', $quantity);
 
     InventoryTransactionItem::create([
       'inventory_transaction_id' => $transactionId,
