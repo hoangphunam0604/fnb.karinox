@@ -7,10 +7,10 @@ export default defineConfig({
   plugins: [
     laravel({
       input: [
-        'resources/js/admin.js',
-        'resources/js/pos.js',
-        'resources/js/kitchen.js',
-        'resources/js/manager.js'
+        'resources/js/admin.ts',
+        'resources/js/pos.ts',
+        'resources/js/kitchen.ts',
+        'resources/js/manager.ts'
       ],
       refresh: true,
     }),

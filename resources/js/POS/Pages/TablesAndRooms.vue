@@ -1,62 +1,32 @@
-<template>
-  <POSLayout>
-    <div class="container">
-      <h1>Chọn Bàn/Phòng</h1>
-
-      <div class="filter">
-        <label>Chi nhánh: </label>
-        <select v-model="branchId" @change="fetchTables">
-          <option v-for="branch in branches" :key="branch.id" :value="branch.id">
-            {{ branch.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="grid">
-        <div v-for="table in tables" :key="table.id" class="table-card" :class="{ occupied: table.status !== 'trống' }" @click="selectTable(table)">
-          <h3>{{ table.name }}</h3>
-          <p>{{ table.status }}</p>
-        </div>
-      </div>
-    </div>
-  </POSLayout>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from "vue";
 import axios from "axios";
-import POSLayout from "@/POS/Layouts/POSLayout.vue";
 
-const tables = ref([]);
-const branches = ref([]);
-const branchId = ref(null);
+interface Table {
+  id: number;
+  name: string;
+  status: string;
+}
 
-onMounted(async () => {
-  // Lấy danh sách chi nhánh
-  const branchRes = await axios.get("/api/branches");
-  branches.value = branchRes.data;
-  branchId.value = branches.value[0]?.id || null;
-
-  // Lấy danh sách bàn/phòng theo chi nhánh đầu tiên
-  fetchTables();
-});
-
+const tables = ref<Table[]>([]);
 const fetchTables = async () => {
-  if (!branchId.value) return;
-  const response = await axios.get("/api/tables-and-rooms", {
-    params: { branch_id: branchId.value },
-  });
+  const response = await axios.get<Table[]>("/api/POS/tables-and-rooms");
   tables.value = response.data;
 };
 
-const selectTable = (table) => {
-  if (table.status !== "trống") {
-    alert("Bàn này đang được sử dụng!");
-    return;
-  }
-  alert(`Chọn ${table.name} thành công!`);
-};
+onMounted(fetchTables);
 </script>
+
+<template>
+  <div>
+    <h1>Danh sách bàn/phòng</h1>
+    <ul>
+      <li v-for="table in tables" :key="table.id">
+        {{ table.name }} - {{ table.status }}
+      </li>
+    </ul>
+  </div>
+</template>
 
 <style scoped>
 .container {

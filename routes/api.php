@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Models\Branch;
+use App\Models\TableAndRoom;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,8 +21,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
   return $request->user();
 });
 
-use App\Models\Branch;
 
 Route::get('/branches', function () {
   return Branch::all();
+});
+Route::group('/POS', function () {
+  Route::get('/tables-and-rooms', function () {
+    return TableAndRoom::all();
+  });
 });

@@ -1,11 +1,8 @@
-import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
+import { createApp, h } from 'vue';
 
 createInertiaApp({
-  resolve: name => {
-    console.log(`Loading Vue component: ${name}`);
-    return import(`@POS/Pages/${name}.vue`).then(module => module.default);
-  },
+  resolve: (name) => import(`@POS/Pages/${name}.vue`),
   setup({ el, App, props, plugin }) {
     createApp({ render: () => h(App, props) })
       .use(plugin)
