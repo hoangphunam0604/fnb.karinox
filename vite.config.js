@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
+import path from 'node:path';
 
 export default defineConfig({
   plugins: [
@@ -17,7 +18,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': '/resources/js',
+      '@': path.resolve(__dirname, 'resources/js'),
+      '@POS': path.resolve(__dirname, 'resources/js/POS'),
     },
   },
   server: {
