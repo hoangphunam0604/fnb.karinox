@@ -4,6 +4,7 @@ $prefix = request()->segment(1);
 
 // Map module với file frontend
 $viteFiles = [
+'app' => 'resources/js/app.ts',
 'admin' => 'resources/js/admin.ts',
 'pos' => 'resources/js/pos.ts',
 'kitchen' => 'resources/js/kitchen.ts',
@@ -11,7 +12,7 @@ $viteFiles = [
 ];
 
 // Nếu không khớp module nào, dùng mặc định là admin
-$viteEntry = $viteFiles[$prefix] ?? 'resources/js/admin.ts';
+$viteEntry = $viteFiles[$prefix] ?? 'resources/js/app.ts';
 @endphp
 
 <!DOCTYPE html>
