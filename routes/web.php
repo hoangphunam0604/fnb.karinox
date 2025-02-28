@@ -4,10 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Auth;
 
-Route::get('/login', fn() => Inertia::render('Auth/Login'));
-Route::get('/register', fn() => Inertia::render('Auth/Register'));
 
 Route::get('/', function () {
   return Inertia::render('Welcome', [
@@ -16,7 +13,14 @@ Route::get('/', function () {
     'laravelVersion' => Application::VERSION,
     'phpVersion' => PHP_VERSION,
   ]);
-});
+})->name('welcome');
+Route::get('/login', fn() => Inertia::render('Auth/Login'))->name('login');
+Route::get('/register', fn() => Inertia::render('Auth/Register'))->name('register');
+
+Route::post('/logout', function () {
+  auth()->logout();
+  return redirect('/');
+})->name('logout');
 
 Route::get('/dashboard', function () {
   return Inertia::render('Dashboard');
@@ -53,7 +57,3 @@ Route::prefix('manager')->group(function () {
 })->middleware(['auth', 'role:manager']);
 
 require __DIR__ . '/auth.php';
-
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

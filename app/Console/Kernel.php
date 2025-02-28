@@ -3,7 +3,7 @@
 namespace App\Console;
 
 use App\Jobs\Tasks\AnnualPointsAndMembershipReset;
-use App\Jobs\UpdateMembershipLevelsJob;
+use App\Jobs\Membership\UpdateMembershipLevelsJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
