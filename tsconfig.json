@@ -13,10 +13,11 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./resources/js/*"],
+      "@App/*": ["./resources/js/App/*"],
       "@POS/*": ["./resources/js/POS/*"],
-      "@Admin/*": ["./resources/js/Admin/*"],
       "@Kitchen/*": ["./resources/js/Kitchen/*"],
       "@Mamager/*": ["./resources/js/Mamager/*"],
+      "@Admin/*": ["./resources/js/Admin/*"],
       "ziggy-js": ["./vendor/tightenco/ziggy"]
     }
   },

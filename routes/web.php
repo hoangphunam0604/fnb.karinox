@@ -4,6 +4,10 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+Route::get('/login', fn() => Inertia::render('Auth/Login'));
+Route::get('/register', fn() => Inertia::render('Auth/Register'));
 
 Route::get('/', function () {
   return Inertia::render('Welcome', [
@@ -49,3 +53,7 @@ Route::prefix('manager')->group(function () {
 })->middleware(['auth', 'role:manager']);
 
 require __DIR__ . '/auth.php';
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
