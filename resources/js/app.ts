@@ -4,8 +4,8 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, DefineComponent, h } from 'vue';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-
+import type { Config } from 'ziggy-js'; // 👈 Import kiểu dữ liệu Config
+import { ZiggyVue } from 'ziggy-js';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
@@ -16,9 +16,18 @@ createInertiaApp({
       import.meta.glob<DefineComponent>('./App/Pages/**/*.vue')
     ),
   setup({ el, App, props, plugin }) {
+    const ziggyData: Config = props.initialPage.props.ziggy as Config;
+
+    if (typeof window !== 'undefined') {
+      window.Ziggy = ziggyData;
+    }
+
+    console.log('🚀 Props received in Vue (app.ts):', props);
+    console.log('🚀 Ziggy in app.ts:', ziggyData);
+
     createApp({ render: () => h(App, props) })
       .use(plugin)
-      .use(ZiggyVue)
+      .use(ZiggyVue, window.Ziggy)
       .mount(el);
   },
   progress: {

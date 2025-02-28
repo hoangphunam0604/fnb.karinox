@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["@inertiajs/vue3"],
     "allowJs": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -16,10 +17,14 @@
       "@App/*": ["./resources/js/App/*"],
       "@POS/*": ["./resources/js/POS/*"],
       "@Kitchen/*": ["./resources/js/Kitchen/*"],
-      "@Mamager/*": ["./resources/js/Mamager/*"],
+      "@Manager/*": ["./resources/js/Manager/*"],
       "@Admin/*": ["./resources/js/Admin/*"],
       "ziggy-js": ["./vendor/tightenco/ziggy"]
     }
   },
-  "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"]
+  "include": [
+    "resources/js/types/**/*.d.ts",
+    "resources/js/**/*.ts",
+    "resources/js/**/*.vue"
+  ]
 }

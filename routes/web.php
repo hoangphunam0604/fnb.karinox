@@ -25,7 +25,7 @@ Route::post('/logout', function () {
 Route::get('/dashboard', function () {
   return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
-
+/* 
 Route::middleware('auth')->group(function () {
   Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
   Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -54,6 +54,6 @@ Route::prefix('kitchen')->group(function () {
 Route::prefix('manager')->group(function () {
   Route::get('/', fn() => Inertia::render('Reports'));
   Route::get('/sales', fn() => Inertia::render('Sales'));
-})->middleware(['auth', 'role:manager']);
+})->middleware(['auth', 'role:manager']); */
 
 require __DIR__ . '/auth.php';
