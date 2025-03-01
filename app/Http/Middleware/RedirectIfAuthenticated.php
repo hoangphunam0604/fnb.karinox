@@ -2,29 +2,35 @@
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider;
+use App\Enums\UserRole;
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
 
 class RedirectIfAuthenticated
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
-    public function handle(Request $request, Closure $next, string ...$guards): Response
-    {
-        $guards = empty($guards) ? [null] : $guards;
+  public function handle($request, Closure $next)
+  {
+    if (Auth::check()) {
+      /** @var User|null $user */
+      $user = Auth::user();
 
-        foreach ($guards as $guard) {
-            if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
-            }
-        }
+      if (!$user->currentBranch) {
+        return redirect()->route('branches.index');
+      }
 
-        return $next($request);
+      switch ($user->getRoleNames()->first()) {
+        case UserRole::ADMIN:
+        case UserRole::MANAGER:
+          return redirect()->route('admin.dashboard');
+        case UserRole::KITCHEN_STAFF:
+          return redirect()->route('kitchen.orders');
+        case UserRole::CASHIER:
+          return redirect()->route('pos.tables');
+        default:
+          return redirect()->route('forbidden');
+      }
     }
+
+    return $next($request);
+  }
 }

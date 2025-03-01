@@ -34,7 +34,13 @@ class BranchService
     $branch = Branch::findOrFail($branchId);
     return $branch->delete();
   }
-
+  /**
+   * Lấy chi nhánh theo id
+   */
+  public function findById($id): Branch
+  {
+    return Branch::findOrFail($id);
+  }
   /**
    * Tìm kiếm chi nhánh theo tên, địa chỉ hoặc số điện thoại
    */

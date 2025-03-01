@@ -1,26 +1,24 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\App\BranchController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\RedirectIfAuthenticated;
 use Inertia\Inertia;
 
+Route::middleware([RedirectIfAuthenticated::class])->group(function () {
+  Route::get('/login', [AuthController::class, 'loginView'])->name('login');
+  Route::post('/login', [AuthController::class, 'login'])->name('login');
+});
 
-Route::get('/', function () {
-  return Inertia::render('Welcome', [
-    'canLogin' => Route::has('login'),
-    'canRegister' => Route::has('register'),
-    'laravelVersion' => Application::VERSION,
-    'phpVersion' => PHP_VERSION,
-  ]);
-})->name('welcome');
-Route::get('/login', fn() => Inertia::render('Auth/Login'))->name('login');
-Route::get('/register', fn() => Inertia::render('Auth/Register'))->name('register');
+Route::middleware('auth')->group(function () {
+  Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+  Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
+  Route::get('/branches', [BranchController::class, 'getUserBranches'])->name('branches.index');
+  Route::post('/select-branch', [BranchController::class, 'selectBranch'])->name('branches.select');
+});
 
-Route::post('/logout', function () {
-  auth()->logout();
-  return redirect('/');
-})->name('logout');
 
 Route::get('/dashboard', function () {
   return Inertia::render('Dashboard');

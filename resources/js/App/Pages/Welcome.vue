@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { usePage } from "@inertiajs/vue3";
 
-const { auth, laravelVersion, phpVersion } = usePage().props;
+import LogoutButton from '@/Components/LogoutButton.vue';
+const { auth } = usePage().props;
 </script>
 
 <template>
@@ -14,6 +15,8 @@ const { auth, laravelVersion, phpVersion } = usePage().props;
     <div v-if="auth?.user" class="welcome-box">
       <h2>Xin chào, {{ auth.user.name }} 👋</h2>
       <p>Chúc bạn một ngày làm việc vui vẻ!</p>
+
+      <LogoutButton />
     </div>
 
     <div v-else class="auth-buttons">
@@ -21,9 +24,6 @@ const { auth, laravelVersion, phpVersion } = usePage().props;
       <a href="/register" class="btn register">Đăng ký</a>
     </div>
 
-    <footer>
-      <p>Laravel v{{ laravelVersion }} - PHP v{{ phpVersion }}</p>
-    </footer>
   </div>
 </template>
 

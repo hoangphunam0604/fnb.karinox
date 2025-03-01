@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class TableAndRoomService
 {
+
+  public function listTablesAndRooms(int $branchId) {
+    return TableAndRoom::where('branch_id',$branchId)->all();
+  }
   /**
    * Tạo hoặc cập nhật phòng/bàn
    */
@@ -50,7 +54,8 @@ class TableAndRoomService
   /**
    * Lấy danh sách tất cả phòng/bàn (phân trang)
    */
-  public function getTablesAndRooms($perPage = 10)
+  public function listgetTablesAndRooms($perPage = 10
+  return TableAndRoom::where('branch_id',$branchId))->all();
   {
     return TableAndRoom::orderBy('created_at', 'desc')->paginate($perPage);
   }
@@ -58,7 +63,8 @@ class TableAndRoomService
   /**
    * Lấy danh sách phòng/bàn theo trạng thái
    */
-  public function getTablesAndRoomsByStatus($status, $perPage = 10)
+  public function listgetTablesAndRoomsByStatus($status, $perPage = 10
+  return TableAndRoom::where('branch_id',$branchId))->all();
   {
     return TableAndRoom::byStatus($status)->paginate($perPage);
   }

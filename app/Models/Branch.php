@@ -21,8 +21,16 @@ class Branch extends Model
   protected $casts = [
     'status'  => CommonStatus::class,
   ];
+
   public function products()
   {
     return $this->belongsToMany(Product::class, 'product_branches');
+  }
+
+
+  public function users()
+  {
+    return $this->belongsToMany(User::class, 'branch_user')
+      ->using(BranchUser::class);
   }
 }

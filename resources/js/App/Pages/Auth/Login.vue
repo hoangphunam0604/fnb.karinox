@@ -1,29 +1,55 @@
 <script setup lang="ts">
-import Checkbox from '@/Components/Checkbox.vue';
+import { onMounted } from 'vue';
 import GuestLayout from '@/App/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
+import { User } from "@/types";
+import axios from "axios";
+import { useUserStore } from "@/stores/useUserStore";
+import { route } from 'ziggy-js';
+const userStore = useUserStore();
 
-defineProps<{
-  canResetPassword?: boolean;
-  status?: string;
-}>();
 
 const form = useForm({
-  email: '',
-  password: '',
-  remember: false,
+  username: '',
+  password: ''
 });
-
-const submit = () => {
-  form.post(route('login'), {
-    onFinish: () => {
-      form.reset('password');
-    },
-  });
+onMounted(() => {
+  if (userStore.user) {
+    window.location.href = handleRedirect(userStore.user);
+  }
+});
+const submit = async () => {
+  try {
+    const response = await axios.post('/login', form);
+    const user: User = response.data.user;
+    userStore.setUser(user); // Lưu vào Pinia
+    window.location.href = handleRedirect(user);
+  } catch (error) {
+    console.log(error)
+    form.setError('username', 'Đăng nhập thất bại! Vui lòng kiểm tra lại.');
+  }
+};
+const handleRedirect = (user: User) => {
+  if (!user.currentBranch)
+    return route('branches.index');
+  switch (user.role) {
+    case 'admin':
+      return route('admin.dashboard');
+      break;
+    case 'kitchen':
+      return route('kitchen.orders');
+      break;
+    case 'pos':
+      return route('pos.tables');
+      break;
+    default:
+      return route('branches.index');
+      break;
+  }
 };
 </script>
 
@@ -32,37 +58,22 @@ const submit = () => {
 
     <Head title="Log in" />
 
-    <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-      {{ status }}
+    <div v-if="form.errors.username" class="mb-4 text-sm font-medium text-green-600">
+      {{ form.errors.username }}
     </div>
 
     <form @submit.prevent="submit">
       <div>
-        <InputLabel for="email" value="Email" />
-
-        <TextInput id="email" type="email" class="mt-1 block w-full" v-model="form.email" required autofocus autocomplete="username" />
-
-        <InputError class="mt-2" :message="form.errors.email" />
+        <InputLabel for="username" value="Tên đăng nhập" />
+        <TextInput id="username" type="text" class="mt-1 block w-full" v-model="form.username" required autofocus autocomplete="username" />
       </div>
-
       <div class="mt-4">
-        <InputLabel for="password" value="Password" />
-
+        <InputLabel for="password" value="Mật khẩu" />
         <TextInput id="password" type="password" class="mt-1 block w-full" v-model="form.password" required autocomplete="current-password" />
-
-        <InputError class="mt-2" :message="form.errors.password" />
       </div>
 
-      <div class="mt-4 block">
-        <label class="flex items-center">
-          <Checkbox name="remember" v-model:checked="form.remember" />
-          <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-        </label>
-      </div>
 
       <div class="mt-4 flex items-center justify-end">
-
-
         <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
           Log in
         </PrimaryButton>
