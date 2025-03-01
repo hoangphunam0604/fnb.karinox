@@ -16,6 +16,7 @@ return new class extends Migration
       $table->timestamps();
       $table->boolean('is_active')->default(false);
       $table->timestamp('last_seen_at')->nullable();
+      $table->foreignId('current_branch')->nullable()->constrained('branches')->nullOnDelete();
       $table->string('fullname');
       $table->string('username');
       $table->string('password');

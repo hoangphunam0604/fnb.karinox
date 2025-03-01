@@ -34,22 +34,7 @@ const submit = async () => {
   }
 };
 const handleRedirect = (user: User) => {
-  if (!user.currentBranch)
-    return route('branches.index');
-  switch (user.role) {
-    case 'admin':
-      return route('admin.dashboard');
-      break;
-    case 'kitchen':
-      return route('kitchen.orders');
-      break;
-    case 'pos':
-      return route('pos.tables');
-      break;
-    default:
-      return route('branches.index');
-      break;
-  }
+  return userStore.user.login_redirect ?? route('branches.index')
 };
 </script>
 

@@ -29,9 +29,11 @@ class BranchController extends Controller
       $branches = Branch::all();
     } else {
       // Nếu không phải admin, chỉ trả về các chi nhánh được phân công
-      $branches = $user->branches;
-    }
-    return Inertia::render('Branches', ['branches' => BranchResource::collection($branches)]);
+      $branches = $user->branches->get();
+    } // Kiểm tra dữ liệu trước khi dùng Resource
+    return Inertia::render('Branches', [
+      'branches' => BranchResource::collection($branches)->resolve()
+    ]);
 
 
     return response()->json($branches);
@@ -40,9 +42,11 @@ class BranchController extends Controller
   public function selectBranch(Request $request)
   {
     $branch = Branch::findOrFail($request->branch_id);
-    // Lưu vào session để sử dụng trong suốt phiên làm việc
-    session(['current_branch' => $branch->id]);
-
-    return to_route('pos.tables');
+    /** @var User|null $user */
+    $user = Auth::user();
+    $user->current_branch = $branch->id;
+    $user->save();
+    $auth_redirect = $user->login_redirect;
+    return redirect()->to($auth_redirect);
   }
 }

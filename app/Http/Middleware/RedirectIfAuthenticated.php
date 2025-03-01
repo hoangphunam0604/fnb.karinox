@@ -13,22 +13,9 @@ class RedirectIfAuthenticated
     if (Auth::check()) {
       /** @var User|null $user */
       $user = Auth::user();
+      $auth_redirect = $user->login_redirect;
 
-      if (!$user->currentBranch) {
-        return redirect()->route('branches.index');
-      }
-
-      switch ($user->getRoleNames()->first()) {
-        case UserRole::ADMIN:
-        case UserRole::MANAGER:
-          return redirect()->route('admin.dashboard');
-        case UserRole::KITCHEN_STAFF:
-          return redirect()->route('kitchen.orders');
-        case UserRole::CASHIER:
-          return redirect()->route('pos.tables');
-        default:
-          return redirect()->route('forbidden');
-      }
+      return redirect()->to($auth_redirect);
     }
 
     return $next($request);

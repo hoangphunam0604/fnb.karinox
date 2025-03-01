@@ -21,7 +21,8 @@ class UserResource extends JsonResource
       'fullname' => $this->name,
       'role' => $this->getRoleNames()->first(), // Lấy vai trò đầu tiên
       'permissions' => $this->getAllPermissions()->pluck('name'), // Lấy danh sách quyền hạn
-      'current_branch' => session('current_branch') ?? null,
+      'current_branch' => $this->current_branch,
+      'login_redirect' => $this->login_redirect,
     ];
   }
 }

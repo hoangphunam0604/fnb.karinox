@@ -7,22 +7,22 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use Inertia\Inertia;
 
-Route::middleware([RedirectIfAuthenticated::class])->group(function () {
-  Route::get('/login', [AuthController::class, 'loginView'])->name('login');
-  Route::post('/login', [AuthController::class, 'login'])->name('login');
-});
+/* Route::middleware([RedirectIfAuthenticated::class])->group(function () { */
+
+Route::get('/login', [AuthController::class, 'loginView'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+/* }); */
 
 Route::middleware('auth')->group(function () {
   Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
   Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
   Route::get('/branches', [BranchController::class, 'getUserBranches'])->name('branches.index');
-  Route::post('/select-branch', [BranchController::class, 'selectBranch'])->name('branches.select');
+  Route::post('/branches/select', [BranchController::class, 'selectBranch'])->name('branches.select');
 });
 
-
-Route::get('/dashboard', function () {
-  return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::prefix('admin')->name('admin.')->group(function () {
+  Route::get('/', fn() => Inertia::render('Dashboard'))->name('dashboard');
+})->middleware(['auth', 'role:admin']);
 /* 
 Route::middleware('auth')->group(function () {
   Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

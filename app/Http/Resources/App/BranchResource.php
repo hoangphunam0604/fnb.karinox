@@ -1,8 +1,8 @@
 <?php
+// app/Http/Resources/BranchResource.php
 
 namespace App\Http\Resources\App;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class BranchResource extends JsonResource
@@ -10,7 +10,7 @@ class BranchResource extends JsonResource
   /**
    * Transform the resource into an array.
    *
-   * @param  Request  $request
+   * @param  \Illuminate\Http\Request  $request
    * @return array
    */
   public function toArray($request)
@@ -18,9 +18,8 @@ class BranchResource extends JsonResource
     return [
       'id' => $this->id,
       'name' => $this->name,
-      'phone' => $this->phone,
       'address' => $this->address,
-      'status' => $this->status,
+      'phone' => $this->phone_number,
     ];
   }
 }

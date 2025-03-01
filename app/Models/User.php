@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,6 +22,7 @@ class User extends Authenticatable
     'fullname',
     'username',
     'password',
+    'current_branch',
     'is_active',
     'last_seen_at',
   ];
@@ -32,7 +34,6 @@ class User extends Authenticatable
    */
   protected $hidden = [
     'password',
-    'remember_token',
   ];
 
   /**
@@ -43,7 +44,6 @@ class User extends Authenticatable
   protected function casts(): array
   {
     return [
-      'email_verified_at' => 'datetime',
       'password' => 'hashed',
     ];
   }
@@ -52,5 +52,25 @@ class User extends Authenticatable
   {
     return $this->belongsToMany(Branch::class, 'branch_user')
       ->using(BranchUser::class);
+  }
+
+
+
+  public function getLoginRedirectAttribute()
+  {
+    if (!$this->current_branch) {
+      return route('branches.index');
+    }
+    switch ($this->getRoleNames()->first()) {
+      case UserRole::ADMIN->value:
+      case UserRole::MANAGER->value:
+        return route('admin.dashboard');
+      case UserRole::KITCHEN_STAFF->value:
+        return route('kitchen.orders');
+      case UserRole::CASHIER->value:
+        return route('pos.tables');
+      default:
+        return route('welcome');
+    }
   }
 }
