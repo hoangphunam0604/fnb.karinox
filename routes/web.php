@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\pos\TableAndRoomController;
 use App\Http\Controllers\App\BranchController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Middleware\RedirectIfAuthenticated;
 use Inertia\Inertia;
 
 /* Route::middleware([RedirectIfAuthenticated::class])->group(function () { */
@@ -18,6 +18,9 @@ Route::middleware('auth')->group(function () {
   Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
   Route::get('/branches', [BranchController::class, 'getUserBranches'])->name('branches.index');
   Route::post('/branches/select', [BranchController::class, 'selectBranch'])->name('branches.select');
+});
+Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
+  Route::get('/tables', [TableAndRoomController::class, 'list'])->name('tables');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {

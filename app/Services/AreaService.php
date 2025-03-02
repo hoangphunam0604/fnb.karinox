@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Models\Area;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 class AreaService
 {
+
+  public function getAreasByBranch($branchId)
+  {
+    return Area::with(['tablesAndRooms'])->where('branch_id', $branchId)->get();
+  }
   /**
    * Tạo hoặc cập nhật khu vực
    */

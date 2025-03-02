@@ -1,25 +1,30 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Services\BranchService;
-use App\Services\TableAndRoomService;
+use App\Http\Resources\App\AreaResource;
+use App\Services\AreaService;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class TableAndRoomController extends Controller
 {
-  protected $tableAndRoomService;
+  protected $areaService;
 
-  public function __construct(TableAndRoomService $tableAndRoomService)
+  public function __construct(AreaService $areaService)
   {
-    $this->tableAndRoomService = $tableAndRoomService;
+    $this->areaService = $areaService;
   }
 
   public function list()
   {
-    $branchId = session('current_branch');
-    $branch = $this->tableAndRoomService->listTablesAndRooms($branchId);
-    return response()->json($branch);
+    /** @var User|null $user */
+    $user = Auth::user();
+    $areas = $this->areaService->getAreasByBranch($user->current_branch);
+    return Inertia::render('TablesAndRooms', [
+      'areas' => AreaResource::collection($areas)->resolve()
+    ]);
+    return response()->json($areas);
   }
 }

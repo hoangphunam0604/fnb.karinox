@@ -20,11 +20,15 @@ onMounted(fetchTables);
 <template>
   <div>
     <h1>Danh sách bàn/phòng</h1>
-    <ul>
-      <li v-for="table in tables" :key="table.id">
-        {{ table.name }} - {{ table.status }}
-      </li>
-    </ul>
+    <div v-for="area in areas" :key="area.id">
+      <h2>{{ area.name }}</h2>
+      <p>{{ area.note }}</p>
+      <ul>
+        <li v-for="table in tables" :key="table.id">
+          {{ table.name }} - {{ table.status }}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
