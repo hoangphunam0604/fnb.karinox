@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\POS\TableAndRoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -48,9 +49,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/branches', function () {
   return Branch::all();
-});
-Route::group('/POS', function () {
-  Route::get('/tables-and-rooms', function () {
-    return TableAndRoom::all();
-  });
 });
