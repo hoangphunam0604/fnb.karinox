@@ -8,7 +8,7 @@ use App\Services\AreaService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
-class TablesController extends Controller
+class TableController extends Controller
 {
   protected $areaService;
 

@@ -1,15 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\POS\TableAndRoomController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\Auth\AuthController;
 
-use App\Models\Branch;
-use App\Models\TableAndRoom;
-
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -21,32 +14,12 @@ use Illuminate\Validation\ValidationException;
 |
 */
 
-Route::post('/login', function (Request $request) {
-  $request->validate([
-    'email' => 'required|email',
-    'password' => 'required',
-  ]);
-
-  $user = User::where('email', $request->email)->first();
-
-  if (! $user || ! Hash::check($request->password, $user->password)) {
-    throw ValidationException::withMessages([
-      'email' => ['Thông tin đăng nhập không đúng.'],
-    ]);
-  }
-
-  return response()->json([
-    'token' => $user->createToken('POS-Token')->plainTextToken,
-    'user' => $user
-  ]);
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::middleware('auth:api')->group(function () {
+  Route::post('logout', [AuthController::class, 'logout']);
+  Route::get('me', [AuthController::class, 'me']);
 });
 
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-  return $request->user();
-});
-
-
-Route::get('/branches', function () {
+/* Route::get('/branches', function () {
   return Branch::all();
-});
+}); */

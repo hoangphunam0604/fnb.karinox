@@ -192,7 +192,7 @@ class OrderService
       'receiver_id' => $data['receiver_id'] ?? $order->receiver_id,
       'branch_id' => $data['branch_id'] ?? $order->branch_id,
       'table_id' => $data['table_id'] ?? $order->table_id,
-      'order_status' => $data['order_status'] ?? 'pending',
+      'order_status' => $data['order_status'] ?? OrderStatus::PENDING,
       'note' => $data['note'] ?? $order->note,
     ]);
 

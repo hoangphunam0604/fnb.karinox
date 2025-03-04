@@ -23,7 +23,7 @@ Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list'])->name('tables');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
   Route::get('/', fn() => Inertia::render('Dashboard'))->name('dashboard');
 })->middleware(['auth', 'role:admin']);
 /* 
