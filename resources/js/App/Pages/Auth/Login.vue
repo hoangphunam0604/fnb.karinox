@@ -12,29 +12,18 @@ import { useUserStore } from "@/stores/useUserStore";
 import { route } from 'ziggy-js';
 const userStore = useUserStore();
 
-
 const form = useForm({
-  username: '',
-  password: ''
+  email: '',
+  password: '',
+  remember: false,
 });
-onMounted(() => {
-  if (userStore.user) {
-    window.location.href = handleRedirect(userStore.user);
-  }
-});
-const submit = async () => {
-  try {
-    const response = await axios.post('/login', form);
-    const user: User = response.data.user;
-    userStore.setUser(user); // Lưu vào Pinia
-    window.location.href = handleRedirect(user);
-  } catch (error) {
-    console.log(error)
-    form.setError('username', 'Đăng nhập thất bại! Vui lòng kiểm tra lại.');
-  }
-};
-const handleRedirect = (user: User) => {
-  return userStore.user.login_redirect ?? route('branches.index')
+
+const submit = () => {
+  form.post(route('login'), {
+    onFinish: () => {
+      form.reset('password');
+    },
+  });
 };
 </script>
 
