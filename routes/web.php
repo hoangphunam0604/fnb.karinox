@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 /* Route::middleware([RedirectIfAuthenticated::class])->group(function () { */
 
-Route::get('/login', [AuthController::class, 'loginView'])->name('login');
+Route::get('/login', [AuthController::class, 'loginView'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 /* }); */
 

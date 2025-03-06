@@ -23,6 +23,8 @@ class AuthController extends Controller
     if (Auth::attempt($credentials, false)) {
       /** @var User|null $user */
       $user = Auth::user();
+
+      return redirect()->to($user->login_redirect);
       return response()->json([
         'status' => 'success',
         'user' => new UserResource($user),

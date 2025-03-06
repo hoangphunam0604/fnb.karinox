@@ -13,9 +13,8 @@ import { route } from 'ziggy-js';
 const userStore = useUserStore();
 
 const form = useForm({
-  email: '',
+  username: '',
   password: '',
-  remember: false,
 });
 
 const submit = () => {

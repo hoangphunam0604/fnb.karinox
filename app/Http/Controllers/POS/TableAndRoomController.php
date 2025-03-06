@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\App\AreaResource;
+use App\Http\Resources\POS\AreaResource;
 use App\Services\AreaService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -25,6 +25,5 @@ class TableAndRoomController extends Controller
     return Inertia::render('TablesAndRooms', [
       'areas' => AreaResource::collection($areas)->resolve()
     ]);
-    return response()->json($areas);
   }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\App;
+namespace App\Http\Resources\POS;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,7 +18,7 @@ class AreaResource extends JsonResource
       'id' => $this->id,
       'name' => $this->name,
       'note' => $this->note,
-      'tablesAndRooms' => TableAndRoomResource::collection($this->tablesAndRooms)
+      'tables' => TableAndRoomResource::collection($this->tablesAndRooms)->resolve()
     ];
   }
 }
