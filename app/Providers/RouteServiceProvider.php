@@ -34,7 +34,12 @@ class RouteServiceProvider extends ServiceProvider
         ->group(base_path('routes/api.php'));
 
       Route::middleware('web')
+        ->group(base_path('routes/admin.php'));
+      Route::middleware('web')
         ->group(base_path('routes/web.php'));
+
+      // Thêm file route mới vào hệ thống
+      /* 
 
       // Đăng ký các file route riêng biệt
       Route::middleware(['api', 'role:admin,cashier'])
@@ -43,7 +48,7 @@ class RouteServiceProvider extends ServiceProvider
 
       Route::middleware(['api', 'role:admin,kitchen_staff'])
         ->prefix('api')
-        ->group(base_path('routes/kitchen.php'));
+        ->group(base_path('routes/kitchen.php')); */
     });
   }
 }

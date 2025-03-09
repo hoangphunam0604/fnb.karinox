@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\pos\TableAndRoomController;
 use App\Http\Controllers\App\BranchController;
+use App\Http\Controllers\Admin\BranchController as AdminBranchController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
@@ -25,36 +26,5 @@ Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
 
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
   Route::get('/', fn() => Inertia::render('Dashboard'))->name('dashboard');
+  Route::resource('branches', AdminBranchController::class);
 })->middleware(['auth', 'role:admin']);
-/* 
-Route::middleware('auth')->group(function () {
-  Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-  Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-  Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-// Admin Panel
-Route::prefix('admin')->group(function () {
-  Route::get('/', fn() => Inertia::render('Dashboard'));
-  Route::get('/users', fn() => Inertia::render('Users'));
-  Route::get('/products', fn() => Inertia::render('Products'));
-})->middleware(['auth', 'role:admin']);
-
-// POS (Thu ngân)
-Route::prefix('pos')->group(function () {
-  Route::get('/tables', fn() => Inertia::render('TablesAndRooms'));
-})->middleware(['auth', 'role:cashier']);
-
-// Kitchen (Bếp)
-Route::prefix('kitchen')->group(function () {
-  Route::get('/', fn() => Inertia::render('KitchenDashboard'));
-  Route::get('/queue', fn() => Inertia::render('OrderQueue'));
-})->middleware(['auth', 'role:kitchen']);
-
-// Manager (Quản lý)
-Route::prefix('manager')->group(function () {
-  Route::get('/', fn() => Inertia::render('Reports'));
-  Route::get('/sales', fn() => Inertia::render('Sales'));
-})->middleware(['auth', 'role:manager']); */
-
-require __DIR__ . '/auth.php';
