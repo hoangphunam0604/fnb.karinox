@@ -14,6 +14,10 @@ use App\Http\Controllers\Api\Auth\AuthController;
 |
 */
 
+Route::get('/auth/login', function () {
+  return response()->json(['success' => true, 'msg' => "Api working"]);
+});
+
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
   Route::post('logout', [AuthController::class, 'logout']);

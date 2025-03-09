@@ -10,7 +10,6 @@ import { User } from "@/types";
 import axios from "axios";
 import { useUserStore } from "@/stores/useUserStore";
 import { route } from 'ziggy-js';
-const userStore = useUserStore();
 
 const form = useForm({
   username: '',
