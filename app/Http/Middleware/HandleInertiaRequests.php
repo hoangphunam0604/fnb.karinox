@@ -29,8 +29,6 @@ class HandleInertiaRequests extends Middleware
 
     ]);
 
-    // 🚨 Debug dữ liệu ngay tại middleware
-    logger()->info('Middleware HandleInertiaRequests - Shared Data:', $data);
 
     return $data;
   }

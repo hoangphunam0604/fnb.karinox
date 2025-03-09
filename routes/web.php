@@ -17,13 +17,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::middleware('auth')->group(function () {
   Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
   Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
-  Route::get('/branches', [BranchController::class, 'getUserBranches'])->name('branches.index');
-  Route::post('/branches/select', [BranchController::class, 'selectBranch'])->name('branches.select');
 });
-Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
-  Route::get('/tables', [TableAndRoomController::class, 'list'])->name('tables');
-});
-
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
   Route::get('/', fn() => Inertia::render('Dashboard'))->name('dashboard');
   Route::resource('branches', AdminBranchController::class);
