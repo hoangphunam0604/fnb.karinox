@@ -24,16 +24,16 @@ class AuthController extends Controller
 
     $credentials = $request->only('username', 'password');
 
-    if (!Auth::attempt($credentials)) {
-      return response()->json(['error' => 'Invalid credentials'], 401);
+
+    $user = User::where('username', $request->username)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+      return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    $user = Auth::user();
-
-    $moduleName = 'api'; // hoặc 'admin', 'kitchen' tùy vào module hiện tại
-    $tokenName = " $moduleName Access Token for {$user->name} (ID: {$user->id})";
-
     // Tạo access token với Laravel Passport
+    $moduleName = 'api';
+    $tokenName = "$moduleName Access Token for {$user->name} (ID: {$user->id})";
     $token = $user->createToken($tokenName)->accessToken;
 
     return response()->json([

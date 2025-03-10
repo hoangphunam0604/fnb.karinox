@@ -23,3 +23,6 @@ Route::middleware('auth:api')->group(function () {
   Route::post('auth/logout', [AuthController::class, 'logout']);
   Route::get('auth/me', [AuthController::class, 'me']);
 });
+
+require_once __DIR__ . "/pos.php";
+require_once __DIR__ . "/kitchen.php";

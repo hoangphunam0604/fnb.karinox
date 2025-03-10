@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\App\AreaResource;
+use App\Http\Resources\POS\AreaResource;
 use App\Services\AreaService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;

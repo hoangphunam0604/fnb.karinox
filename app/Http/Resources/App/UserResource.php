@@ -17,7 +17,7 @@ class UserResource extends JsonResource
   {
     return [
       'id' => $this->id,
-      'fullname' => $this->name,
+      'fullname' => $this->fullname,
       'role' => $this->getRoleNames()->first(), // Lấy vai trò đầu tiên
       'permissions' => $this->getAllPermissions()->pluck('name'), // Lấy danh sách quyền hạn
       'current_branch' => $this->current_branch,
