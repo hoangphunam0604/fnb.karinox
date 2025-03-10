@@ -2,13 +2,13 @@
 // app/Events/TableUpdated.php
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use App\Models\Table;
+use App\Models\TableAndRoom;
 
 class TableUpdated implements ShouldBroadcast
 {
   public $table;
 
-  public function __construct(Table $table)
+  public function __construct(TableAndRoom $table)
   {
     $this->table = $table;
   }

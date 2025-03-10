@@ -2,16 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\POS\OrderController;
-use App\Http\Controllers\Api\POS\TableController;
+use App\Http\Controllers\Api\POS\TableAndRoomController;
 
-use App\Events\TableUpdated;
+use App\Models\TableAndRoom;
+use Illuminate\Http\Request;
 
-Route::prefix('pos')->group(function () {
-  Route::get('/tables', [TableController::class, 'index']);
+Route::middleware('auth:api')->prefix('pos')->group(function () {
+  Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::post('/orders', [OrderController::class, 'order']);
-
   Route::post('/tables/update', function (Request $request) {
-    $table = Table::find($request->id);
+    $table = TableAndRoom::find($request->id);
     $table->status = $request->status;
     $table->save();
 
