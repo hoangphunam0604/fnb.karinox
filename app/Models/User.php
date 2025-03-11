@@ -55,6 +55,10 @@ class User extends Authenticatable
       ->using(BranchUser::class);
   }
 
+  public function currentBranch()
+  {
+    return $this->belongsTo(Branch::class, 'current_branch');
+  }
 
 
   public function getLoginRedirectAttribute()

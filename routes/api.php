@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\App\BranchController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
 
@@ -22,6 +23,8 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
   Route::post('auth/logout', [AuthController::class, 'logout']);
   Route::get('auth/me', [AuthController::class, 'me']);
+  Route::get('branches', [BranchController::class, 'getUserBranches']);
+  Route::post('branches/select', [BranchController::class, 'selectBranch']);
 });
 
 require_once __DIR__ . "/pos.php";

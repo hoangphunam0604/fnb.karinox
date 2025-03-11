@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Resources\POS;
+namespace App\Http\Resources\Api\App;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TableAndRoomResource extends JsonResource
+class BranchResource extends JsonResource
 {
   /**
    * Transform the resource into an array.
@@ -17,9 +17,8 @@ class TableAndRoomResource extends JsonResource
     return [
       'id' => $this->id,
       'name' => $this->name,
-      'capacity' => $this->capacity,
-      'note' => $this->note,
-      'status' => $this->status,
+      'address' => $this->address,
+      'phone' => $this->phone_number,
     ];
   }
 }

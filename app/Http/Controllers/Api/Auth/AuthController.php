@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\App\UserResource;
+use App\Http\Resources\Api\App\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -21,9 +18,6 @@ class AuthController extends Controller
       'username' => 'required',
       'password' => 'required',
     ]);
-
-    $credentials = $request->only('username', 'password');
-
 
     $user = User::where('username', $request->username)->first();
 

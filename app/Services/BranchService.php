@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\Branch;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -58,5 +60,17 @@ class BranchService
   public function getBranches($perPage = 10)
   {
     return Branch::orderBy('created_at', 'desc')->paginate($perPage);
+  }
+
+  public function getUserBranches(User $user)
+  {
+    // Nếu là admin, trả về tất cả chi nhánh
+    if ($user->hasRole(UserRole::ADMIN)) {
+      $branches = Branch::all();
+    } else {
+      // Nếu không phải admin, chỉ trả về các chi nhánh được phân công
+      $branches = $user->branches->get();
+    }
+    return $branches;
   }
 }

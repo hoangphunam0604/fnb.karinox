@@ -26,6 +26,7 @@ class TableAndRoomController extends Controller
       return response()->json([
         'success' => false,
         'message' => 'Người dùng hoặc chi nhánh không hợp lệ',
+        'user' => $user
       ], 400);
     }
 
