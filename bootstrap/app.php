@@ -24,8 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
       Route::middleware('web')
         ->group(base_path('routes/web.php'));
 
-      Route::middleware('admin')
-        ->prefix('admin')
+      Route::prefix('admin')
         ->name('admin.')
         ->group(base_path('routes/admin.php'));
     },
@@ -34,7 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->web(append: [
       \App\Http\Middleware\HandleInertiaRequests::class,
+      \Illuminate\Session\Middleware\StartSession::class,
       \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+      \Inertia\Middleware::class, // Middleware của Inertia
     ]);
 
     //

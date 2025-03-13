@@ -20,14 +20,15 @@ class AuthController extends Controller
   {
     $credentials = $request->only('username', 'password');
 
-    if (Auth::attempt($credentials, false)) {
+    if (Auth::guard('web')->attempt($credentials, false)) {
+      $request->session()->regenerate(); // 🔥 Quan trọng: Đảm bảo session được giữ
+
       /** @var User|null $user */
       $user = Auth::user();
 
-      return redirect()->to($user->login_redirect);
-      return response()->json([
-        'status' => 'success',
-        'user' => new UserResource($user),
+      return redirect()->intended('admin/branches')->with([
+        'success' => 'Đăng nhập thành công!',
+        'user' => $user,
       ]);
     }
     throw ValidationException::withMessages([

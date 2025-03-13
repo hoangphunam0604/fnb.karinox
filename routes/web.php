@@ -14,14 +14,10 @@ Route::get('/login', [AuthController::class, 'loginView'])->name('login')->middl
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 /* }); */
 
+Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
 Route::middleware('auth')->group(function () {
   Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-  Route::get('/', [WelcomeController::class, 'welcome'])->name('welcome');
 });
 
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
-  Route::get('/', fn() => Inertia::render('Dashboard'))->name('dashboard');
-  Route::resource('branches', AdminBranchController::class);
-})->middleware(['auth', 'role:admin']);
 
 require_once __DIR__ . "/api.php";
