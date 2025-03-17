@@ -31,6 +31,8 @@ class OrderItem extends Model
     'status' => OrderItemStatus::class,
   ];
 
+
+
   /**
    * Mối quan hệ với đơn hàng
    */

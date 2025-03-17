@@ -227,26 +227,48 @@ class OrderService
     foreach ($items as $item) {
       $product = $this->getProduct($item['product_id']);
       $unitPrice = $product->price;
-      $orderItem = OrderItem::updateOrCreate(
-        ['order_id' => $order->id, 'product_id' => $item['product_id']],
-        [
-          'product_name' => $product->name,
-          'quantity' => $item['quantity'] ?? 1,
-          'unit_price' => $unitPrice,
-          'total_price' => $unitPrice  * $item['quantity'],
-          'total_price_with_topping' => $unitPrice  * $item['quantity'],
-        ]
-      );
+      if (isset($item['id'])):
+        $orderItem = OrderItem::findOrFail($item['id']);
+        $orderItem->quantity = $item['quantity'] ?? 1;
+        $orderItem->total_price = $unitPrice * $orderItem->quantity;
+
+        $orderItem->total_price = $unitPrice * $orderItem->quantity;
+        $orderItem->total_price_with_topping = $orderItem->total_price;
+        $orderItem->note = $item['note'];
+        // Xử lý topping
+        if (!empty($item['toppings'])) {
+          $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
+        } else {
+          // Nếu không có topping mới, xóa tất cả topping cũ
+          OrderTopping::where('order_item_id', $orderItem->id)->delete();
+        }
+      else:
+        $orderItem = OrderItem::where('product_id', $item['product_id'])
+          ->where('order_id', $order->id)
+          ->whereDoesntHave('toppings')
+          ->first();
+        if ($orderItem) :
+          // Nếu item có sẵn và không có topping bị xóa, tăng số lượng
+          $orderItem->increment('quantity');
+          $orderItem->total_price = $unitPrice * $orderItem->quantity;
+          $orderItem->total_price_with_topping = $orderItem->total_price;
+          $orderItem->save();
+        else :
+          $orderItem = OrderItem::create(
+            [
+              'order_id' => $order->id,
+              'product_id' => $product->id,
+              'product_name' => $product->name,
+              'quantity' => $item['quantity'] ?? 1,
+              'unit_price' => $unitPrice,
+              'total_price' => $unitPrice  * $item['quantity'],
+              'total_price_with_topping' => $unitPrice  * $item['quantity'],
+            ]
+          );
+        endif;
+      endif;
 
       $orderItemIds[] = $orderItem->id;
-
-      // Xử lý topping
-      if (!empty($item['toppings'])) {
-        $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
-      } else {
-        // Nếu không có topping mới, xóa tất cả topping cũ
-        OrderTopping::where('order_item_id', $orderItem->id)->delete();
-      }
     }
 
     // Xóa các mục không có trong danh sách mới
