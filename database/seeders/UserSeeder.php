@@ -25,9 +25,10 @@ class UserSeeder extends Seeder
     Role::firstOrCreate(['name' => UserRole::INVENTORY_STAFF, 'guard_name' => 'web']);
 
     // Tạo tài khoản admin
-    $admin = User::create([
-      'fullname' => 'Admin User',
+    $admin = User::updateOrCreate([
       'username' => 'karinox_admin',
+    ], [
+      'fullname' => 'Karinox Admin',
       'password' => Hash::make('karinox_admin'),
     ]);
     $admin->assignRole(UserRole::ADMIN);
