@@ -293,12 +293,13 @@ class OrderService
       }
 
       $topping = $this->getTopping($toppingId);
+      $topping_name = $topping->name;
       $unitPrice = $topping->price;
       $totalPrice = $unitPrice * $quantity;
 
       $orderTopping = OrderTopping::updateOrCreate(
         ['order_item_id' => $orderItem->id, 'topping_id' => $toppingId],
-        ['quantity' => $quantity, 'unit_price' => $unitPrice, 'total_price' => $totalPrice]
+        ['quantity' => $quantity, 'topping_name' => $topping_name, 'unit_price' => $unitPrice, 'total_price' => $totalPrice]
       );
 
       $toppingIds[] = $orderTopping->id;

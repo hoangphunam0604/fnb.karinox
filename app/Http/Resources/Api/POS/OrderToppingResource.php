@@ -12,8 +12,8 @@ class OrderToppingResource extends JsonResource
     return [
       'id' => $this->id,
       'order_item_id' => $this->order_item_id,
-      'product_id' => $this->product_id,
-      'name' => $this->product_name,
+      'topping_id' => $this->topping_id,
+      'topping_name' => $this->topping_name,
       'price' => $this->price,
       'quantity' => $this->quantity,
     ];
