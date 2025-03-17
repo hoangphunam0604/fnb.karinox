@@ -230,7 +230,7 @@ class OrderService
         ['order_id' => $order->id, 'product_id' => $item['product_id']],
         [
           'quantity' => $item['quantity'] ?? 1,
-          'price' => $unitPrice,
+          'unit_price' => $unitPrice,
           'total_price' => $unitPrice  * $item['quantity'],
           'total_price_with_topping' => $unitPrice  * $item['quantity'],
         ]
