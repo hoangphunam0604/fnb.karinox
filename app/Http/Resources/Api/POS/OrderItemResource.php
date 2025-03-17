@@ -13,11 +13,14 @@ class OrderItemResource extends JsonResource
       'id' => $this->id,
       'order_id' => $this->order_id,
       'product_id' => $this->product_id,
-      'product_name' => $this->product->name,
+      'product_name' => $this->product_name,
       'quantity' => $this->quantity,
       'unit_price' => $this->unit_price,
       'total_price' => $this->total_price,
       'final_price' => $this->total_price_with_topping,
+      'status' => $this->status,
+      'created_at' => $this->created_at,
+      'updated_at' => $this->updated_at,
       'toppings' => OrderToppingResource::collection($this->whenLoaded('toppings')),
     ];
   }
