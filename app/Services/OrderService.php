@@ -26,21 +26,21 @@ class OrderService
   }
   public function getOrderByTableId(int $tableId)
   {
-      $order = Order::where('table_id', $tableId)
-          ->where('order_status', OrderStatus::PENDING)
-          ->with(['items.toppings.product'])
-          ->first();
+    $order = Order::where('table_id', $tableId)
+      ->where('order_status', OrderStatus::PENDING)
+      ->with(['items.toppings.product'])
+      ->first();
 
-      if (!$order) {
-          $order = Order::create([
-              'table_id' => $tableId,
-              'order_status' => OrderStatus::PENDING,
-              'total_price' => 0,
-          ]);
-          $order->loadMissing(['items.toppings.product']); 
-      }
+    if (!$order) {
+      $order = Order::create([
+        'table_id' => $tableId,
+        'order_status' => OrderStatus::PENDING,
+        'total_price' => 0,
+      ]);
+      $order->loadMissing(['items.toppings.product']);
+    }
 
-      return $order;
+    return $order;
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
@@ -229,8 +229,8 @@ class OrderService
       $orderItem = OrderItem::updateOrCreate(
         ['order_id' => $order->id, 'product_id' => $item['product_id']],
         [
-          'quantity' => $item['quantity'],
-          'unit_price' => $unitPrice,
+          'quantity' => $item['quantity'] ?? 1,
+          'price' => $unitPrice,
           'total_price' => $unitPrice  * $item['quantity'],
           'total_price_with_topping' => $unitPrice  * $item['quantity'],
         ]

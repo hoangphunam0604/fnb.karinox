@@ -18,54 +18,23 @@ class OrderController extends Controller
   {
     $this->orderService = $orderService;
   }
-  public function index(Request $request)
-  {
-      $tableId = $request->input('table_id');
 
-      if (!$tableId) {
-          return response()->json(['error' => 'Table ID is required'], 400);
-      } 
-      $order = $this->orderService->getOrderByTableId($tableId);
-      return new OrderResource($order);
-  }
 
   public function getOrderByTableId(Request $request)
   {
-      $tableId = $request->input('table_id');
+    $tableId = $request->input('table_id');
 
-      if (!$tableId) {
-          return response()->json(['error' => 'Table ID is required'], 400);
-      } 
-      return response()->json(['table_id' => $tableId]);
-      $order = $this->orderService->getOrderByTableId($tableId);
-      return new OrderResource($order);
-  }
-  /**
-   * Đặt trước, trạng thái sẽ là PENDING
-   */
-  public function preOrder(OrderRequest $request): JsonResponse
-  {
-    $data = $request->validated();
-    dd($data);
-    return response()->json($order, 201);
+    if (!$tableId) {
+      return response()->json(['error' => 'Table ID is required'], 400);
+    }
+    $order = $this->orderService->getOrderByTableId($tableId);
+    return new OrderResource($order);
   }
 
-  /**
-   * Cập nhật đơn hàng
-   */
-  public function order(OrderRequest $request, int $orderId): JsonResponse
+  public function update($order_id, Request $request,)
   {
-    $validatedData = $request->validated();
-
-    $order = $this->orderService->updateOrder(
-      $orderId,
-      $validatedData['order_items'] ?? [],
-      $validatedData['table_id'] ?? null,
-      $validatedData['voucher_code'] ?? null,
-      $validatedData['note'] ?? '',
-      $validatedData['status'] ?? OrderStatus::PENDING
-    );
-
-    return response()->json($order);
+    $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used']);
+    $order = $this->orderService->updateOrder($order_id, $data);
+    return new OrderResource($order);
   }
 }
