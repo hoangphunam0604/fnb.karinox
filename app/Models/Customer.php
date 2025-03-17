@@ -52,7 +52,7 @@ class Customer extends Model
 
   public function membershipLevel()
   {
-    return $this->belongsTo(MembershipLevel::class, 'membership_level_id');
+    return $this->belongsTo(MembershipLevel::class, 'membership_level_id')->withDefault(['name' => 'Silver']);
   }
 
 
