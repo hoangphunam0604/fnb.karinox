@@ -225,10 +225,12 @@ class OrderService
     $orderItemIds = [];
 
     foreach ($items as $item) {
-      $unitPrice = $this->getProductPrice($item['product_id']);
+      $product = $this->getProduct($item['product_id']);
+      $unitPrice = $product->price;
       $orderItem = OrderItem::updateOrCreate(
         ['order_id' => $order->id, 'product_id' => $item['product_id']],
         [
+          'product_name' => $product->name,
           'quantity' => $item['quantity'] ?? 1,
           'unit_price' => $unitPrice,
           'total_price' => $unitPrice  * $item['quantity'],
@@ -268,7 +270,8 @@ class OrderService
         continue;
       }
 
-      $unitPrice = $this->getToppingPrice($toppingId);
+      $topping = $this->getTopping($toppingId);
+      $unitPrice = $topping->price;
       $totalPrice = $unitPrice * $quantity;
 
       $orderTopping = OrderTopping::updateOrCreate(
@@ -311,16 +314,16 @@ class OrderService
   /**
    * Lấy giá sản phẩm từ database
    */
-  private function getProductPrice($productId)
+  private function getProduct($productId)
   {
-    return Product::findOrFail($productId)->price;
+    return Product::findOrFail($productId);
   }
 
   /**
    * Lấy giá topping từ database
    */
-  private function getToppingPrice($toppingId)
+  private function getTopping($toppingId)
   {
-    return $this->getProductPrice($toppingId);
+    return $this->getProduct($toppingId);
   }
 }

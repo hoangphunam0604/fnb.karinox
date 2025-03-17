@@ -12,6 +12,7 @@ return new class extends Migration {
       $table->timestamps();
       $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete(); // Đơn hàng
       $table->foreignId('product_id')->constrained('products')->cascadeOnDelete(); // Sản phẩm
+      $table->string('product_name'); // Số lượng
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('unit_price', 15, 2); // Giá mỗi sản phẩm
       $table->decimal('total_price', 15, 2); // Tổng giá

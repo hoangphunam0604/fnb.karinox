@@ -35,6 +35,6 @@ class OrderController extends Controller
   {
     $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used']);
     $order = $this->orderService->updateOrder($order_id, $data);
-    return new OrderResource($order);
+    return response()->json($order);
   }
 }

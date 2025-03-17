@@ -12,6 +12,7 @@ return new class extends Migration {
       $table->timestamps();
       $table->foreignId('order_item_id')->constrained('order_items')->cascadeOnDelete(); // Sản phẩm trong đơn hàng
       $table->foreignId('topping_id')->nullable()->constrained('products')->nullOnDelete(); // Sản phẩm topping
+      $table->string('topping_name');
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('unit_price', 15, 2); // Giá topping
       $table->decimal('total_price', 15, 2); // Tổng giá

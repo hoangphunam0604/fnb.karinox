@@ -12,6 +12,7 @@ class OrderTopping extends Model
   protected $fillable = [
     'order_item_id',
     'topping_id',
+    'topping_name',
     'quantity',
     'unit_price',
     'total_price',
