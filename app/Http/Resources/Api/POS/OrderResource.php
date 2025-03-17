@@ -21,6 +21,7 @@ class OrderResource extends JsonResource
       'ordered_at' => $this->ordered_at,
       'creator_id' => $this->creator_id,
       'receiver_id' => $this->receiver_id,
+      'customer_id' => $this->customer_id,
       'customer' => $this->customer_id ? new CustomerResource($this->customer) : null,
       'subtotal_price' => $this->subtotal_price,
       'discount_amount' => $this->discount_amount,

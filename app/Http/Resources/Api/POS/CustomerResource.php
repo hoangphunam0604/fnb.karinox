@@ -17,6 +17,7 @@ class CustomerResource extends JsonResource
   {
     return [
       'id'  =>  $this->id,
+      'membership_level_id' => $this->membership_level_id,
       'membership_level' =>  new MembershipLevel($this->membership_level),
       'loyalty_card_number' =>  $this->loyalty_card_number,
       'loyalty_points'  =>  $this->loyalty_points,

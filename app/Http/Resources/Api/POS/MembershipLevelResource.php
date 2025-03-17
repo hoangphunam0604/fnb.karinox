@@ -15,7 +15,7 @@ class MembershipLevelResource extends JsonResource
   public function toArray($request)
   {
     return [
-      'rank'  =>  $this->rank,
+      'id'  =>  $this->id,
       'name'  =>  $this->name,
       'min_spent' =>  $this->min_spent,
       'max_spent' =>  $this->max_spent,
