@@ -28,7 +28,7 @@ class OrderService
   {
     $order = Order::where('table_id', $tableId)
       ->where('order_status', OrderStatus::PENDING)
-      ->with(['items.toppings'])
+      ->with(['items.toppings', 'customer.membershipLevel'])
       ->first();
 
     if (!$order) {
@@ -37,7 +37,7 @@ class OrderService
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
-      $order->loadMissing(['items.toppings']);
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
     }
 
     return $order;
@@ -96,7 +96,7 @@ class OrderService
 
       $order->refresh();
       $this->applyDiscounts($order, $data);
-
+      $order->loadMissing('customer.membershipLevel');
       return $order->refresh();
     });
   }

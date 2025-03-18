@@ -21,6 +21,7 @@ return new class extends Migration {
       $table->unsignedInteger('per_customer_limit')->nullable();
       $table->unsignedInteger('per_customer_daily_limit')->nullable(); // Giới hạn số lần dùng voucher trong ngày cho từng khách hàng
       $table->boolean('is_active')->default(true);
+      $table->boolean('disable_holiday')->default(false);
       $table->json('applicable_membership_levels')->nullable(); // Hỗ trợ nhiều hạng thành viên
       $table->json('valid_days_of_week')->nullable();
       $table->json('valid_weeks_of_month')->nullable();

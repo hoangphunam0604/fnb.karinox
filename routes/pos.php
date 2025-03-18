@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\POS\OrderController;
 use App\Http\Controllers\Api\POS\ProductController;
+use App\Http\Controllers\Api\POS\CustomerController;
 use App\Http\Controllers\Api\POS\TableAndRoomController;
 
 use App\Models\TableAndRoom;
@@ -19,6 +20,10 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::get('/orders', [OrderController::class, 'index']);
   Route::post('/orders', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
+
+  Route::get('/customers', [CustomerController::class, 'index']);
+  Route::get('/customers/find', [CustomerController::class, 'findCustomer']);
+
   Route::post('/tables/update', function (Request $request) {
     $table = TableAndRoom::find($request->id);
     $table->status = $request->status;

@@ -16,4 +16,8 @@ class MembershipLevel extends Model
     'reward_multiplier',
     'upgrade_reward_content'
   ];
+  protected $casts = [
+    'min_spent' => 'integer',
+    'max_spent' => 'integer'
+  ];
 }

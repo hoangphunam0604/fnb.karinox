@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Api\POS;
 
-use App\Models\MembershipLevel;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CustomerResource extends JsonResource
@@ -18,7 +17,7 @@ class CustomerResource extends JsonResource
     return [
       'id'  =>  $this->id,
       'membership_level_id' => $this->membership_level_id,
-      'membership_level' =>  new MembershipLevel($this->membership_level),
+      'membership_level' =>  new MembershipLevelResource($this->whenLoaded('membershipLevel')),
       'loyalty_card_number' =>  $this->loyalty_card_number,
       'loyalty_points'  =>  $this->loyalty_points,
       'reward_points' =>  $this->reward_points,

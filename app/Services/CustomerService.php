@@ -40,7 +40,8 @@ class CustomerService
    */
   public function findCustomer($keyword)
   {
-    return Customer::where('phone', $keyword)
+    return Customer::with('membershipLevel')
+      ->where('phone', $keyword)
       ->orWhere('email', $keyword)
       ->orWhere('loyalty_card_number', $keyword)
       ->first();

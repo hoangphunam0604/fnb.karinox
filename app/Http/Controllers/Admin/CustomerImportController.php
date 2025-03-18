@@ -24,12 +24,31 @@ class CustomerImportController extends Controller
 
   public function import(Request $request)
   {
-    $request->validate([
-      'file' => 'required|mimes:xlsx,xls'
-    ]);
 
-    $result = $this->importService->import($request->file('file'));
+    if (!$request->hasFile('file')) {
+      return response()->json(['error' => 'Không có file nào được tải lên.'], 400);
+    }
 
-    return redirect()->back()->with('message', $result['message']);
+    $file = $request->file('file');
+
+    if (!$file->isValid()) {
+      return response()->json(['error' => 'File tải lên bị lỗi.'], 400);
+    }
+    // Kiểm tra tên file và kích thước
+
+    // Lưu file vào storage/temp
+    //$filePath = $file->store('temp');
+    $filePath = $file->move(public_path('uploads'), time() . '-' . $file->getClientOriginalName());
+
+    if (!$filePath) {
+      return response()->json(['error' => 'Lưu file thất bại.'], 500);
+    }
+
+
+    $fullPath = public_path('uploads/' . basename($filePath));
+
+    $result = $this->importService->import($fullPath);
+
+    return response()->json($result);
   }
 }

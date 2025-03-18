@@ -5,7 +5,6 @@ import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
 
-const file = ref(null);
 const importStatus = ref(null);
 const form = useForm({ file: null });
 

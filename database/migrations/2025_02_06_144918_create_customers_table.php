@@ -18,6 +18,13 @@ return new class extends Migration
 
       $table->foreignId('membership_level_id')->nullable()->constrained()->nullOnDelete(); // Xếp hạng thành viên
       $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
+      $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
+      $table->string('fullname')->nullable(); // Tên khách hàng
+      $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
+      $table->string('address')->nullable(); // Địa chỉ khách hàng
+      $table->date('birthday')->nullable(); // Ngày sinh khách hàng
+      $table->enum('gender', ['male', 'female'])->nullable(); // Giới tính khách hàng
+
       $table->integer('loyalty_points')->default(0); // Điểm tích lũy
       $table->integer('reward_points')->default(0); // Điểm thưởng
       $table->integer('used_reward_points')->default(0); // Điểm thưởng đã sử dụng
@@ -26,12 +33,7 @@ return new class extends Migration
       $table->date('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
-      $table->string('fullname')->nullable(); // Tên khách hàng
-      $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
-      $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
-      $table->string('address')->nullable(); // Địa chỉ khách hàng
-      $table->date('birthday')->nullable(); // Ngày sinh khách hàng
-      $table->enum('gender', ['male', 'female'])->nullable(); // Giới tính khách hàng
+
 
       $table->string('referral_code')->nullable(); // Mã giới thiệu khách hàng
       $table->string('avatar')->nullable(); // Ảnh đại diện khách hàng
