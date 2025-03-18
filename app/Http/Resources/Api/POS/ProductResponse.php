@@ -23,7 +23,7 @@ class ProductResponse extends JsonResource
       'thumbnail' => $this->thumbnail,
       'is_reward_point' => $this->is_reward_point,
       'product_type' => $this->product_type,
-      'toppings' => ProductToppingResponse::collection($this->whenLoaded('toppings')),
+      'toppings' => ToppingResponse::collection($this->whenLoaded('toppings')),
     ];
   }
 }

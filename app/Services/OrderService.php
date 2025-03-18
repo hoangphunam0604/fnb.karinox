@@ -28,7 +28,7 @@ class OrderService
   {
     $order = Order::where('table_id', $tableId)
       ->where('order_status', OrderStatus::PENDING)
-      ->with(['items.toppings.product'])
+      ->with(['items.toppings'])
       ->first();
 
     if (!$order) {
@@ -37,7 +37,7 @@ class OrderService
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
-      $order->loadMissing(['items.toppings.product']);
+      $order->loadMissing(['items.toppings']);
     }
 
     return $order;
@@ -235,6 +235,7 @@ class OrderService
         $orderItem->total_price = $unitPrice * $orderItem->quantity;
         $orderItem->total_price_with_topping = $orderItem->total_price;
         $orderItem->note = $item['note'];
+        $orderItem->save();
         // Xử lý topping
         if (!empty($item['toppings'])) {
           $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
