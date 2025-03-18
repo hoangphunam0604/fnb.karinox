@@ -23,7 +23,7 @@ class ProductController extends Controller
    * @return \Illuminate\Http\JsonResponse
    */
   public function index(Request $request)
-  { 
+  { /* 
     $user = auth('api')->user();
 
     if (!$user || !$user->current_branch) {
@@ -32,8 +32,8 @@ class ProductController extends Controller
         
         'message' => 'Người dùng hoặc chi nhánh không hợp lệ',
       ], 400);
-    }
-    $branchId = $user->current_branch;
+    } */
+    $branchId = $request->branch_id;
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
     }
