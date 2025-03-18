@@ -210,6 +210,7 @@ class OrderService
       'branch_id' => $data['branch_id'] ?? $order->branch_id,
       'table_id' => $data['table_id'] ?? $order->table_id,
       'order_status' => $data['order_status'] ?? OrderStatus::PENDING,
+      'payment_method' => $data['payment_method'] ?? 'cash',
       'note' => $data['note'] ?? $order->note,
     ]);
 

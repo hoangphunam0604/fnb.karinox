@@ -110,7 +110,7 @@ class VoucherService
         $q->whereNull('usage_limit')
           ->orWhereColumn('applied_count', '<', 'usage_limit');
       });
-
+    // Thêm  min_order_value nếu có totalOrder
     if ($customerId) {
       $query->where(function ($q) use ($customerId) {
         // Kiểm tra giới hạn số lần sử dụng 

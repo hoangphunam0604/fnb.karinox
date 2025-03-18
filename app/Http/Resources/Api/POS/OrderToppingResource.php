@@ -14,7 +14,7 @@ class OrderToppingResource extends JsonResource
       'order_item_id' => $this->order_item_id,
       'topping_id' => $this->topping_id,
       'topping_name' => $this->topping_name,
-      'price' => $this->price,
+      'price' => $this->unit_price,
       'quantity' => $this->quantity,
     ];
   }

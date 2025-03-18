@@ -31,6 +31,7 @@ class OrderResource extends JsonResource
       'voucher_id' => $this->voucher_id,
       'voucher_code' => $this->voucher_code,
       'order_status' => $this->order_status,
+      'payment_method' => $this->payment_method,
       'note' => $this->note,
       'items' => OrderItemResource::collection($this->whenLoaded('items')),
     ];

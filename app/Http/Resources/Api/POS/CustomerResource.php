@@ -33,6 +33,8 @@ class CustomerResource extends JsonResource
       'birthday'  =>  $this->birthday,
       'gender'  =>  $this->gender,
       'avatar'  =>  $this->avatar,
+      'is_birthday_today'  =>  $this->isBirthdayToday(),
+      'is_eligible_for_birthday_bonus' => $this->isEligibleForBirthdayBonus(),
     ];
   }
 }

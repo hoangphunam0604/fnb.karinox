@@ -34,6 +34,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'voucher_id',
     'voucher_code',
     'order_status',
+    'payment_method',
     'note',
   ];
 
