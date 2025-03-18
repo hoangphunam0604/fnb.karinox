@@ -18,6 +18,7 @@ return new class extends Migration {
       $table->decimal('total_price', 15, 2); // Tổng giá
       $table->decimal('total_price_with_topping', 15, 2)->default(0);
       $table->enum('status', ['pending', 'accepted', 'preparing', 'prepared', 'serving', 'served', 'canceled', 'refunded'])->default('pending');
+      $table->string('note')->nullable(); // Ghi chú
     });
   }
 

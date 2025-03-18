@@ -18,7 +18,8 @@ class OrderItem extends Model
     'unit_price',
     'total_price',
     'total_price_with_topping',
-    'status'
+    'status',
+    'note'
   ];
 
   protected $casts = [
