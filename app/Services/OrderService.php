@@ -49,7 +49,13 @@ class OrderService
   {
     return Order::with(['items.toppings', 'customer.membershipLevel'])->where('order_code', strtoupper($code))->first();
   }
-
+  /**
+   * Tìm kiếm đơn đặt hàng theo mã
+   */
+  public function findOrderById($id)
+  {
+    return Order::with(['items.toppings', 'customer.membershipLevel'])->where('id', $id)->first();
+  }
   /**
    * Lấy danh sách đơn đặt hàng (phân trang)
    */
@@ -198,6 +204,25 @@ class OrderService
     return $order;
   }
 
+  public function removeCustomer($orderId): Order
+  {
+    $order = Order::findOrFail($orderId);
+    $this->pointService->restoreTransactionRewardPoints($order);
+    $order->customer_id = null;
+    $order->save();
+    $order->refresh();
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    return $order;
+  }
+
+  public function restoreRewardPoints($orderId): Order
+  {
+    $order = Order::findOrFail($orderId);
+    $this->pointService->restoreTransactionRewardPoints($order);
+    $order->refresh();
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    return $order;
+  }
   /**
    * Chuẩn bị đơn hàng
    */

@@ -172,7 +172,9 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   public function remoreRewardPointsUsed(): void
   {
+    $this->total_price = $this->total_price + $this->reward_discount;
     $this->reward_points_used = 0;
+    $this->reward_discount = 0;
     $this->save();
   }
 

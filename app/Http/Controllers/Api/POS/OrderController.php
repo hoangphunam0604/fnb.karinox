@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use App\Enums\OrderStatus;
+use App\Services\PointService;
 
 class OrderController extends Controller
 {
@@ -35,6 +36,18 @@ class OrderController extends Controller
   {
     $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used']);
     $order = $this->orderService->updateOrder($order_id, $data);
+    return new OrderResource($order);
+  }
+
+  public function removeCustomer($order_id)
+  {
+    $order = $this->orderService->removeCustomer($order_id);
+    return new OrderResource($order);
+  }
+
+  public function remoreRewardPointsUsed($order_id)
+  {
+    $order = $this->orderService->restoreRewardPoints($order_id);
     return new OrderResource($order);
   }
 }
