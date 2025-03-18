@@ -47,7 +47,7 @@ class OrderService
    */
   public function findOrderByCode($code)
   {
-    return Order::where('order_code', strtoupper($code))->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel'])->where('order_code', strtoupper($code))->first();
   }
 
   /**
@@ -96,8 +96,9 @@ class OrderService
 
       $order->refresh();
       $this->applyDiscounts($order, $data);
-      $order->loadMissing('customer.membershipLevel');
-      return $order->refresh();
+      $order->refresh();
+      $order->loadMissing(['customer.membershipLevel']);
+      return $order;
     });
   }
 
