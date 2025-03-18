@@ -20,7 +20,7 @@ class ProductImportController extends Controller
     $this->branchService = $branchService;
     $this->productImportService = $productImportService;
   }
-  public function index()
+  public function viewImport()
   {
     $user = Auth::user();
     $branches = $this->branchService->getUserBranches($user);
