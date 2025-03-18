@@ -322,12 +322,12 @@ class OrderService
   private function applyDiscounts(Order $order, array $data): void
   {
     // 2️⃣ Áp dụng voucher nếu có
-    if (!empty($data['voucher_code'])) {
+    if (!empty($data['voucher_code']) && $order->discount_amount) {
       $order->refresh();
       $this->voucherService->applyVoucher($order, $data['voucher_code']);
     }
     // 3️⃣ Áp dụng điểm thưởng nếu có
-    if (!empty($data['reward_points_used'])) {
+    if (!empty($data['reward_points_used']) && !$order->reward_points_used) {
       $order->refresh();
       $this->pointService->useRewardPoints($order, $data['reward_points_used']);
     }
