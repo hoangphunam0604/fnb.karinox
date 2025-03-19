@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
       UserSeeder::class,
       SystemSettingSeeder::class,
       AreasAndTablesSeeder::class,
+      MembershipLevelSeeder::class,
+      VoucherSeeder::class,
     ]);
   }
 }
