@@ -20,7 +20,6 @@ class OrderController extends Controller
     $this->orderService = $orderService;
   }
 
-
   public function getOrderByTableId(Request $request)
   {
     $tableId = $request->input('table_id');
@@ -34,20 +33,29 @@ class OrderController extends Controller
 
   public function update($order_id, Request $request,)
   {
-    $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used']);
+    $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used', 'payment_method']);
     $order = $this->orderService->updateOrder($order_id, $data);
     return new OrderResource($order);
   }
-
+  public function checkout($order_id)
+  {
+    $order = $this->orderService->markAsCompleted($order_id);
+    return new OrderResource($order);
+  }
   public function removeCustomer($order_id)
   {
     $order = $this->orderService->removeCustomer($order_id);
     return new OrderResource($order);
   }
 
-  public function remoreRewardPointsUsed($order_id)
+  public function removeRewardPointsUsed($order_id)
   {
-    $order = $this->orderService->restoreRewardPoints($order_id);
+    $order = $this->orderService->removeRewardPointsUsed($order_id);
+    return new OrderResource($order);
+  }
+  public function removeVoucherUsed($order_id)
+  {
+    $order = $this->orderService->removeVoucherUsed($order_id);
     return new OrderResource($order);
   }
 }

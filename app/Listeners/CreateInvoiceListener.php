@@ -6,7 +6,7 @@ use App\Events\OrderCompleted;
 use App\Services\InvoiceService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class CreateInvoiceListener implements ShouldQueue
+class CreateInvoiceListener /* implements ShouldQueue */
 {
   protected InvoiceService $invoiceService;
 

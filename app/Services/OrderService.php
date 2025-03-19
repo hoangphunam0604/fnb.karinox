@@ -32,8 +32,11 @@ class OrderService
       ->first();
 
     if (!$order) {
+      $branchId = app()->bound('branch_id') ? app('branch_id') : null;
+
       $order = Order::create([
         'table_id' => $tableId,
+        'branch_id' => $branchId,
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
@@ -158,21 +161,23 @@ class OrderService
   /**
    * Hoàn tất đơn hàng
    */
-  public function markAsCompleted($orderId, $paidAmount = 0): Order
+  public function markAsCompleted($orderId): Order
   {
-    return DB::transaction(function () use ($orderId, $paidAmount) {
+    return DB::transaction(function () use ($orderId) {
       $order = Order::findOrFail($orderId);
 
-      if ($order->order_status === OrderStatus::COMPLETED) {
-        throw new Exception('Đơn hàng đã hoàn tất trước đó.');
+      if ($order->order_status !== OrderStatus::COMPLETED) {
+        $order->markAsCompleted();
       }
-
+      /* 
       if ($order->total_price > 0 && $paidAmount < $order->total_price) {
         throw new Exception('Số tiền thanh toán không đủ.');
-      }
-      $order->markAsCompleted();
+      } */
 
-      return $order->refresh();
+      $order->refresh();
+
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+      return $order;
     });
   }
 
@@ -215,7 +220,7 @@ class OrderService
     return $order;
   }
 
-  public function restoreRewardPoints($orderId): Order
+  public function removeRewardPointsUsed($orderId): Order
   {
     $order = Order::findOrFail($orderId);
     $this->pointService->restoreTransactionRewardPoints($order);
@@ -223,6 +228,16 @@ class OrderService
     $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
     return $order;
   }
+
+  public function removeVoucherUsed($orderId): Order
+  {
+    $order = Order::findOrFail($orderId);
+    $this->voucherService->restoreVoucherUsage($order);
+    $order->refresh();
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    return $order;
+  }
+
   /**
    * Chuẩn bị đơn hàng
    */
@@ -347,7 +362,7 @@ class OrderService
   private function applyDiscounts(Order $order, array $data): void
   {
     // 2️⃣ Áp dụng voucher nếu có
-    if (!empty($data['voucher_code']) && $order->discount_amount) {
+    if (!empty($data['voucher_code']) && !$order->discount_amount) {
       $order->refresh();
       $this->voucherService->applyVoucher($order, $data['voucher_code']);
     }

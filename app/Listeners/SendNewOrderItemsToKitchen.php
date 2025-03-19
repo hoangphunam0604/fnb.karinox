@@ -7,7 +7,7 @@ use App\Events\OrderCompleted;
 use App\Services\KitchenService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendNewOrderItemsToKitchen implements ShouldQueue
+class SendNewOrderItemsToKitchen /* implements ShouldQueue */
 {
   protected KitchenService $kitchenService;
 

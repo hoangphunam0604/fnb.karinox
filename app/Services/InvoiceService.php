@@ -102,6 +102,7 @@ class InvoiceService
       $invoiceItem = InvoiceItem::create([
         'invoice_id' => $invoice->id,
         'product_id' => $orderItem->product_id,
+        'product_name' => $orderItem->product_name,
         'quantity' => $orderItem->quantity,
         'unit_price' => $orderItem->unit_price,
         'total_price' => $orderItem->total_price,
@@ -117,6 +118,7 @@ class InvoiceService
       InvoiceTopping::create([
         'invoice_item_id' => $invoiceItem->id,
         'topping_id' => $orderTopping->topping_id,
+        'topping_name' => $orderTopping->topping_name,
         'quantity' => $orderTopping->quantity,
         'unit_price' => $orderTopping->unit_price,
         'total_price' => $orderTopping->total_price,

@@ -69,7 +69,7 @@ class VoucherService
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
-  public function getValidVouchers($customerId = null)
+  public function getValidVouchers($customerId = null, $totalPrice = null)
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
@@ -110,7 +110,15 @@ class VoucherService
         $q->whereNull('usage_limit')
           ->orWhereColumn('applied_count', '<', 'usage_limit');
       });
-    // Thêm  min_order_value nếu có totalOrder
+    // Thêm  min_order_value nếu có totalPrice
+    if ($totalPrice) {
+      $query->where(function ($q) use ($totalPrice) {
+        // Kiểm tra giới hạn số lần sử dụng 
+        $q->whereNull('min_order_value')
+          ->orWhere("min_order_value", '<=', $totalPrice);
+      });
+    }
+
     if ($customerId) {
       $query->where(function ($q) use ($customerId) {
         // Kiểm tra giới hạn số lần sử dụng 
@@ -180,11 +188,11 @@ class VoucherService
    * Kiểm tra voucher có hợp lệ hay không.
    *
    * @param Voucher $voucher
-   * @param float $totalOrder
+   * @param float $totalPrice
    * @param int|null $customerId
    * @return ValidationResult
    */
-  public function isValid(Voucher $voucher, float $totalOrder, ?int $customerId = null): ValidationResult
+  public function isValid(Voucher $voucher, float $totalPrice, ?int $customerId = null): ValidationResult
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
@@ -198,7 +206,7 @@ class VoucherService
     }
 
     // Kiểm tra giá trị tối thiểu của đơn hàng
-    if ($voucher->min_order_value && $totalOrder < $voucher->min_order_value) {
+    if ($voucher->min_order_value && $totalPrice < $voucher->min_order_value) {
       return ValidationResult::fail(config('messages.voucher.min_order_value'));
     }
 
