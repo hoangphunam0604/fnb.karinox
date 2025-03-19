@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         if ($e instanceof \Illuminate\Validation\ValidationException) {
           return response()->json([
             'success' => false,
-            'error' => $message,
+            'message' => $message,
             'messages' => $e->errors(),
             'code' => 422
           ], 422);
@@ -54,7 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
           if ($e instanceof $exceptionClass) {
             return response()->json([
               'success' => false,
-              'error' => $errorMessage,
+              'message' => $errorMessage,
               'code' => $code
             ], $code);
           }
