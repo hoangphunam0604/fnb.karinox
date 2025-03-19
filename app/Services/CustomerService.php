@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\MembershipLevel;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CustomerService
 {
@@ -40,11 +42,15 @@ class CustomerService
    */
   public function findCustomer($keyword)
   {
-    return Customer::with('membershipLevel')
-      ->where('phone', $keyword)
-      ->orWhere('email', $keyword)
-      ->orWhere('loyalty_card_number', $keyword)
-      ->first();
+    try {
+      return Customer::with('membershipLevel')
+        ->where('phone', $keyword)
+        ->orWhere('email', $keyword)
+        ->orWhere('loyalty_card_number', $keyword)
+        ->firstOrFail();
+    } catch (ModelNotFoundException $e) {
+      abort(404, 'Không tìm thấy khách hàng.');
+    }
   }
 
   /**

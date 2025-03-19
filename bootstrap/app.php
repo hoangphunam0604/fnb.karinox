@@ -46,7 +46,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $errorResponses = [
           \Illuminate\Auth\AuthenticationException::class => ['Unauthorized', 401],
           \Illuminate\Auth\Access\AuthorizationException::class => ['Forbidden', 403],
-          \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => ['Not Found', 404],
           \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class => ['Method Not Allowed', 405],
           \Illuminate\Validation\ValidationException::class => ['Validation failed', 422],
           \Illuminate\Http\Exceptions\ThrottleRequestsException::class => ['Too Many Requests', 429]
