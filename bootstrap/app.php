@@ -44,11 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Danh sách mã lỗi và thông điệp tương ứng
         $errorResponses = [
-          \Illuminate\Auth\AuthenticationException::class => ['Unauthorized', 401],
-          \Illuminate\Auth\Access\AuthorizationException::class => ['Forbidden', 403],
-          \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class => ['Method Not Allowed', 405],
-          \Illuminate\Validation\ValidationException::class => ['Validation failed', 422],
-          \Illuminate\Http\Exceptions\ThrottleRequestsException::class => ['Too Many Requests', 429]
+          \Illuminate\Auth\AuthenticationException::class => ['Bạn không có quyền truy cập.', 401],
+          \Illuminate\Auth\Access\AuthorizationException::class => ['Bạn không có quyền thực hiện hành động này.', 403],
+          \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => ['Không tìm thấytài nguyên yêu cầu.', 404],
+          \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class => ['Phương thức không được phép.', 405],
+          \Illuminate\Validation\ValidationException::class => [' Dữ liệu không hợp lệ.', 422],
+          \Illuminate\Http\Exceptions\ThrottleRequestsException::class => ['Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.', 429]
         ];
         foreach ($errorResponses as $exceptionClass => [$errorMessage, $code]) {
           if ($e instanceof $exceptionClass) {
