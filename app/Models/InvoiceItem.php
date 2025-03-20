@@ -12,11 +12,18 @@ class InvoiceItem extends Model
     'invoice_id',
     'product_id',
     'product_name',
-    'quantity',
+    'product_price',
     'unit_price',
+    'quantity',
     'total_price',
   ];
-
+  protected $casts = [
+    'product_id' => 'integer',
+    'product_price' => 'integer',
+    'unit_price' => 'integer',
+    'quantity' => 'integer',
+    'total_price' => 'integer',
+  ];
   /**
    * Mối quan hệ với hóa đơn
    */

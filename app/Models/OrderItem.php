@@ -14,18 +14,19 @@ class OrderItem extends Model
     'order_id',
     'product_id',
     'product_name',
-    'quantity',
+    'product_price',
     'unit_price',
+    'quantity',
     'total_price',
     'status',
     'note'
   ];
 
   protected $casts = [
-    'order_item_id' => 'integer',
     'product_id' => 'integer',
-    'quantity' => 'integer',
+    'product_price' => 'integer',
     'unit_price' => 'integer',
+    'quantity' => 'integer',
     'total_price' => 'integer',
     'status' => OrderItemStatus::class,
   ];

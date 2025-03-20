@@ -103,6 +103,7 @@ class InvoiceService
         'invoice_id' => $invoice->id,
         'product_id' => $orderItem->product_id,
         'product_name' => $orderItem->product_name,
+        'product_price' => $orderItem->product_price,
         'quantity' => $orderItem->quantity,
         'unit_price' => $orderItem->unit_price,
         'total_price' => $orderItem->total_price,

@@ -349,7 +349,7 @@ class OrderService
     OrderTopping::where('order_item_id', $orderItem->id)->whereNotIn('id', $toppingIds)->delete();
 
     // Cập nhật tổng tiền sản phẩm kèm topping
-    $orderItem->unit_price = $orderItem->unit_price + $orderItem->toppings->sum('total_price');
+    $orderItem->unit_price = $orderItem->product_price + $orderItem->toppings->sum('total_price');
     $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
     $orderItem->save();
   }
