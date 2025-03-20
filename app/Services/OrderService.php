@@ -117,7 +117,7 @@ class OrderService
   public function updateTotalPrice(Order $order): void
   {
     // 1️⃣ Tính tổng tiền sản phẩm & topping (trước giảm giá)
-    $subtotal = $order->items->sum(fn($item) => $item->total_price_with_topping);
+    $subtotal = $order->items->sum(fn($item) => $item->total_price);
 
     // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
     $discountAmount = $order->discount_amount ?? 0;
@@ -275,7 +275,6 @@ class OrderService
         $orderItem->total_price = $unitPrice * $orderItem->quantity;
 
         $orderItem->total_price = $unitPrice * $orderItem->quantity;
-        $orderItem->total_price_with_topping = $orderItem->total_price;
         $orderItem->note = $item['note'];
         $orderItem->save();
         // Xử lý topping
@@ -294,7 +293,6 @@ class OrderService
           // Nếu item có sẵn và không có topping bị xóa, tăng số lượng
           $orderItem->increment('quantity');
           $orderItem->total_price = $unitPrice * $orderItem->quantity;
-          $orderItem->total_price_with_topping = $orderItem->total_price;
           $orderItem->save();
         else :
           $orderItem = OrderItem::create(
@@ -305,7 +303,6 @@ class OrderService
               'quantity' => $item['quantity'] ?? 1,
               'unit_price' => $unitPrice,
               'total_price' => $unitPrice  * $item['quantity'],
-              'total_price_with_topping' => $unitPrice  * $item['quantity'],
             ]
           );
         endif;
@@ -352,7 +349,8 @@ class OrderService
     OrderTopping::where('order_item_id', $orderItem->id)->whereNotIn('id', $toppingIds)->delete();
 
     // Cập nhật tổng tiền sản phẩm kèm topping
-    $orderItem->total_price_with_topping = $orderItem->toppings->sum('total_price') + $orderItem->total_price;
+    $orderItem->unit_price = $orderItem->unit_price + $orderItem->toppings->sum('total_price');
+    $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
     $orderItem->save();
   }
 

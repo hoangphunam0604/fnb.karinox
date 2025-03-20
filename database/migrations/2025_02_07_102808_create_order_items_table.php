@@ -14,9 +14,8 @@ return new class extends Migration {
       $table->foreignId('product_id')->constrained('products')->cascadeOnDelete(); // Sản phẩm
       $table->string('product_name'); // Số lượng
       $table->integer('quantity')->default(1); // Số lượng
-      $table->decimal('unit_price', 15, 2); // Giá mỗi sản phẩm
+      $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
       $table->decimal('total_price', 15, 2); // Tổng giá
-      $table->decimal('total_price_with_topping', 15, 2)->default(0);
       $table->enum('status', ['pending', 'accepted', 'preparing', 'prepared', 'serving', 'served', 'canceled', 'refunded'])->default('pending');
       $table->string('note')->nullable(); // Ghi chú
     });

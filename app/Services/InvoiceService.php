@@ -106,7 +106,6 @@ class InvoiceService
         'quantity' => $orderItem->quantity,
         'unit_price' => $orderItem->unit_price,
         'total_price' => $orderItem->total_price,
-        'total_price_with_topping' => $orderItem->total_price_with_topping,
       ]);
       $this->copyOrderToppingsToInvoice($orderItem, $invoiceItem);
     }
