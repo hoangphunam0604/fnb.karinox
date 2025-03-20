@@ -20,7 +20,8 @@ class Product extends Model
     'name',
     'description',
     'cost_price',
-    'price',
+    'regular_price',
+    'sale_price',
     'unit',
     'status',
     'allows_sale',
@@ -84,6 +85,10 @@ class Product extends Model
   public function toppings()
   {
     return $this->hasMany(ProductTopping::class);
+  }
+  public function getPriceAttribute()
+  {
+    return $this->sale_price ?? $this->regular_price;
   }
 
   public function getThumbnailAttribute()

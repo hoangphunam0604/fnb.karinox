@@ -22,7 +22,8 @@ return new class extends Migration
       $table->string('name');
       $table->text('description')->nullable();
       $table->decimal('cost_price', 10, 2)->default(0);
-      $table->decimal('price', 10, 2)->nullable();
+      $table->decimal('regular_price', 10, 2)->nullable();
+      $table->decimal('sale_price', 10, 2)->nullable();
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
       $table->boolean('allows_sale')->default(true);
