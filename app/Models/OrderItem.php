@@ -27,7 +27,6 @@ class OrderItem extends Model
     'quantity' => 'integer',
     'unit_price' => 'integer',
     'total_price' => 'integer',
-    'total_price_with_topping' => 'integer',
     'status' => OrderItemStatus::class,
   ];
 
