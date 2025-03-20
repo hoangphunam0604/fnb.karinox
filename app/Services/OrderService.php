@@ -272,9 +272,8 @@ class OrderService
       if (isset($item['id'])):
         $orderItem = OrderItem::findOrFail($item['id']);
         $orderItem->quantity = $item['quantity'] ?? 1;
-        $orderItem->total_price = $unitPrice * $orderItem->quantity;
-
-        $orderItem->total_price = $unitPrice * $orderItem->quantity;
+        $orderItem->unit_price = $unitPrice;
+        $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
         $orderItem->note = $item['note'];
         $orderItem->save();
         // Xử lý topping
@@ -300,6 +299,7 @@ class OrderService
               'order_id' => $order->id,
               'product_id' => $product->id,
               'product_name' => $product->name,
+              'product_price' => $product->price,
               'quantity' => $item['quantity'] ?? 1,
               'unit_price' => $unitPrice,
               'total_price' => $unitPrice  * $item['quantity'],
