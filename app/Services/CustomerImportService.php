@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\MembershipLevel;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
@@ -61,11 +62,29 @@ class CustomerImportService
       }
 
       DB::commit();
+      $this->updateMembershipLevels();
       return ['success' => true, 'message' => 'Import thành công'];
     } catch (Exception $e) {
       DB::rollBack();
       Log::error('Lỗi import khách hàng: ' . $e->getMessage());
       return ['success' => false, 'message' => 'Lỗi import dữ liệu'];
+    }
+  }
+
+  private function updateMembershipLevels()
+  {
+    // Lấy danh sách hạng thành viên, sắp xếp theo rank tăng dần
+    $membershipLevels = MembershipLevel::orderBy('rank')->get();
+
+    foreach ($membershipLevels as $level) {
+      $query = Customer::whereNull('membership_level_id')
+        ->where('loyalty_points', '>=', $level->min_spent);
+
+      // Chỉ áp dụng giới hạn max_spent nếu nó không null
+      if (!is_null($level->max_spent)) {
+        $query->where('loyalty_points', '<=', $level->max_spent);
+      }
+      $query->update(['membership_level_id' => $level->id]);
     }
   }
 }
