@@ -86,7 +86,7 @@ class ProductImportService
         'category_id' => $category->id,
         'product_type' => $productType,
         'unit' => $unit,
-        'price' => $price,
+        'regular_price' => $price,
         'status' => $status, // 🔥 Lưu trạng thái `active/inactive`
         'allows_sale' => $allowsSale, // 🔥 Lưu trạng thái `Được bán trực tiếp`
         'is_topping' => $isTopping,
