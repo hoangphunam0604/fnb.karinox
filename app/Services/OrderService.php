@@ -28,7 +28,7 @@ class OrderService
   {
     $order = Order::where('table_id', $tableId)
       ->where('order_status', OrderStatus::PENDING)
-      ->with(['items.toppings', 'customer.membershipLevel'])
+      ->with(['items.toppings', 'customer.membershipLevel', 'table'])
       ->first();
 
     if (!$order) {
@@ -40,7 +40,7 @@ class OrderService
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
-      $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     }
 
     return $order;
@@ -50,14 +50,14 @@ class OrderService
    */
   public function findOrderByCode($code)
   {
-    return Order::with(['items.toppings', 'customer.membershipLevel'])->where('order_code', strtoupper($code))->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
   public function findOrderById($id)
   {
-    return Order::with(['items.toppings', 'customer.membershipLevel'])->where('id', $id)->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('id', $id)->first();
   }
   /**
    * Lấy danh sách đơn đặt hàng (phân trang)
@@ -106,7 +106,7 @@ class OrderService
       $order->refresh();
       $this->applyDiscounts($order, $data);
       $order->refresh();
-      $order->loadMissing(['customer.membershipLevel']);
+      $order->loadMissing(['customer.membershipLevel', 'table']);
       return $order;
     });
   }
@@ -216,7 +216,7 @@ class OrderService
     $order->customer_id = null;
     $order->save();
     $order->refresh();
-    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
@@ -225,7 +225,7 @@ class OrderService
     $order = Order::findOrFail($orderId);
     $this->pointService->restoreTransactionRewardPoints($order);
     $order->refresh();
-    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
@@ -234,7 +234,7 @@ class OrderService
     $order = Order::findOrFail($orderId);
     $this->voucherService->restoreVoucherUsage($order);
     $order->refresh();
-    $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 

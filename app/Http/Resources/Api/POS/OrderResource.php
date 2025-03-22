@@ -22,7 +22,6 @@ class OrderResource extends JsonResource
       'creator_id' => $this->creator_id,
       'receiver_id' => $this->receiver_id,
       'customer_id' => $this->customer_id,
-      'customer' => $this->customer_id ? new CustomerResource($this->whenLoaded('customer')) : null,
       'subtotal_price' => $this->subtotal_price,
       'discount_amount' => $this->discount_amount,
       'reward_points_used' => $this->reward_points_used,
@@ -34,6 +33,8 @@ class OrderResource extends JsonResource
       'payment_method' => $this->payment_method,
       'note' => $this->note,
       'items' => OrderItemResource::collection($this->whenLoaded('items')),
+      'table' =>  $this->table_id ? new TableResponse($this->whenLoaded('table')) : null,
+      'customer' => $this->customer_id ? new CustomerResource($this->whenLoaded('customer')) : null,
     ];
   }
 }
