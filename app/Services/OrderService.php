@@ -155,7 +155,9 @@ class OrderService
     if ($order->order_status == OrderStatus::COMPLETED)
       throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
 
-    return  $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
+    $this->pointService->restoreTransactionRewardPoints($order);
+    $this->voucherService->restoreVoucherUsage($order);
+    return $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
   }
 
   /**

@@ -22,6 +22,7 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::post('/orders', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
   Route::post('/orders/{id}/checkout', [OrderController::class, 'checkout']);
+  Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
   Route::put('/orders/{id}/remove-customer', [OrderController::class, 'removeCustomer']);
   Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
