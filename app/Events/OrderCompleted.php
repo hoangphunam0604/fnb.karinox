@@ -4,11 +4,12 @@ namespace App\Events;
 
 use App\Models\Order;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderCompleted implements ShouldBroadcast
+
+class OrderCompleted implements ShouldBroadcastNow
 {
   use Dispatchable, SerializesModels;
 

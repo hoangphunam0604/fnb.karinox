@@ -21,6 +21,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   protected $fillable = [
     'branch_id',
     'order_id',
+    'code',
 
     'subtotal_price',
     'discount_amount',
@@ -75,12 +76,12 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
 
   public static function generateInvoiceCode($branchId)
   {
-    $latestOrder = self::whereDate('created_at', now()->toDateString())
+    $latest = self::whereDate('created_at', now()->toDateString())
       ->where('branch_id', $branchId)
       ->orderBy('id', 'desc')
       ->first();
 
-    $increment = $latestOrder ? ((int) substr($latestOrder->order_code, -4)) + 1 : 1;
+    $increment = $latest ? ((int) substr($latest->code, -4)) + 1 : 1;
 
     return sprintf("HD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
   }
