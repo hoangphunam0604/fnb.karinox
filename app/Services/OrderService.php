@@ -178,7 +178,7 @@ class OrderService
 
       $order->refresh();
 
-      $order->loadMissing(['items.toppings', 'customer.membershipLevel']);
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
       return $order;
     });
   }
