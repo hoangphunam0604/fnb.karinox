@@ -19,6 +19,8 @@ class OrderItem extends Model
     'quantity',
     'total_price',
     'status',
+    'print_label',
+    'print_kitchen',
     'note'
   ];
 

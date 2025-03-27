@@ -28,6 +28,8 @@ class Product extends Model
     'is_reward_point',
     'is_topping',
     'manage_stock',
+    'print_label',
+    'print_kitchen',
     'images',
   ];
 

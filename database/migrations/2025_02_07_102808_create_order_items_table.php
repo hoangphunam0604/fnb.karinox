@@ -18,6 +18,8 @@ return new class extends Migration {
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('total_price', 15, 2); // Tổng giá
       $table->enum('status', ['pending', 'accepted', 'preparing', 'prepared', 'serving', 'served', 'canceled', 'refunded'])->default('pending');
+      $table->boolean('print_label'); // In tem (dán ly/giữ lại)
+      $table->boolean('print_kitchen'); // In phiếu bếp
       $table->string('note')->nullable(); // Ghi chú
     });
   }

@@ -19,6 +19,8 @@ class OrderItemResource extends JsonResource
       'total_price' => $this->total_price,
       'status' => $this->status,
       'note' => $this->note,
+      'print_label' =>  $this->print_label,
+      'print_kitchen' =>  $this->print_kitchen,
       'toppings' => OrderToppingResource::collection($this->toppings ?? []),
     ];
   }

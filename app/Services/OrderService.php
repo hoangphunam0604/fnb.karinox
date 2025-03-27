@@ -291,7 +291,7 @@ class OrderService
           ->whereDoesntHave('toppings')
           ->first();
         if ($orderItem) :
-          // Nếu item có sẵn và không có topping bị xóa, tăng số lượng
+          // Nếu item có sẵn và không có topping => tăng số lượng
           $orderItem->increment('quantity');
           $orderItem->total_price = $unitPrice * $orderItem->quantity;
           $orderItem->save();
@@ -305,6 +305,8 @@ class OrderService
               'quantity' => $item['quantity'] ?? 1,
               'unit_price' => $unitPrice,
               'total_price' => $unitPrice  * $item['quantity'],
+              'print_label' =>  $product->print_label,
+              'print_kitchen' =>  $product->print_kitchen,
             ]
           );
         endif;

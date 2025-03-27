@@ -30,6 +30,8 @@ return new class extends Migration
       $table->boolean('is_reward_point')->default(true);
       $table->boolean('is_topping')->default(false);
       $table->boolean('manage_stock')->default(true);
+      $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
+      $table->boolean('print_kitchen')->default(true); // In phiếu bếp
       $table->json('images')->nullable();
     });
   }
