@@ -6,9 +6,8 @@ use App\Http\Controllers\Api\POS\ProductController;
 use App\Http\Controllers\Api\POS\CustomerController;
 use App\Http\Controllers\Api\POS\TableAndRoomController;
 use App\Http\Controllers\Api\POS\VoucherController;
+use App\Http\Controllers\Api\POS\PrintTemplateController;
 
-use App\Models\TableAndRoom;
-use Illuminate\Http\Request;
 
 Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
@@ -27,12 +26,8 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
 
-  Route::post('/tables/update', function (Request $request) {
-    $table = TableAndRoom::find($request->id);
-    $table->status = $request->status;
-    $table->save();
-
-    broadcast(new TableUpdated($table));
-    return response()->json($table);
+  Route::prefix('pos')->group(function () {
+    Route::get('print-templates', [PrintTemplateController::class, 'index']);
+    Route::get('print-templates/{id}', [PrintTemplateController::class, 'show']);
   });
 });

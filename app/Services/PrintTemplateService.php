@@ -35,7 +35,7 @@ class PrintTemplateService
       $query->where('is_default', $filters['is_default']);
     }
 
-    return $query->orderByDesc('updated_at')->paginate($perPage);
+    return $perPage === 0 ? $query->get() : $query->paginate($perPage);
   }
 
   public static function create(array $data): PrintTemplate
