@@ -26,8 +26,6 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
 
-  Route::prefix('pos')->group(function () {
-    Route::get('print-templates', [PrintTemplateController::class, 'index']);
-    Route::get('print-templates/{id}', [PrintTemplateController::class, 'show']);
-  });
+  Route::get('print-templates', [PrintTemplateController::class, 'index']);
+  Route::get('print-templates/{id}', [PrintTemplateController::class, 'show']);
 });
