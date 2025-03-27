@@ -8,12 +8,7 @@ use App\Http\Controllers\Api\POS\TableAndRoomController;
 use App\Http\Controllers\Api\POS\VoucherController;
 
 use App\Models\TableAndRoom;
-use App\Services\OrderService;
 use Illuminate\Http\Request;
-
-Route::get('/test-order-service', function (OrderService $orderService) {
-  return response()->json(['message' => 'OrderService injected OK']);
-});
 
 Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
