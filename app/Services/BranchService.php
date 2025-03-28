@@ -59,18 +59,11 @@ class BranchService
    */
   public function getBranches($perPage = 10)
   {
-    return Branch::orderBy('created_at', 'desc')->paginate($perPage);
+    return Branch::orderBy('sort_order', 'asc')->paginate($perPage);
   }
 
-  public function getUserBranches(User $user)
+  public function getActiveBranches()
   {
-    // Nếu là admin, trả về tất cả chi nhánh
-    if ($user->hasRole(UserRole::ADMIN)) {
-      $branches = Branch::all();
-    } else {
-      // Nếu không phải admin, chỉ trả về các chi nhánh được phân công
-      $branches = $user->branches->get();
-    }
-    return $branches;
+    return Branch::whereStatus('active')->orderBy('sort_order', 'asc')->get();
   }
 }

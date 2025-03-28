@@ -19,9 +19,12 @@ class OrderItem extends Model
     'quantity',
     'total_price',
     'status',
+    'note',
     'print_label',
+    'printed_label',
     'print_kitchen',
-    'note'
+    'printed_kitchen',
+    'printed_histories',
   ];
 
   protected $casts = [
@@ -31,6 +34,10 @@ class OrderItem extends Model
     'quantity' => 'integer',
     'total_price' => 'integer',
     'status' => OrderItemStatus::class,
+    'print_label' =>  'boolean',
+    'printed_label' =>  'boolean',
+    'print_kitchen' =>  'boolean',
+    'printed_kitchen' =>  'boolean',
   ];
 
 

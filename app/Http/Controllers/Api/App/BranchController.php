@@ -21,11 +21,9 @@ class BranchController extends Controller
     $this->branchService = $branchService;
   }
 
-  public function getUserBranches(Request $request)
+  public function getUserBranches()
   {
-    /** @var User|null $user */
-    $user = Auth::user();
-    $branches = $this->branchService->getUserBranches($user);
+    $branches = $this->branchService->getActiveBranches();
     return BranchResource::collection($branches);
   }
 
@@ -35,7 +33,7 @@ class BranchController extends Controller
 
     /** @var User|null $user */
     $user = Auth::user();
-    $branches = $this->branchService->getUserBranches($user);
+    $branches = $this->branchService->getActiveBranches($user);
     // Lấy danh sách chi nhánh mà user quản lý
     $managedBranches = $branches->pluck('id')->toArray();
 

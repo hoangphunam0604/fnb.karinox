@@ -16,10 +16,12 @@ class Branch extends Model
     'email',
     'address',
     'status',
+    'sort_order',
   ];
 
   protected $casts = [
     'status'  => CommonStatus::class,
+    'sort_order'  =>  'integer'
   ];
 
   public function products()
