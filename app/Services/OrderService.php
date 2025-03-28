@@ -32,7 +32,7 @@ class OrderService
       ->first();
 
     if (!$order) {
-      $branchId = app()->bound('branch_id') ? app('branch_id') : null;
+      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
 
       $order = Order::create([
         'table_id' => $tableId,

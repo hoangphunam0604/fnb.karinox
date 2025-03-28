@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ]);
     $middleware->api(append: [
       \App\Http\Middleware\IsKarinoxAppMiddleware::class,
-      \App\Http\Middleware\SetBranchMiddleware::class,
+      \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
     ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {

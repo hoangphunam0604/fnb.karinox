@@ -5,16 +5,16 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class SetBranchMiddleware
+class SetKarinoxBranchIdMiddleware
 {
   public function handle(Request $request, Closure $next)
   {
-    if ($request->hasHeader('karinox-branch-id')) {
+    if ($request->hasHeader('Karinox-Branch-Id')) {
       /**
        * Lưu branchId vào request để dùng ở bất cứ đâu trong ứng dụng 
-       * Sử dụng:$branchId = app('branch_id');
+       * Sử dụng:$branchId = app('karinox_branch_id');
        **/
-      app()->instance('branch_id', $request->header('karinox-branch-id'));
+      app()->instance('karinox_branch_id', $request->header('karinox-branch-id'));
     }
 
     return $next($request);
