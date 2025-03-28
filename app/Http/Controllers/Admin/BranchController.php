@@ -22,7 +22,7 @@ class BranchController extends Controller
    */
   public function index(): Response
   {
-    $branches = $this->branchService->getBranches();
+    $branches = $this->branchService->getActiveBranches();
     return Inertia::render('Branches/Index', [
       'title' => 'Quản lý Chi nhánh',
       'branches' => $branches,

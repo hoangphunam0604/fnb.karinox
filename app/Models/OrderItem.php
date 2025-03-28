@@ -24,7 +24,6 @@ class OrderItem extends Model
     'printed_label',
     'print_kitchen',
     'printed_kitchen',
-    'printed_histories',
   ];
 
   protected $casts = [

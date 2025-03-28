@@ -23,7 +23,6 @@ return new class extends Migration {
       $table->boolean('printed_label')->default(false); // Đã từng in tem
       $table->boolean('print_kitchen'); // In phiếu bếp
       $table->boolean('printed_kitchen')->default(false); // Đã từng in tem
-      $table->string('printed_histories'); // Lịch sử
     });
   }
 

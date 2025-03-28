@@ -22,8 +22,7 @@ class ProductImportController extends Controller
   }
   public function viewImport()
   {
-    $user = Auth::user();
-    $branches = $this->branchService->getUserBranches($user);
+    $branches = $this->branchService->getActiveBranches();
     return Inertia::render(
       'Products/Import',
       [
