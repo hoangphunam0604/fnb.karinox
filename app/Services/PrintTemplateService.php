@@ -21,7 +21,7 @@ class PrintTemplateService
 
   public static function getUsedTemplateInBranch($branchId)
   {
-    $templates = PrintTemplate::whereBrachId($branchId)->whereIsDefault(true)->get();
+    return PrintTemplate::whereBranchId($branchId)->whereIsDefault(true)->get();
   }
 
   public static function getAll(array $filters = [], int $perPage = 20)
