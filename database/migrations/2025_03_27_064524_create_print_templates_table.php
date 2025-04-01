@@ -13,6 +13,7 @@ return new class extends Migration
   {
     Schema::create('print_templates', function (Blueprint $table) {
       $table->id();
+      $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Chi nhánh
       $table->string('type'); // bill, label, kitchen, etc.
       $table->string('name'); // tên gợi nhớ
       $table->text('description')->nullable();

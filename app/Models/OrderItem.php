@@ -21,9 +21,9 @@ class OrderItem extends Model
     'status',
     'note',
     'print_label',
-    'printed_label',
     'print_kitchen',
-    'printed_kitchen',
+    'printed',
+    'printed_at',
   ];
 
   protected $casts = [
@@ -34,9 +34,9 @@ class OrderItem extends Model
     'total_price' => 'integer',
     'status' => OrderItemStatus::class,
     'print_label' =>  'boolean',
-    'printed_label' =>  'boolean',
     'print_kitchen' =>  'boolean',
-    'printed_kitchen' =>  'boolean',
+    'printed'  =>  'boolean',
+    'printed_at' =>  'datetime',
   ];
 
 

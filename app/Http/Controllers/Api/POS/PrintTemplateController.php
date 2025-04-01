@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\PrintTemplateService;
 use App\Http\Resources\Api\POS\PrintTemplateResource;
 
@@ -16,24 +15,13 @@ class PrintTemplateController extends Controller
     $this->service = $service;
   }
 
-  public function index(Request $request)
+  public function index()
   {
-    $templates = $this->service->getAll([
-      'type' => $request->get('type'),
-      'is_active' => true,
-    ], perPage: 0); // Lấy tất cả
+    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
+    if (!$branchId)
+      return response()->json(['error' => 'Vui lòng chọn chi nhánh', 'karinox_branch_id' => $branchId], 400);
 
+    $templates = $this->service->getUsedTemplateInBranch($branchId);
     return PrintTemplateResource::collection($templates);
-  }
-
-  public function show($id)
-  {
-    $template = $this->service->getById($id);
-
-    if (!$template || !$template->is_active) {
-      return response()->json(['message' => 'Không tìm thấy template'], 404);
-    }
-
-    return new PrintTemplateResource($template);
   }
 }

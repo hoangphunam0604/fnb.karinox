@@ -9,6 +9,7 @@ class PrintTemplate extends Model
 {
   use HasFactory;
   protected $fillable = [
+    'branch_id',
     'type',
     'name',
     'description',
@@ -16,4 +17,14 @@ class PrintTemplate extends Model
     'is_default',
     'is_active',
   ];
+
+  protected $casts = [
+    'is_default'  =>  'boolean',
+    'is_active' =>  'boolean',
+  ];
+
+  public function branch()
+  {
+    return $this->belongsTo(Branch::class)->withDefault();
+  }
 }

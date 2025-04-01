@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
       AreasAndTablesSeeder::class,
       MembershipLevelSeeder::class,
       VoucherSeeder::class,
+      PrintTemplateSeeder::class,
     ]);
   }
 }

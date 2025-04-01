@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use App\Enums\OrderStatus;
+use App\Http\Resources\Api\POS\OrderPrintResource;
 use App\Services\PointService;
 
 class OrderController extends Controller
@@ -62,5 +63,16 @@ class OrderController extends Controller
   {
     $order = $this->orderService->removeVoucherUsed($order_id);
     return new OrderResource($order);
+  }
+
+  public function notifyKitchen($orderId)
+  {
+    $order = $this->orderService->notifyKitchen($orderId);
+    return new OrderPrintResource($order);
+  }
+  public function provisional($orderId)
+  {
+    $order = $this->orderService->findOrderById($orderId);
+    return new OrderPrintResource($order);
   }
 }

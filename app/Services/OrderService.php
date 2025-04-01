@@ -17,8 +17,9 @@ class OrderService
   protected PointService $pointService;
   protected VoucherService $voucherService;
   protected InvoiceService $invoiceService;
+  protected KitchenService $kitchenService;
 
-  public function __construct(PointService $pointService, VoucherService $voucherService, InvoiceService $invoiceService)
+  public function __construct(PointService $pointService, VoucherService $voucherService, InvoiceService $invoiceService, KitchenService $kitchenService)
   {
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
@@ -237,6 +238,24 @@ class OrderService
     $this->voucherService->restoreVoucherUsage($order);
     $order->refresh();
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    return $order;
+  }
+
+  public function notifyKitchen($orderId): Order
+  {
+    $order = Order::with([
+      'items' => function ($query) {
+        $query->where('printed', false);
+      },
+      'items.toppings',
+      'customer.membershipLevel',
+      'table'
+    ])
+      ->find($orderId);
+    $order->orderItems()
+      ->where('printed', false)
+      ->update(['printed' => true]);
+    $this->kitchenService->addItemsToKitchen($order);
     return $order;
   }
 

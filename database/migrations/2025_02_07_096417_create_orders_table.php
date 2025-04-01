@@ -40,6 +40,9 @@ return new class extends Migration
       $table->enum('order_status', ['pending', 'confirmed', 'completed', 'canceled'])->default('pending'); // Trạng thái đơn hàng
       $table->string('payment_method', 20)->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->text('note')->nullable(); // Ghi chú
+
+      $table->boolean('printed_bill')->default(false); // Đã từng in
+      $table->timestamp('printed_bill_at')->nullable(); // In lúc
     });
   }
 

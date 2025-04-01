@@ -36,6 +36,8 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'order_status',
     'payment_method',
     'note',
+    'printed_bill',
+    'printed_bill_at',
   ];
 
   protected $casts = [
@@ -45,6 +47,8 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'reward_discount' => 'integer',
     'total_price' => 'integer',
     'order_status' => OrderStatus::class,
+    'printed_bill'  =>  'boolean',
+    'printed_bill_at' =>  'datetime',
   ];
 
   protected static function boot()
