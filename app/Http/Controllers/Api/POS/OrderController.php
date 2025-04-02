@@ -60,8 +60,7 @@ class OrderController extends Controller
   {
     [$order, $allItems, $kitchenItems, $labels] = $this->orderService->notifyKitchen($orderId);
     return response()->json([
-      'allItems'  => $allItems,
-      'order' => $order,
+      'order' => new OrderResource($order->setRelation('items', $allItems->values())),
       'print_data' => [
         'labels' => OrderItemPrintResource::collection($labels),
         'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
