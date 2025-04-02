@@ -30,7 +30,7 @@ class OrderService
   {
     $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
     $order = Order::where('table_id', $tableId)
-      ->where('branchId', $branchId)
+      ->where('branch_id', $branchId)
       ->where('order_status', OrderStatus::PENDING)
       ->first();
 
