@@ -177,8 +177,6 @@ class OrderService
       } */
 
       $order->refresh();
-
-      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
       return $order;
     });
   }
@@ -240,22 +238,49 @@ class OrderService
     return $order;
   }
 
-  public function notifyKitchen($orderId): Order
+  public function notifyKitchen($orderId)
   {
-    $order = Order::with([
-      'items' => function ($query) {
-        $query->where('printed', false);
-      },
-      'items.toppings',
-      'customer.membershipLevel',
-      'table'
-    ])
-      ->findOrFail($orderId);
-    $order->items()
-      ->where('printed', false)
-      ->update(['printed' => true]);
-    $this->kitchenService->addItemsToKitchen($order);
-    return $order;
+    return DB::transaction(function () use ($orderId) {
+      $now = now()->toDateTimeString();
+      $order = Order::with(['items.toppings', 'customer.membershipLevel', 'table'])
+        ->findOrFail($orderId);
+
+      // Cập nhật toàn bộ item chưa in tem
+      $order->items()
+        ->where('print_label', true)
+        ->where('printed_label', false)
+        ->update([
+          'printed_label' => true,
+          'printed_label_at' => $now,
+        ]);
+
+      // Cập nhật toàn bộ item chưa in bếp
+      $order->items()
+        ->where('print_kitchen', true)
+        ->where('printed_kitchen', false)
+        ->update([
+          'printed_kitchen' => true,
+          'printed_kitchen_at' => $now,
+        ]);
+
+      // Lấy lại dữ liệu để in (sau khi đã cập nhật)
+      $allItems = $order->items()->with('toppings')->get();
+      // Tách lại dữ liệu theo mục đích in (phân loại in trước/sau)
+      $labels = $allItems->filter(fn($item) => optional($item->printed_label_at)?->toDateTimeString() === $now);
+      $kitchenItems = $allItems->filter(fn($item) => optional($item->printed_kitchen_at)?->toDateTimeString() === $now);
+
+
+      //Báo bếp
+      $this->kitchenService->addItemsToKitchen($order);
+      // Set lại danh sách items để in hoá đơn
+      return [$order, $allItems, $kitchenItems, $labels];
+    });
+  }
+
+  public function payment($orderId)
+  {
+    $this->markAsCompleted($orderId);
+    return $this->notifyKitchen($orderId);
   }
 
   /**
@@ -306,10 +331,12 @@ class OrderService
       else:
         $orderItem = OrderItem::where('product_id', $item['product_id'])
           ->where('order_id', $order->id)
+          ->where('printed_label', false)
+          ->where('printed_kitchen', false)
           ->whereDoesntHave('toppings')
           ->first();
         if ($orderItem) :
-          // Nếu item có sẵn và không có topping => tăng số lượng
+          // Nếu item có sẵn và không có topping, chưa in tem, chưa in phiếu bếp => tăng số lượng
           $orderItem->increment('quantity');
           $orderItem->total_price = $unitPrice * $orderItem->quantity;
           $orderItem->save();

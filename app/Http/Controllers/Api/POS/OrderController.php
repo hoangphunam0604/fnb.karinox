@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use App\Enums\OrderStatus;
+use App\Http\Resources\Api\POS\OrderItemPrintResource;
 use App\Http\Resources\Api\POS\OrderPrintResource;
 use App\Services\PointService;
 
@@ -38,16 +39,6 @@ class OrderController extends Controller
     $order = $this->orderService->updateOrder($order_id, $data);
     return new OrderResource($order);
   }
-  public function checkout($order_id)
-  {
-    $order = $this->orderService->markAsCompleted($order_id);
-    return new OrderResource($order);
-  }
-  public function cancel($order_id)
-  {
-    $result = $this->orderService->cancelOrder($order_id);
-    return response()->json($result);
-  }
   public function removeCustomer($order_id)
   {
     $order = $this->orderService->removeCustomer($order_id);
@@ -67,12 +58,46 @@ class OrderController extends Controller
 
   public function notifyKitchen($orderId)
   {
-    $order = $this->orderService->notifyKitchen($orderId);
-    return new OrderPrintResource($order);
+    [$order, $allItems, $kitchenItems, $labels] = $this->orderService->notifyKitchen($orderId);
+    return response()->json([
+      'allItems'  => $allItems,
+      'order' => $order,
+      'print_data' => [
+        'labels' => OrderItemPrintResource::collection($labels),
+        'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
+          $order->setRelation('items', $kitchenItems->values())
+        ) : null,
+      ]
+    ]);
   }
   public function provisional($orderId)
   {
     $order = $this->orderService->findOrderById($orderId);
     return new OrderPrintResource($order);
+  }
+  public function checkout($orderId)
+  {
+    [$order, $kitchenItems, $labels] = $this->orderService->markAsCompleted($orderId);
+    return response()->json([
+      'order' => new OrderPrintResource($order),
+      'print_data' => [
+        'invoice' => new OrderPrintResource($order),
+        'labels' => OrderItemPrintResource::collection($labels),
+        'kitchen' => $kitchenItems ? new OrderPrintResource(
+          $order->setRelation('items', $kitchenItems->values())
+        ) : null,
+      ]
+    ]);
+    return new OrderResource($order);
+  }
+  public function payment($order_id)
+  {
+    $order = $this->orderService->payment($order_id);
+    return new OrderResource($order);
+  }
+  public function cancel($order_id)
+  {
+    $result = $this->orderService->cancelOrder($order_id);
+    return response()->json($result);
   }
 }

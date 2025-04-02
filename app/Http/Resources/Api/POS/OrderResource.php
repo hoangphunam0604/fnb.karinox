@@ -32,7 +32,7 @@ class OrderResource extends JsonResource
       'order_status' => $this->order_status,
       'payment_method' => $this->payment_method,
       'note' => $this->note,
-      'items' => OrderItemResource::collection($this->whenLoaded('items')),
+      'items' => OrderItemResource::collection($this->items),
       'table' =>  $this->table_id ? new TableResponse($this->whenLoaded('table')) : null,
       'customer' => $this->customer_id ? new CustomerResource($this->whenLoaded('customer')) : null,
     ];

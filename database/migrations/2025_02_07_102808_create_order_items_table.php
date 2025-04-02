@@ -20,9 +20,11 @@ return new class extends Migration {
       $table->enum('status', ['pending', 'accepted', 'preparing', 'prepared', 'serving', 'served', 'canceled', 'refunded'])->default('pending');
       $table->string('note')->nullable(); // Ghi chú
       $table->boolean('print_label'); // In tem (dán ly/giữ lại)
-      $table->boolean('print_kitchen'); // In phiếu bếp
-      $table->boolean('printed')->default(false); // Đã từng in
-      $table->timestamp('printed_at')->nullable(); // In lúc
+      $table->boolean('printed_label')->default(false); // Đã từng in tem
+      $table->timestamp('printed_label_at')->nullable(); // In lúc
+      $table->boolean('print_kitchen'); // In phiếu bếp      
+      $table->boolean('printed_kitchen')->default(false); // Đã từng in tem
+      $table->timestamp('printed_kitchen_at')->nullable(); // In lúc
     });
   }
 

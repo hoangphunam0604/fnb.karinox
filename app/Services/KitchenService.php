@@ -41,7 +41,8 @@ class KitchenService
   {
     return DB::transaction(function () use ($order) {
       // Kiểm tra nếu đơn hàng không có món => Không tạo vé bếp
-      if ($order->items()->count() === 0) {
+
+      if ($order->items()->where('print_kitchen', true)->count() === 0) {
         return null;
       }
 
@@ -58,7 +59,7 @@ class KitchenService
 
       // Lọc ra các món mới chưa có trong vé bếp
       $existingItemIds = $ticket->items()->pluck('order_item_id')->toArray();
-      $newItems = $order->items->reject(fn($item) => in_array($item->id, $existingItemIds));
+      $newItems = $order->items->reject(fn($item) => !$item->print_kitchen || in_array($item->id, $existingItemIds));
 
       if ($newItems->isEmpty()) {
         return $ticket; // Không có món mới
