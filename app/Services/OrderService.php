@@ -24,26 +24,25 @@ class OrderService
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
     $this->invoiceService = $invoiceService;
+    $this->kitchenService = $kitchenService;
   }
   public function getOrderByTableId(int $tableId)
   {
+    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
     $order = Order::where('table_id', $tableId)
+      ->where('branchId', $branchId)
       ->where('order_status', OrderStatus::PENDING)
-      ->with(['items.toppings', 'customer.membershipLevel', 'table'])
       ->first();
 
     if (!$order) {
-      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
-
       $order = Order::create([
         'table_id' => $tableId,
         'branch_id' => $branchId,
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
-      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     }
-
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
   /**
@@ -251,8 +250,8 @@ class OrderService
       'customer.membershipLevel',
       'table'
     ])
-      ->find($orderId);
-    $order->orderItems()
+      ->findOrFail($orderId);
+    $order->items()
       ->where('printed', false)
       ->update(['printed' => true]);
     $this->kitchenService->addItemsToKitchen($order);

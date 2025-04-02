@@ -20,8 +20,8 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::put('/orders/{id}/remove-customer', [OrderController::class, 'removeCustomer']);
   Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
-  Route::put('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
-  Route::put('/orders/{id}/provisional', [OrderController::class, 'provisional']);
+  Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
+  Route::post('/orders/{id}/provisional', [OrderController::class, 'provisional']);
 
   Route::get('/customers', [CustomerController::class, 'index']);
   Route::get('/customers/find', [CustomerController::class, 'findCustomer']);
