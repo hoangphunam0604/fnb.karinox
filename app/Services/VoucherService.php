@@ -11,8 +11,7 @@ use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
-use App\Enums\CustomerStatus;
-use App\Models\Invoice;
+use App\Enums\VoucherType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -66,6 +65,12 @@ class VoucherService
     return Voucher::paginate($perPage);
   }
 
+  public function getCommonVouchers()
+  {
+    return Voucher::where('is_active', true)
+      ->where('voucher_type', VoucherType::COMMON)
+      ->get();
+  }
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
@@ -74,10 +79,19 @@ class VoucherService
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
     $weekOfMonth = ceil($now->day / 7);
+    $now = Carbon::now();
+
+    //Ngày hội thành viên
+    $isMemberDay = $this->isMemberDay();
+    $isHoliday = $this->isHoliday();
+
+
+
     $month = $now->month;
     $time = $now->format('H:i');
 
     $query = Voucher::where('is_active', true)
+      ->where('voucher_type', VoucherType::COMMON)
       ->where(function ($q) use ($now) {
         $q->whereNull('start_date')
           ->orWhere('start_date',  '<=', $now);
@@ -85,6 +99,15 @@ class VoucherService
       ->where(function ($q) use ($now) {
         $q->whereNull('end_date')
           ->orWhere('end_date',  '>=', $now);
+      })
+      ->where(function ($q) use ($isMemberDay) {
+        if (!$isMemberDay)
+          $q->where('is_member_day', false);
+      })
+      //không áp dụng ngày lễ tết
+      ->where(function ($q) use ($isHoliday) {
+        if ($isHoliday)
+          $q->where('disable_holiday', false);
       })
       ->where(function ($q) use ($dayOfWeek) {
         $q->whereNull('valid_days_of_week')
@@ -162,6 +185,7 @@ class VoucherService
       $customerMembershipLevel = $customer->membership_level_id;
       // Kiểm tra hạng thành viên hợp lệ
 
+      Log::info("customerMembershipLevel:\n" . $customerMembershipLevel);
       $query->where(function ($q) use ($customerMembershipLevel) {
         $q->whereNull('applicable_membership_levels')
           ->orWhereRaw("JSON_CONTAINS(applicable_membership_levels, ?)", [json_encode($customerMembershipLevel)]);
@@ -172,15 +196,22 @@ class VoucherService
         ->whereNull('per_customer_daily_limit')
         ->whereNull('applicable_membership_levels');
     }
-
+    $this->logFullSql($query); // Ghi câu SQL đầy đủ vào log
     // Lấy danh sách voucher hợp lệ
     $validVouchers = $query->get();
-
 
     return $validVouchers;
   }
 
-
+  function logFullSql($query)
+  {
+    $sql = $query->toSql();
+    foreach ($query->getBindings() as $binding) {
+      $value = is_numeric($binding) ? $binding : "'" . addslashes($binding) . "'";
+      $sql = preg_replace('/\?/', $value, $sql, 1);
+    }
+    Log::info("Full SQL:\n" . $sql);
+  }
   /**
    * Kiểm tra voucher hợp lệ
    */
@@ -199,6 +230,8 @@ class VoucherService
     $weekOfMonth = ceil($now->day / 7);
     $month = $now->month;
     $currentTime = $now->format('H:i');
+
+    $isMemberDay = $this->isMemberDay();
 
     // Kiểm tra trạng thái voucher
     if (!$voucher->is_active || ($voucher->start_date && $voucher->start_date > $now) || ($voucher->end_date && $voucher->end_date < $now)) {
@@ -241,7 +274,7 @@ class VoucherService
       if (!empty($voucher->applicable_membership_levels)) {
         $customerMembership = $this->customerService->getCustomerMembershipLevel($customerId);
         $customerMembershipId = $customerMembership->id;
-        if (!in_array($customerMembershipId, json_decode($voucher->applicable_membership_levels, true))) {
+        if (!in_array($customerMembershipId, $voucher->applicable_membership_levels)) {
           return ValidationResult::fail(config('messages.voucher.invalid_membership_level'));
         }
       }
@@ -252,23 +285,23 @@ class VoucherService
     }
 
     // Kiểm tra ngày trong tuần hợp lệ
-    if (!empty($voucher->valid_days_of_week) && !in_array($dayOfWeek, json_decode($voucher->valid_days_of_week, true))) {
+    if (!empty($voucher->valid_days_of_week) && !in_array($dayOfWeek, $voucher->valid_days_of_week)) {
       return ValidationResult::fail(config('messages.voucher.invalid_day_of_week'));
     }
 
     // Kiểm tra tuần trong tháng hợp lệ
-    if (!empty($voucher->valid_weeks_of_month) && !in_array($weekOfMonth, json_decode($voucher->valid_weeks_of_month, true))) {
+    if (!empty($voucher->valid_weeks_of_month) && !in_array($weekOfMonth, $voucher->valid_weeks_of_month, true)) {
       return ValidationResult::fail(config('messages.voucher.invalid_week_of_month'));
     }
 
     // Kiểm tra tháng hợp lệ
-    if (!empty($voucher->valid_months) && !in_array($month, json_decode($voucher->valid_months, true))) {
+    if (!empty($voucher->valid_months) && !in_array($month, $voucher->valid_months)) {
       return ValidationResult::fail(config('messages.voucher.invalid_month'));
     }
 
     // Kiểm tra khung giờ hợp lệ
     if (!empty($voucher->valid_time_ranges)) {
-      $validTimeRanges = json_decode($voucher->valid_time_ranges, true);
+      $validTimeRanges = $voucher->valid_time_ranges;
       $isValidTime = false;
 
       foreach ($validTimeRanges as $range) {
@@ -285,7 +318,7 @@ class VoucherService
     }
 
     // Kiểm tra ngày bị loại trừ
-    if (!empty($voucher->excluded_dates) && in_array($now->toDateString(), json_decode($voucher->excluded_dates, true))) {
+    if (!empty($voucher->excluded_dates) && in_array($now->toDateString(), $voucher->excluded_dates)) {
       return ValidationResult::fail(config('messages.voucher.excluded_date'));
     }
 
@@ -397,5 +430,27 @@ class VoucherService
     });
 
     return ['success' => true, 'message' => Msg::VOUCHER_RESTORE_SUCCESSFULL];
+  }
+
+  private function isMemberDay(): bool
+  {
+    return true;
+    $today = Carbon::now(); // hoặc Carbon::parse('2025-04-28') để test
+    $lastDayOfMonth = $today->copy()->endOfMonth();
+
+    // Tìm thứ 2 gần nhất trước hoặc bằng ngày cuối tháng
+    $lastMonday = $lastDayOfMonth->copy()->startOfWeek(Carbon::MONDAY);
+
+    // Nếu Monday đó thuộc tháng trước, lùi lại 1 tuần
+    if ($lastMonday->month !== $lastDayOfMonth->month) {
+      $lastMonday->subWeek();
+    }
+
+    // Kiểm tra hôm nay có phải đúng là thứ hai tuần cuối không
+    return $today->isSameDay($lastMonday);
+  }
+  private function isHoliday(): bool
+  {
+    return false;
   }
 }

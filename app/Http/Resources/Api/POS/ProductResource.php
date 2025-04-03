@@ -5,7 +5,7 @@ namespace App\Http\Resources\Api\POS;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductResponse extends JsonResource
+class ProductResource extends JsonResource
 {
   /**
    * Transform the resource into an array.
@@ -23,7 +23,7 @@ class ProductResponse extends JsonResource
       'thumbnail' => $this->thumbnail,
       'is_reward_point' => $this->is_reward_point,
       'product_type' => $this->product_type,
-      'toppings' => ToppingResponse::collection($this->whenLoaded('toppings')),
+      'toppings' => ToppingResource::collection($this->whenLoaded('toppings')),
     ];
   }
 }

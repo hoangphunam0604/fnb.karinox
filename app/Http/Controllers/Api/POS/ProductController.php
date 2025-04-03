@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\POS\CategoryProductResponse;
+use App\Http\Resources\Api\POS\CategoryProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
@@ -30,7 +30,7 @@ class ProductController extends Controller
     $category_products = $this->productService->getProductsByBranch($branchId);
     return response()->json([
       'success' => true,
-      'data' => CategoryProductResponse::collection($category_products)
+      'data' => CategoryProductResource::collection($category_products)
     ]);
   }
 }

@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\POS\AreaResource;
+use App\Http\Resources\Api\POS\AreaResource;
 use App\Services\AreaService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TableAndRoomController extends Controller
 {

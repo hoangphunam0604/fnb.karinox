@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DiscountType;
+use App\Enums\VoucherType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,8 @@ class Voucher extends Model
 
   protected $fillable = [
     'code',
+    'description',
+    'voucher_type',
     'discount_type',
     'discount_value',
     'applied_count',
@@ -25,6 +28,7 @@ class Voucher extends Model
     'per_customer_daily_limit',
     'is_active',
     'disable_holiday',
+    'is_member_day',
     'applicable_membership_levels',
     'valid_days_of_week',
     'valid_weeks_of_month',
@@ -42,6 +46,8 @@ class Voucher extends Model
     'valid_months' => 'array',
     'valid_time_ranges' => 'array',
     'excluded_dates' => 'array',
+    'is_member_day' =>  'boolean',
+    'voucher_type' => VoucherType::class,
     'discount_type' => DiscountType::class,
   ];
 

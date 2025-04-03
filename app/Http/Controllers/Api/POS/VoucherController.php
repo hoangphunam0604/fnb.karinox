@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\POS\CustomerResource;
+use App\Http\Resources\Api\POS\VoucherResource;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 
@@ -21,9 +22,6 @@ class VoucherController extends Controller
     $customerId = $request->customerId;
     $totalPrice = $request->totalPrice;
     $vouchers = $this->voucherService->getValidVouchers($customerId, $totalPrice);
-    return response()->json([
-      'success' => true,
-      'data' => $vouchers
-    ]);
+    return VoucherResource::collection($vouchers);
   }
 }

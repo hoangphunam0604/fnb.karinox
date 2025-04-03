@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers\Api\App;
 
-use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\App\BranchResource;
-use App\Models\Branch;
+use App\Http\Resources\Api\App\BranchResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\BranchService;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
 class BranchController extends Controller
 {
