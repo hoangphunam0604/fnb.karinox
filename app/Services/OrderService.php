@@ -269,11 +269,10 @@ class OrderService
       $labels = $allItems->filter(fn($item) => optional($item->printed_label_at)?->toDateTimeString() === $now);
       $kitchenItems = $allItems->filter(fn($item) => optional($item->printed_kitchen_at)?->toDateTimeString() === $now);
 
-
       //Báo bếp
       $this->kitchenService->addItemsToKitchen($order);
       // Set lại danh sách items để in hoá đơn
-      return [$order, $allItems, $kitchenItems, $labels];
+      return [$order, $kitchenItems, $labels];
     });
   }
 

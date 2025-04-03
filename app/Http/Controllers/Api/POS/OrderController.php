@@ -58,14 +58,17 @@ class OrderController extends Controller
 
   public function notifyKitchen($orderId)
   {
-    [$order, $allItems, $kitchenItems, $labels] = $this->orderService->notifyKitchen($orderId);
+    [$order, $kitchenItems, $labels] = $this->orderService->notifyKitchen($orderId);
     return response()->json([
-      'order' => new OrderResource($order->setRelation('items', $allItems->values())),
-      'print_data' => [
-        'labels' => OrderItemPrintResource::collection($labels),
-        'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
-          $order->setRelation('items', $kitchenItems->values())
-        ) : null,
+      'success'  =>  true,
+      "data"  =>  [
+        'order' => new OrderResource($order),
+        'print_data' => [
+          'labels' => OrderItemPrintResource::collection($labels),
+          'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
+            tap(clone $order)->setRelation('items', $kitchenItems->values())
+          ) : null,
+        ]
       ]
     ]);
   }
@@ -76,22 +79,20 @@ class OrderController extends Controller
   }
   public function checkout($orderId)
   {
-    [$order, $kitchenItems, $labels] = $this->orderService->markAsCompleted($orderId);
+    [$order, $kitchenItems, $labels] = $this->orderService->payment($orderId);
     return response()->json([
-      'order' => new OrderPrintResource($order),
-      'print_data' => [
-        'invoice' => new OrderPrintResource($order),
-        'labels' => OrderItemPrintResource::collection($labels),
-        'kitchen' => $kitchenItems ? new OrderPrintResource(
-          $order->setRelation('items', $kitchenItems->values())
-        ) : null,
+      'success'  =>  true,
+      'data'  =>  [
+        'order' => new OrderResource($order),
+        'print_data' => [
+          'invoice' => new OrderPrintResource($order),
+          'labels' => OrderItemPrintResource::collection($labels),
+          'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
+            tap(clone $order)->setRelation('items', $kitchenItems->values())
+          ) : null,
+        ]
       ]
     ]);
-    return new OrderResource($order);
-  }
-  public function payment($order_id)
-  {
-    $order = $this->orderService->payment($order_id);
     return new OrderResource($order);
   }
   public function cancel($order_id)
