@@ -157,28 +157,30 @@ class VoucherService
         ->whereDate('used_at', $now->toDateString())
         ->groupBy('voucher_id')
         ->pluck('used_today', 'voucher_id');
-      $query->where(function ($dailyLimitQuery) use ($dailyUsageCounts) {
-        $dailyLimitQuery->whereNull('per_customer_daily_limit')
-          ->orWhere(function ($q) use ($dailyUsageCounts) {
-            foreach ($dailyUsageCounts as $voucherId => $usedToday) {
-              $q->orWhere(function ($subQ) use ($voucherId, $usedToday) {
-                $subQ->where('id', $voucherId)
-                  ->whereRaw("? < per_customer_daily_limit", [$usedToday]);
-              });
-            }
-          })
-          ->orWhere(function ($q) {
-            // Kiểm tra các voucher có `per_customer_daily_limit` nhưng chưa có lượt sử dụng
-            $q->whereNotNull('per_customer_daily_limit')
-              ->whereNotExists(function ($existsQuery) {
-                $existsQuery->select(DB::raw(1))
-                  ->from('voucher_usages')
-                  ->whereRaw('voucher_usages.voucher_id = vouchers.id')
-                  ->whereRaw('DATE(voucher_usages.used_at) = CURDATE()');
-              });
-          });
-      });
+      Log::info("dailyUsageCounts:\n" . json_encode($dailyUsageCounts));
 
+      $query->where(function ($q) use ($dailyUsageCounts, $customerId) {
+        $q->whereNull('per_customer_daily_limit');
+
+        foreach ($dailyUsageCounts as $voucherId => $usedToday) {
+          $q->orWhere(function ($subQ) use ($voucherId, $usedToday) {
+            $subQ->where('id', $voucherId)
+              ->where('per_customer_daily_limit', '>', $usedToday);
+          });
+        }
+
+        // Bao phủ trường hợp voucher chưa từng được dùng hôm nay
+        $q->orWhere(function ($q2) use ($customerId) {
+          $q2->whereNotNull('per_customer_daily_limit')
+            ->whereNotExists(function ($existsQuery)  use ($customerId) {
+              $existsQuery->select(DB::raw(1))
+                ->from('voucher_usages')
+                ->where('customer_id', $customerId)
+                ->whereRaw('voucher_usages.voucher_id = vouchers.id')
+                ->whereRaw('DATE(voucher_usages.used_at) = CURDATE()');
+            });
+        });
+      });
 
       // Lấy thông tin hạng thành viên của khách hàng
       $customer = Customer::findOrFail($customerId);
