@@ -100,4 +100,10 @@ class OrderController extends Controller
     $result = $this->orderService->cancelOrder($order_id);
     return response()->json($result);
   }
+
+  public function extend($order_id, Request $request)
+  {
+    $order = $this->orderService->extend($order_id, $request->old_order_code);
+    return new OrderResource($order);
+  }
 }

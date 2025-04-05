@@ -282,6 +282,17 @@ class OrderService
     return $this->notifyKitchen($orderId);
   }
 
+  public function extend($orderId, $oldOrderCode): Order
+  {
+    $oldOrder = Order::where('order_code', $oldOrderCode)->firstOrFail();
+    $order = Order::findOrFail($orderId);
+    $order->extend_id = $oldOrder->id;
+    $this->voucherService->applyVoucher($order, $order->voucher_code);
+    $this->updateTotalPrice($order);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    return $order;
+  }
+
   /**
    * Chuẩn bị đơn hàng
    */

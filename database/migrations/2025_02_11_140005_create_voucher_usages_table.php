@@ -10,6 +10,7 @@ return new class extends Migration {
     Schema::dropIfExists('voucher_usages'); // Xóa bảng cũ nếu đã tồn tại
 
     Schema::create('voucher_usages', function (Blueprint $table) {
+      $table->unsignedBigInteger('order_extend_id')->nullable(); // Người tạo đơn
       $table->foreignId('voucher_id')->constrained('vouchers')->onDelete('cascade');
       $table->foreignId('order_id')->constrained('orders')->onDelete('cascade'); // Lưu voucher sử dụng khi đặt hàng
       $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade'); // Giả sử khách hàng lưu trong bảng `users`

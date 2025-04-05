@@ -28,7 +28,6 @@ class Voucher extends Model
     'per_customer_daily_limit',
     'is_active',
     'disable_holiday',
-    'is_member_day',
     'applicable_membership_levels',
     'valid_days_of_week',
     'valid_weeks_of_month',
@@ -46,7 +45,6 @@ class Voucher extends Model
     'valid_months' => 'array',
     'valid_time_ranges' => 'array',
     'excluded_dates' => 'array',
-    'is_member_day' =>  'boolean',
     'voucher_type' => VoucherType::class,
     'discount_type' => DiscountType::class,
   ];

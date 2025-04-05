@@ -23,6 +23,7 @@ class VoucherSeeder extends Seeder
         'per_customer_limit' => 1,
         'is_active' => true,
         'disable_holiday' => true, // Không áp dụng vào lễ, tết
+        'applicable_membership_levels' => [1, 2, 3], // Áp dụng cho tất cả thành viên
       ],
       [
         'code' => 'HAPPYMONDAY',
@@ -35,7 +36,9 @@ class VoucherSeeder extends Seeder
         'per_customer_limit' => null,
         'is_active' => true,
         'disable_holiday' => true, // Không áp dụng vào lễ, tết
-        'is_member_day' => true, //Tuần cuối cùng
+        'applicable_membership_levels' => [1, 2, 3], // Áp dụng cho tất cả thành viên
+        'valid_days_of_week' => [1], //1 = Thứ 2
+        'valid_weeks_of_month' => [6], //1 tháng tối đa 5 tuần, Thêm 6 để xác định tuần cuối cùng      
       ],
       [
         'code' => 'GOLD_MEMBER',

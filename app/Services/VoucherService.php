@@ -78,14 +78,14 @@ class VoucherService
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
-    $weekOfMonth = ceil($now->day / 7);
+    $weeksOfMonth = [];
+    $weeksOfMonth[] = ceil($now->day / 7);
+    if ($this->todayIsLastOccurrenceOfWeekdayInMonth()) {
+      $weeksOfMonth[] = 6;
+    }
     $now = Carbon::now();
 
-    //Ngày hội thành viên
-    $isMemberDay = $this->isMemberDay();
     $isHoliday = $this->isHoliday();
-
-
 
     $month = $now->month;
     $time = $now->format('H:i');
@@ -100,22 +100,15 @@ class VoucherService
         $q->whereNull('end_date')
           ->orWhere('end_date',  '>=', $now);
       })
-      ->where(function ($q) use ($isMemberDay) {
-        if (!$isMemberDay)
-          $q->where('is_member_day', false);
-      })
-      //không áp dụng ngày lễ tết
-      ->where(function ($q) use ($isHoliday) {
-        if ($isHoliday)
-          $q->where('disable_holiday', false);
-      })
+
+
       ->where(function ($q) use ($dayOfWeek) {
         $q->whereNull('valid_days_of_week')
           ->orWhereJsonContains('valid_days_of_week', $dayOfWeek);
       })
-      ->where(function ($q) use ($weekOfMonth) {
+      ->where(function ($q) use ($weeksOfMonth) {
         $q->whereNull('valid_weeks_of_month')
-          ->orWhereJsonContains('valid_weeks_of_month', $weekOfMonth);
+          ->orWhereRaw("JSON_OVERLAPS(valid_weeks_of_month, ?)", [json_encode($weeksOfMonth)]);
       })
       ->where(function ($q) use ($month) {
         $q->whereNull('valid_months')
@@ -141,7 +134,9 @@ class VoucherService
           ->orWhere("min_order_value", '<=', $totalPrice);
       });
     }
-
+    if ($isHoliday) {
+      $query->where('disable_holiday', false);
+    }
     if ($customerId) {
       $query->where(function ($q) use ($customerId) {
         // Kiểm tra giới hạn số lần sử dụng 
@@ -154,10 +149,10 @@ class VoucherService
       $dailyUsageCounts = DB::table('voucher_usages')
         ->selectRaw('voucher_id, COUNT(*) as used_today')
         ->where('customer_id', $customerId)
+        ->whereNull('order_extend_id')
         ->whereDate('used_at', $now->toDateString())
         ->groupBy('voucher_id')
         ->pluck('used_today', 'voucher_id');
-      Log::info("dailyUsageCounts:\n" . json_encode($dailyUsageCounts));
 
       $query->where(function ($q) use ($dailyUsageCounts, $customerId) {
         $q->whereNull('per_customer_daily_limit');
@@ -186,8 +181,6 @@ class VoucherService
       $customer = Customer::findOrFail($customerId);
       $customerMembershipLevel = $customer->membership_level_id;
       // Kiểm tra hạng thành viên hợp lệ
-
-      Log::info("customerMembershipLevel:\n" . $customerMembershipLevel);
       $query->where(function ($q) use ($customerMembershipLevel) {
         $q->whereNull('applicable_membership_levels')
           ->orWhereRaw("JSON_CONTAINS(applicable_membership_levels, ?)", [json_encode($customerMembershipLevel)]);
@@ -198,7 +191,7 @@ class VoucherService
         ->whereNull('per_customer_daily_limit')
         ->whereNull('applicable_membership_levels');
     }
-    $this->logFullSql($query); // Ghi câu SQL đầy đủ vào log
+    //$this->logFullSql($query); // Ghi câu SQL đầy đủ vào log
     // Lấy danh sách voucher hợp lệ
     $validVouchers = $query->get();
 
@@ -229,11 +222,14 @@ class VoucherService
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
-    $weekOfMonth = ceil($now->day / 7);
+    $weeksOfMonth = [];
+    $weeksOfMonth[] = ceil($now->day / 7);
+    if ($this->todayIsLastOccurrenceOfWeekdayInMonth()) {
+      $weeksOfMonth[] = 6;
+    }
     $month = $now->month;
     $currentTime = $now->format('H:i');
 
-    $isMemberDay = $this->isMemberDay();
 
     // Kiểm tra trạng thái voucher
     if (!$voucher->is_active || ($voucher->start_date && $voucher->start_date > $now) || ($voucher->end_date && $voucher->end_date < $now)) {
@@ -292,7 +288,7 @@ class VoucherService
     }
 
     // Kiểm tra tuần trong tháng hợp lệ
-    if (!empty($voucher->valid_weeks_of_month) && !in_array($weekOfMonth, $voucher->valid_weeks_of_month, true)) {
+    if (!empty($voucher->valid_weeks_of_month) && !array_intersect($weeksOfMonth, $voucher->valid_weeks_of_month, true)) {
       return ValidationResult::fail(config('messages.voucher.invalid_week_of_month'));
     }
 
@@ -354,17 +350,17 @@ class VoucherService
 
   public function useVoucher(Order $order, Voucher $voucher): ValidationResult
   {
-    // Tính toán giảm giá
-    $totalBeforeDiscount = $order->total_price;
-    $discount = 0;
-
-    if ($voucher->discount_type === DiscountType::FIXED) {
-      $discount = min($voucher->discount_value, $totalBeforeDiscount);
-    } elseif ($voucher->discount_type === DiscountType::PERCENTAGE) {
-      $discount = min($totalBeforeDiscount * ($voucher->discount_value / 100), $voucher->max_discount ?? $totalBeforeDiscount);
-    }
-
     try {
+      // Tính toán giảm giá
+      $totalBeforeDiscount = $order->total_price;
+      $discount = 0;
+
+      if ($voucher->discount_type === DiscountType::FIXED) {
+        $discount = min($voucher->discount_value, $totalBeforeDiscount);
+      } elseif ($voucher->discount_type === DiscountType::PERCENTAGE) {
+        $discount = min($totalBeforeDiscount * ($voucher->discount_value / 100), $voucher->max_discount ?? $totalBeforeDiscount);
+      }
+
       DB::beginTransaction(); // Bắt đầu transaction
 
       // Tăng số lần sử dụng voucher
@@ -374,6 +370,7 @@ class VoucherService
       VoucherUsage::create([
         'voucher_id' => $voucher->id,
         'customer_id' => $order->customer_id,
+        'order_extend_id' => $order->extend_id,
         'order_id' => $order->id,
         'invoice_total_before_discount' => $totalBeforeDiscount,
         'invoice_total_after_discount' => $totalBeforeDiscount - $discount,
@@ -435,25 +432,23 @@ class VoucherService
     return ['success' => true, 'message' => Msg::VOUCHER_RESTORE_SUCCESSFULL];
   }
 
-  private function isMemberDay(): bool
+  private function todayIsLastOccurrenceOfWeekdayInMonth(?Carbon $date = null): bool
   {
-    return true;
-    $today = Carbon::now(); // hoặc Carbon::parse('2025-04-28') để test
-    $lastDayOfMonth = $today->copy()->endOfMonth();
+    $date = $date ?? Carbon::now();
 
-    // Tìm thứ 2 gần nhất trước hoặc bằng ngày cuối tháng
-    $lastMonday = $lastDayOfMonth->copy()->startOfWeek(Carbon::MONDAY);
+    $currentWeekday = $date->dayOfWeek; // 0 = CN, 1 = T2, ..., 6 = T7
+    $lastDayOfMonth = $date->copy()->endOfMonth();
 
-    // Nếu Monday đó thuộc tháng trước, lùi lại 1 tuần
-    if ($lastMonday->month !== $lastDayOfMonth->month) {
-      $lastMonday->subWeek();
+    // Tìm thứ giống với hôm nay, bắt đầu từ cuối tháng đi lùi lại
+    while ($lastDayOfMonth->dayOfWeek !== $currentWeekday) {
+      $lastDayOfMonth->subDay();
     }
 
-    // Kiểm tra hôm nay có phải đúng là thứ hai tuần cuối không
-    return $today->isSameDay($lastMonday);
+    return $date->isSameDay($lastDayOfMonth);
   }
+
   private function isHoliday(): bool
   {
-    return false;
+    return true;
   }
 }
