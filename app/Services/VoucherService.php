@@ -89,7 +89,7 @@ class VoucherService
 
     $month = $now->month;
     $time = $now->format('H:i');
-
+    $dailyUsageCounts = [];
     $query = Voucher::where('is_active', true)
       ->where('voucher_type', VoucherType::COMMON)
       ->where(function ($q) use ($now) {
@@ -195,6 +195,47 @@ class VoucherService
     // Lấy danh sách voucher hợp lệ
     $validVouchers = $query->get();
 
+    $voucherIds = $validVouchers->pluck('id')->all();
+
+    $totalUsageCounts = DB::table('voucher_usages')
+      ->selectRaw('voucher_id, COUNT(*) as used_total')
+      ->whereNull('order_extend_id')
+      ->whereIn('voucher_id', $voucherIds)
+      ->groupBy('voucher_id')
+      ->pluck('used_total', 'voucher_id');
+
+    $validVouchers->transform(function ($voucher) use ($dailyUsageCounts, $totalUsageCounts) {
+      $usedToday = $dailyUsageCounts[$voucher->id] ?? 0;
+      $usedTotal = $totalUsageCounts[$voucher->id] ?? 0;
+
+      $remainingToday = $voucher->per_customer_daily_limit !== null
+        ? max(0, $voucher->per_customer_daily_limit - $usedToday)
+        : null;
+
+      $remainingTotal = $voucher->per_customer_limit !== null
+        ? max(0, $voucher->per_customer_limit - $usedTotal)
+        : null;
+
+      // Gộp lại thành 1 field duy nhất
+      if (!is_null($remainingToday) && !is_null($remainingTotal)) {
+        $voucher->remaining_uses = min($remainingToday, $remainingTotal);
+      } elseif (!is_null($remainingToday)) {
+        $voucher->remaining_uses = $remainingToday;
+      } elseif (!is_null($remainingTotal)) {
+        $voucher->remaining_uses = $remainingTotal;
+      } else {
+        $voucher->remaining_uses = null; // không giới hạn
+      }
+      $voucher->uses_today = $usedToday;
+      $voucher->remaining_uses_today = $remainingToday;
+
+      $voucher->uses_total = $usedToday;
+      $voucher->remaining_uses_total = $remainingTotal;
+      // Có thể sử dụng không?
+      $voucher->is_usable = is_null($voucher->remaining_uses) || $voucher->remaining_uses > 0;
+
+      return $voucher;
+    });
     return $validVouchers;
   }
 
@@ -288,7 +329,7 @@ class VoucherService
     }
 
     // Kiểm tra tuần trong tháng hợp lệ
-    if (!empty($voucher->valid_weeks_of_month) && !array_intersect($weeksOfMonth, $voucher->valid_weeks_of_month, true)) {
+    if (!empty($voucher->valid_weeks_of_month) && !array_intersect($weeksOfMonth, $voucher->valid_weeks_of_month)) {
       return ValidationResult::fail(config('messages.voucher.invalid_week_of_month'));
     }
 
