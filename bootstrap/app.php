@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $errorResponses = [
           \Illuminate\Auth\AuthenticationException::class => ['Bạn không có quyền truy cập.', 401],
           \Illuminate\Auth\Access\AuthorizationException::class => ['Bạn không có quyền thực hiện hành động này.', 403],
-          \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => ['Không tìm thấytài nguyên yêu cầu.', 404],
+          \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => ['Không tìm thấy dữ liệu.', 404],
           \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class => ['Phương thức không được phép.', 405],
           \Illuminate\Validation\ValidationException::class => [' Dữ liệu không hợp lệ.', 422],
           \Illuminate\Http\Exceptions\ThrottleRequestsException::class => ['Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.', 429]
@@ -68,7 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         return response()->json([
           'success' => false,
-          'error' => $message,
+          'message' => $message,
           'code' => $statusCode
         ], $statusCode);
       }

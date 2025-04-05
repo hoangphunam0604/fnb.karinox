@@ -22,6 +22,7 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
   Route::post('/orders/{id}/provisional', [OrderController::class, 'provisional']);
+  Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
 
   Route::get('/customers', [CustomerController::class, 'index']);
   Route::get('/customers/find', [CustomerController::class, 'findCustomer']);

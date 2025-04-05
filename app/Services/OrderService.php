@@ -284,10 +284,19 @@ class OrderService
 
   public function extend($orderId, $oldOrderCode): Order
   {
-    $oldOrder = Order::where('order_code', $oldOrderCode)->firstOrFail();
+
     $order = Order::findOrFail($orderId);
+    $oldOrder = Order::where('order_code', $oldOrderCode)
+      ->where('customer_id', $order->customer_id)
+      ->whereNotNull('voucher_code')
+      ->firstOrFail();
+    $hasExtend = Order::where('extend_id', $oldOrder->id)->exists();
+    if ($hasExtend) {
+      abort(403, "Hoá đơn này đã được kế thừa, không thể dùng lại");
+    }
     $order->extend_id = $oldOrder->id;
-    $this->voucherService->applyVoucher($order, $order->voucher_code);
+    $order->save();
+    $this->voucherService->applyVoucher($order, $oldOrder->voucher_code);
     $this->updateTotalPrice($order);
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
