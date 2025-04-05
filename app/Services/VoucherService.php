@@ -336,22 +336,24 @@ class VoucherService
     if (!$voucher) {
       return ValidationResult::fail(config('messages.voucher.not_found'));
     }
-    $checkValid = $this->isValid($voucher, $order->total_price, $order->customer_id);
-
-    if ($checkValid->success == false) {
-      return $checkValid;
-    }
-
     // Kiểm tra xem voucher đã được sử dụng trên đơn hàng này chưa
-    $voucherUsed = VoucherUsage::where([
-      'voucher_id' => $voucher->id,
-      'order_id' => $order->id,
-    ])->exists();
+    $voucherUsed = VoucherUsage::where(['voucher_id' => $voucher->id, 'order_id' => $order->id])->exists();
 
-    if ($voucherUsed) {
+    if ($voucherUsed)
       return ValidationResult::fail(config('messages.voucher.used'));
-    }
 
+    if (!$order->extend_id): // Bỏ qua kiểm tra voucher
+      $checkValid = $this->isValid($voucher, $order->total_price, $order->customer_id);
+      if ($checkValid->success == false) {
+        return $checkValid;
+      }
+    endif;
+
+    return $this->useVoucher($order, $voucher);
+  }
+
+  public function useVoucher(Order $order, Voucher $voucher): ValidationResult
+  {
     // Tính toán giảm giá
     $totalBeforeDiscount = $order->total_price;
     $discount = 0;
@@ -396,7 +398,6 @@ class VoucherService
       Log::error($e->getMessage());
     }
   }
-
   /**
    * Hoá đơn thành công: Chuyển voucher đã sử dụng từ đơn hàng sang hóa đơn tương ứng.
    */

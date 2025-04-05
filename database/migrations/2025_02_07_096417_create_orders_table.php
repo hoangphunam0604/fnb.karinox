@@ -21,6 +21,7 @@ return new class extends Migration
     Schema::create('orders', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->unsignedBigInteger('extend_id')->nullable(); // Người tạo đơn
       $table->string('order_code')->unique(); // Mã đơn hàng
       $table->timestamp('ordered_at')->useCurrent(); // Thời gian đặt hàng
       $table->foreignId('creator_id')->nullable()->constrained('users')->nullOnDelete(); // Người tạo đơn

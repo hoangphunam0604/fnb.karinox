@@ -17,6 +17,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
   use HasFactory;
 
   protected $fillable = [
+    'extend_id', // Id đơn hàng kế thừa, dùng cho các chi nhánh khác nhau sử dụng chung mã giảm giá
     'order_code',
     'ordered_at',
     'creator_id',
