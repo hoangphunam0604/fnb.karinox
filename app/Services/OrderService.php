@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -18,13 +19,20 @@ class OrderService
   protected VoucherService $voucherService;
   protected InvoiceService $invoiceService;
   protected KitchenService $kitchenService;
+  protected SystemSettingService $systemSettingService;
 
-  public function __construct(PointService $pointService, VoucherService $voucherService, InvoiceService $invoiceService, KitchenService $kitchenService)
-  {
+  public function __construct(
+    PointService $pointService,
+    VoucherService $voucherService,
+    InvoiceService $invoiceService,
+    KitchenService $kitchenService,
+    SystemSettingService $systemSettingService
+  ) {
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
     $this->invoiceService = $invoiceService;
     $this->kitchenService = $kitchenService;
+    $this->systemSettingService = $systemSettingService;
   }
   public function getOrderByTableId(int $tableId)
   {
@@ -278,7 +286,14 @@ class OrderService
 
   public function payment($orderId)
   {
-    $this->markAsCompleted($orderId);
+    $order = Order::findOrFail($orderId);
+    $now = now();
+    $order->payment_started_at = $now;
+    $order->paid_at = $now;
+    $order->save();
+    if ($order->order_status !== OrderStatus::COMPLETED) {
+      $order->markAsCompleted();
+    }
     return $this->notifyKitchen($orderId);
   }
 
@@ -288,8 +303,17 @@ class OrderService
     $order = Order::findOrFail($orderId);
     $oldOrder = Order::where('order_code', $oldOrderCode)
       ->where('customer_id', $order->customer_id)
-      ->whereNotNull('voucher_code')
       ->firstOrFail();
+    if (!$oldOrder->voucher_code) {
+      abort(403, "Đơn hàng cũ không sử dụng voucher, không cần tiếp tục!");
+    }
+    if (!$oldOrder->paid_at) {
+      abort(403, "Đơn hàng cũ chưa được thanh toán, không thể tiếp tục!");
+    }
+    $extendSubHours = $this->systemSettingService->getExtendSubHours();
+    if (!$oldOrder->paid_at ||  $oldOrder->paid_at->lessThan(Carbon::now()->subHour($extendSubHours))) {
+      abort(403, "Đã quá thời gian, hoá đơn chỉ được tiếp tục trong vòng {$extendSubHours} giờ!");
+    }
     $hasExtend = Order::where('extend_id', $oldOrder->id)->exists();
     if ($hasExtend) {
       abort(403, "Hoá đơn này đã được kế thừa, không thể dùng lại");

@@ -71,4 +71,14 @@ class SystemSettingService
   {
     return intval($this->get('tax_rate', 10));
   }
+
+  /**
+   * Lấy thời gian đơn có thể tiếp tục với mã giảm giá (mặc định 1 giờ)
+   *
+   * @return int
+   */
+  public function getExtendSubHours(): int
+  {
+    return intval($this->get('extend_sub_hours', 1));
+  }
 }

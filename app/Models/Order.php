@@ -36,6 +36,9 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'voucher_code',
     'order_status',
     'payment_method',
+    'payment_url',
+    'payment_started_at',
+    'paid_at',
     'note',
     'printed_bill',
     'printed_bill_at',
@@ -49,6 +52,8 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'total_price' => 'integer',
     'order_status' => OrderStatus::class,
     'printed_bill'  =>  'boolean',
+    'payment_started_at' =>  'datetime',
+    'paid_at' =>  'datetime',
     'printed_bill_at' =>  'datetime',
   ];
 

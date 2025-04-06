@@ -40,6 +40,9 @@ return new class extends Migration
       $table->string('voucher_code')->nullable();
       $table->enum('order_status', ['pending', 'confirmed', 'completed', 'canceled'])->default('pending'); // Trạng thái đơn hàng
       $table->string('payment_method', 20)->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
+      $table->string('payment_url')->nullable(); // Liên kết thanh toán
+      $table->timestamp('payment_started_at')->nullable(); // Bắt đầu thanh toán lúc
+      $table->timestamp('paid_at')->nullable(); //Thanh toán xong lúc
       $table->text('note')->nullable(); // Ghi chú
 
       $table->boolean('printed_bill')->default(false); // Đã từng in
