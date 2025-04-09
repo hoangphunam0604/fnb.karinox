@@ -16,25 +16,34 @@ class KitchenTicketUpdated implements ShouldBroadcastNow
 
   public function __construct(KitchenTicket $ticket)
   {
-    $this->ticket = $ticket->load('items.product');
+    $this->ticket = $ticket->load(['table', 'order', 'items']);
   }
 
   public function broadcastOn()
   {
-    return new Channel('kitchen-orders');
+    return new Channel("kitchen.branch.{$this->ticket->branch_id}");
+  }
+  public function broadcastAs(): string
+  {
+    return 'kitchen.updated';
   }
 
   public function broadcastWith()
   {
+    $order_code = $this->ticket->order_id;
+    $table_name = $this->ticket->table_id ? $this->ticket->table->name : 'Mang đi';
     return [
       'ticket_id' => $this->ticket->id,
-      'order_id' => $this->ticket->order_id,
-      'table' => $this->ticket->table_id ? $this->ticket->table?->name : 'Mang đi',
       'status' => $this->ticket->status,
-      'items' => $this->ticket->items->map(function ($item) {
+      'items' => $this->ticket->items->map(function ($item) use ($order_code, $table_name) {
         return [
-          'product_name' => $item->product->name,
+          'id' => $item->id,
+          'order_code' => $order_code,
+          'table_name' => $table_name,
+          'product_id' => $item->product_id,
+          'product_name' => $item->product_name,
           'quantity' => $item->quantity,
+          'toppings_text' => $item->toppings_text,
           'note' => $item->note,
           'status' => $item->status,
         ];

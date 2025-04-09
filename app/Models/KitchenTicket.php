@@ -36,6 +36,11 @@ class KitchenTicket extends Model
   {
     return $this->belongsTo(Order::class);
   }
+
+  public function table(): BelongsTo
+  {
+    return $this->belongsTo(TableAndRoom::class);
+  }
   /**
    * Quan hệ với User (người nhận món)
    */
