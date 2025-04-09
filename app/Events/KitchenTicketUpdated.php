@@ -4,11 +4,11 @@ namespace App\Events;
 
 use App\Models\KitchenTicket;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class KitchenTicketUpdated implements ShouldBroadcast
+class KitchenTicketUpdated implements ShouldBroadcastNow
 {
   use Dispatchable, SerializesModels;
 
@@ -29,7 +29,7 @@ class KitchenTicketUpdated implements ShouldBroadcast
     return [
       'ticket_id' => $this->ticket->id,
       'order_id' => $this->ticket->order_id,
-      'table' => $this->ticket->table_id ? $this->ticket->table->name : 'Mang đi',
+      'table' => $this->ticket->table_id ? $this->ticket->table?->name : 'Mang đi',
       'status' => $this->ticket->status,
       'items' => $this->ticket->items->map(function ($item) {
         return [

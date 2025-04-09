@@ -13,9 +13,12 @@ class KitchenTicketItem extends Model
     'kitchen_ticket_id',
     'order_item_id',
     'product_id',
+    'product_name',
+    'product_price',
+    'toppings_text',
+    'note',
     'quantity',
     'status',
-    'note'
   ];
 
   protected $casts = [

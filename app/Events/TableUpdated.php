@@ -1,10 +1,10 @@
 <?php
 // app/Events/TableUpdated.php
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use App\Models\TableAndRoom;
 
-class TableUpdated implements ShouldBroadcast
+class TableUpdated implements ShouldBroadcastNow
 {
   public $table;
 

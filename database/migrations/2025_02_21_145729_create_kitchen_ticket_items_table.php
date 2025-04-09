@@ -17,6 +17,8 @@ return new class extends Migration
       $table->foreignId('kitchen_ticket_id')->constrained()->cascadeOnDelete();
       $table->foreignId('order_item_id')->constrained()->cascadeOnDelete();
       $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+      $table->string('product_name');
+      $table->string('toppings_text');
       $table->integer('quantity')->default(1);
       $table->enum('status', ['waiting', 'processing', 'completed', 'canceled'])->default('waiting');
       $table->text('note')->nullable(); // Lưu combo & topping ở đây
