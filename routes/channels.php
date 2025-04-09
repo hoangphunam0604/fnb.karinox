@@ -10,3 +10,7 @@ Broadcast::channel('order.{orderId}', function ($user, $orderId) {
     UserRole::CASHIER->value,
   ]);
 });
+
+Broadcast::channel('kitchen.branch.{branchId}', function ($user, $branchId) {
+  return true;
+});
