@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->api(append: [
       \App\Http\Middleware\IsKarinoxAppMiddleware::class,
       \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
+      \Illuminate\Http\Middleware\HandleCors::class,
     ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {

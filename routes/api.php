@@ -11,4 +11,5 @@ Route::middleware('auth:api')->group(function () {
 
 require __DIR__ . '/api-auth.php';
 require __DIR__ . '/api-pos.php';
+require __DIR__ . '/api-kitchen.php';
 require __DIR__ . '/api-admin.php';

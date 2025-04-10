@@ -7,6 +7,7 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class KitchenTicketUpdated implements ShouldBroadcastNow
 {
@@ -30,6 +31,7 @@ class KitchenTicketUpdated implements ShouldBroadcastNow
 
   public function broadcastWith()
   {
+    Log::info('kitchen.updated');
     $order_code = $this->ticket->order_id;
     $table_name = $this->ticket->table_id ? $this->ticket->table->name : 'Mang đi';
     return [

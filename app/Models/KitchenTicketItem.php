@@ -27,7 +27,7 @@ class KitchenTicketItem extends Model
 
   public function ticket()
   {
-    return $this->belongsTo(KitchenTicket::class);
+    return $this->belongsTo(KitchenTicket::class, 'kitchen_ticket_id');
   }
 
   public function product()

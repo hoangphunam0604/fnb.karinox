@@ -18,6 +18,16 @@ use Illuminate\Support\Facades\Auth;
 
 class KitchenService
 {
+  /**
+   * Lấy danh sách vé bếp theo chi nhánh và trạng thái
+   */
+  public function getKitchenTicketItems(int $branchId)
+  {
+    return KitchenTicketItem::with(['ticket.branch', 'ticket.table', 'ticket.order'])
+      ->whereHas('ticket', function ($q) use ($branchId) {
+        $q->where('branch_id', $branchId);
+      })->get();
+  }
 
   /**
    * Lấy danh sách vé bếp theo chi nhánh và trạng thái
