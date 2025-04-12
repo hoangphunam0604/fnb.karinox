@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
+        'guard' => 'api', // Quan trọng, guard api thì broadcasting mới check được user cho các ứng dụng
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
