@@ -8,6 +8,7 @@ enum KitchenTicketStatus: string
 {
   case WAITING = 'waiting';
   case PROCESSING = 'processing';
+  case READY = 'ready';
   case COMPLETED = 'completed';
   case CANCELED = 'canceled';
 

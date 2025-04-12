@@ -20,7 +20,7 @@ return new class extends Migration
       $table->string('product_name');
       $table->string('toppings_text');
       $table->integer('quantity')->default(1);
-      $table->enum('status', ['waiting', 'processing', 'completed', 'canceled'])->default('waiting');
+      $table->enum('status', ['waiting', 'processing', 'ready', 'completed', 'canceled'])->default('waiting');
       $table->text('note')->nullable(); // Lưu combo & topping ở đây
 
     });
