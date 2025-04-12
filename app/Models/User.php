@@ -55,6 +55,10 @@ class User extends Authenticatable implements JWTSubject
       ->using(BranchUser::class);
   }
 
+  public function managesBranch($branchId): bool
+  {
+    return $this->branches()->where('branches.id', $branchId)->exists();
+  }
   public function currentBranch()
   {
     return $this->belongsTo(Branch::class, 'current_branch');
@@ -78,14 +82,14 @@ class User extends Authenticatable implements JWTSubject
         return route('welcome');
     }
   }
-  
+
   public function getJWTIdentifier()
   {
-      return $this->getKey();
+    return $this->getKey();
   }
 
   public function getJWTCustomClaims()
   {
-      return [];
+    return [];
   }
 }
