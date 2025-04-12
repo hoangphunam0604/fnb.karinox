@@ -26,7 +26,7 @@ return [
     |
     */
   'logging' => [
-    'enabled' => true,
+    'enabled' => false,
     'level' => 'info', // hoặc 'debug'
   ],
 
