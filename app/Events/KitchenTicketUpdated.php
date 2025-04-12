@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\KitchenTicket;
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -22,7 +22,7 @@ class KitchenTicketUpdated implements ShouldBroadcastNow
 
   public function broadcastOn()
   {
-    return new Channel("kitchen.branch.{$this->ticket->branch_id}");
+    return new PrivateChannel("kitchen.branch.{$this->ticket->branch_id}");
   }
   public function broadcastAs(): string
   {
