@@ -25,7 +25,9 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
 
   Route::get('/customers', [CustomerController::class, 'index']);
+  Route::post('/customers', [CustomerController::class, 'store']);
   Route::get('/customers/find', [CustomerController::class, 'findCustomer']);
+  Route::post('/customers/{customer}', [CustomerController::class, 'update']);
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
 

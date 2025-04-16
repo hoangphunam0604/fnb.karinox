@@ -27,6 +27,8 @@ class CustomerService
     return $customer;
   }
 
+  public function saveCustomer(array $data) {}
+
   /**
    * Xóa khách hàng (chỉ khi không có đơn hàng)
    */
@@ -58,7 +60,7 @@ class CustomerService
    */
   public function getCustomers($perPage = 10)
   {
-    return Customer::orderBy('created_at', 'desc')->paginate($perPage);
+    return Customer::with('membershipLevel')->orderBy('created_at', 'desc')->paginate($perPage);
   }
 
   public function getCustomerMembershipLevel($customerId)
