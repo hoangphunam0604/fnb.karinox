@@ -9,6 +9,7 @@ return [
     'per_customer_daily_limit_exceeded' => 'Bạn đã sử dụng mã giảm giá này quá số lần cho phép trong ngày.',
     'invalid_membership_level' => 'Mã giảm giá này chỉ áp dụng cho hạng thành viên nhất định.',
     'customer_required' => 'Cần có thông tin khách hàng để áp dụng mã giảm giá.',
+    'disable_holiday' =>  'Voucher không áp dụng vào ngày lễ.',
     'invalid_day_of_week' => 'Mã giảm giá không áp dụng vào ngày này.',
     'invalid_week_of_month' => 'Mã giảm giá không áp dụng trong tuần này của tháng.',
     'invalid_month' => 'Mã giảm giá không áp dụng trong tháng này.',

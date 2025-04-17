@@ -12,16 +12,19 @@ use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
 use App\Enums\VoucherType;
+use App\Models\Holiday;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class VoucherService
 {
   protected CustomerService $customerService;
+  protected HolidayService $holidayService;
 
-  public function __construct(CustomerService $customerService)
+  public function __construct(CustomerService $customerService, HolidayService $holidayService)
   {
     $this->customerService = $customerService;
+    $this->holidayService = $holidayService;
   }
 
   /**
@@ -85,7 +88,6 @@ class VoucherService
     }
     $now = Carbon::now();
 
-    $isHoliday = $this->isHoliday();
 
     $month = $now->month;
     $time = $now->format('H:i');
@@ -134,7 +136,8 @@ class VoucherService
           ->orWhere("min_order_value", '<=', $totalPrice);
       });
     }
-    if ($isHoliday) {
+
+    if ($this->holidayService->isHoliday()) {
       $query->where('disable_holiday', false);
     }
     if ($customerId) {
@@ -285,6 +288,9 @@ class VoucherService
     // Kiểm tra giới hạn số lần sử dụng
     if ($voucher->usage_limit !== null && $voucher->applied_count >= $voucher->usage_limit) {
       return ValidationResult::fail(config('messages.voucher.usage_limit_exceeded'));
+    }
+    if ($voucher->disable_holiday && $this->holidayService->isHoliday()) {
+      return ValidationResult::fail(config('messages.voucher.disable_holiday'));
     }
 
     if ($customerId) {
@@ -488,8 +494,9 @@ class VoucherService
     return $date->isSameDay($lastDayOfMonth);
   }
 
-  private function isHoliday(): bool
+  public function isHoliday(?Carbon $date = null): bool
   {
-    return true;
+    $date = $date ?? now();
+    return Holiday::whereDate('date', $date->toDateString())->exists();
   }
 }
