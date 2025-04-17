@@ -493,10 +493,4 @@ class VoucherService
 
     return $date->isSameDay($lastDayOfMonth);
   }
-
-  public function isHoliday(?Carbon $date = null): bool
-  {
-    $date = $date ?? now();
-    return Holiday::whereDate('date', $date->toDateString())->exists();
-  }
 }
