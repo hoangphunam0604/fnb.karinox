@@ -47,6 +47,8 @@ class Customer extends Model
     'reward_points' => 'integer',
     'used_reward_points' => 'integer',
     'total_spent' => 'integer',
+    'last_birthday_bonus_date'  =>  'datetime',
+    'last_birthday_gift' => 'datetime',
     'status' => CustomerStatus::class,
     'gender'  =>  Gender::class,
   ];
@@ -73,6 +75,31 @@ class Customer extends Model
     }
 
     return Carbon::now()->format('m-d') === Carbon::parse($this->birthday)->format('m-d');
+  }
+
+  /**
+   * Kiểm tra khách hàng có đủ điều kiện nhận quà sinh nhật không
+   */
+  public function canReceiveBirthdayGifts()
+  {
+    $today = Carbon::now();
+
+    // Kiểm tra xem hôm nay có phải là sinh nhật không
+    if (!$this->isBirthdayToday()) {
+      return false;
+    }
+
+    // Chưa nhận quà thì cho phép
+    if (!$this->last_birthday_gift)
+      return true;
+
+
+    // Nếu đã nhận quà trong năm nay, không cho nhận lại
+    if (Carbon::parse($this->last_birthday_gift)->year == $today->year) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

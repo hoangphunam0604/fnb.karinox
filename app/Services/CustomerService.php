@@ -138,4 +138,15 @@ class CustomerService
   }
 
   public function downgradeMembershipLevel($customer) {}
+
+
+  public function receiveBirthdayGift(int $customerId)
+  {
+    $customer = Customer::findOrFail($customerId);
+    if (!$customer->canReceiveBirthdayGifts())
+      abort(403, "Đã nhận quà sinh nhật năm nay vào lúc:" . $customer->last_birthday_gift->format('H:i:s d/m/Y'));
+    $customer->last_birthday_gift = now();
+    $customer->save();
+    return $customer;
+  }
 }
