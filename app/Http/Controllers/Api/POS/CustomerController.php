@@ -21,7 +21,7 @@ class CustomerController extends Controller
 
   public function index(Request $request)
   {
-    $customers = $this->customerService->getCustomers();
+    $customers = $this->customerService->getCustomers(10, $request->keyword);
     return response()->json([
       'success' => true,
       'data' => CustomerResource::collection($customers)

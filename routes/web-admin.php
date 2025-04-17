@@ -5,7 +5,7 @@ use App\Http\Controllers\Admin\ProductImportController;
 use App\Http\Controllers\Admin\CustomerImportController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('auth:web')->prefix('admin')->name('admin.')->group(function () {
   Route::resource('branches', BranchController::class);
   Route::get('/products/import', [ProductImportController::class, 'viewImport'])->name('import-products');
   Route::post('/products/import', [ProductImportController::class, 'import']);

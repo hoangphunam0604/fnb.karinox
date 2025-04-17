@@ -31,6 +31,7 @@ return new class extends Migration
       $table->decimal('total_spent', 15, 2)->default(0.00); // Tổng tiền khách đã chi tiêu
       $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
       $table->date('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
+      $table->date('last_birthday_gift')->nullable(); // Ngày gần nhất nhận quà sinh nhật
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
 

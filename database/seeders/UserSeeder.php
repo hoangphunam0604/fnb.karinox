@@ -24,6 +24,14 @@ class UserSeeder extends Seeder
     Role::firstOrCreate(['name' => UserRole::DELIVERY_STAFF, 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => UserRole::INVENTORY_STAFF, 'guard_name' => 'web']);
 
+    Role::firstOrCreate(['name' => UserRole::ADMIN, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::MANAGER, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::WAITER, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::KITCHEN_STAFF, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::CASHIER, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::DELIVERY_STAFF, 'guard_name' => 'api']);
+    Role::firstOrCreate(['name' => UserRole::INVENTORY_STAFF, 'guard_name' => 'api']);
+
     // Tạo tài khoản admin
     $admin = User::updateOrCreate([
       'username' => 'karinox_admin',

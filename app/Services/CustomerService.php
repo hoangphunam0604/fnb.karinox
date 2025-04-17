@@ -14,6 +14,7 @@ class CustomerService
    */
   public function createCustomer(array $data)
   {
+    $data['membership_level_id']  = 1;
     return Customer::create($data);
   }
 
@@ -58,9 +59,17 @@ class CustomerService
   /**
    * Lấy danh sách khách hàng (phân trang)
    */
-  public function getCustomers($perPage = 10)
+  public function getCustomers($perPage = 10, $keyword = null)
   {
-    return Customer::with('membershipLevel')->orderBy('created_at', 'desc')->paginate($perPage);
+    return Customer::with('membershipLevel')->when($keyword, function ($query) use ($keyword) {
+      $query->where(function ($q) use ($keyword) {
+        $q->where('phone', 'like', "%$keyword%")
+          ->orWhere('email', 'like', "%$keyword%")
+          ->orWhere('loyalty_card_number', 'like', "%$keyword%")
+          ->orWhere('fullname', 'like', "%$keyword%");
+      });
+    })
+      ->orderBy('created_at', 'desc')->paginate($perPage);
   }
 
   public function getCustomerMembershipLevel($customerId)

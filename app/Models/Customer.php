@@ -22,6 +22,7 @@ class Customer extends Model
     'total_spent',
     'last_purchase_at',
     'last_birthday_bonus_date',
+    'last_birthday_gift',
 
     'status',
     'fullname',
