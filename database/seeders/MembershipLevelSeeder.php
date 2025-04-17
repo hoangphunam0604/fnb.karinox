@@ -17,7 +17,11 @@ class MembershipLevelSeeder extends Seeder
         'max_spent' => 199,
         'reward_multiplier' => 1,
         'birthday_gift' =>  'Tiếp tục chi tiêu thăng hạng để nhận ưu đãi hấp dẫn',
-        'upgrade_reward_content'  =>  'Đăng ký lần đầu tặng voucher giảm giá 5% sử dụng dịch vụ tại Karinox Coffee & Pippy Kids, Pippy FC'
+        'upgrade_reward_content'  =>  'Đăng ký lần đầu tặng voucher giảm giá 5% sử dụng dịch vụ tại Karinox Coffee & Pippy Kids, Pippy FC',
+        'party_booking_offer' => 'Tiếp tục chi tiêu thăng hạng để nhận ưu đãi hấp dẫn',
+        'shopping_entertainment_offers' => 'Tiếp tục chi tiêu thăng hạng để nhận ưu đãi hấp dẫn',
+        'new_product_offers'  => 'Tiếp tục chi tiêu thăng hạng để nhận ưu đãi hấp dẫn',
+        'end_of_year_gifts' => 'Quà tặng cuối năm sẽ được thông báo tùy theo tình hình',
       ],
       [
         'rank' => 2,
@@ -33,7 +37,11 @@ class MembershipLevelSeeder extends Seeder
           •	Tặng voucher giảm 20% sử dụng dịch vụ tại Karinox Coffee & Pippy Kids, Pippy FC<br>
           •	Tặng 1 vé khu vui chơi Pippy Kids<br>
           •	Tặng móc khóa ngẫu nhiên
-        '
+        ',
+        'party_booking_offer' => 'Giảm 5% đặt tiệc sinh nhật tại Pippy Kids',
+        'shopping_entertainment_offers' => 'Giảm trực tiếp 5% cho mỗi hóa đơn (tối đa 2 hóa đơn/ngày)',
+        'new_product_offers'  => 'Trải nghiệm đồ uống mới tại quán chỉ 50% giá',
+        'end_of_year_gifts' => 'Quà tặng cuối năm sẽ được thông báo tùy theo tình hình',
       ],
       [
         'rank' => 3,
@@ -50,7 +58,11 @@ class MembershipLevelSeeder extends Seeder
           •	Tặng voucher giảm 50% sử dụng dịch vụ tại Karinox Coffee & Pippy Kids, Pippy FC<br>
           •	Tặng 2 vé khu vui chơi Pippy Kids<br>
           •	Giỏ quà Karinox, Thú Bông
-        '
+        ',
+        'party_booking_offer' => 'Giảm 10% đặt tiệc sinh nhật tại Pippy Kids',
+        'shopping_entertainment_offers' => 'Giảm trực tiếp 8% cho mỗi hóa đơn (tối đa 3 hóa đơn/ngày)',
+        'new_product_offers'  => 'Trải nghiệm đồ uống mới tại quán miễn phí',
+        'end_of_year_gifts' => 'Quà tặng cuối năm sẽ được thông báo tùy theo tình hình',
       ],
     ];
 
@@ -63,6 +75,11 @@ class MembershipLevelSeeder extends Seeder
           'max_spent' => $level['max_spent'],
           'reward_multiplier' => $level['reward_multiplier'],
           'birthday_gift' => $level['birthday_gift'],
+          'upgrade_reward_content'  => $level['upgrade_reward_content'],
+          'party_booking_offer' =>  $level['party_booking_offer'],
+          'shopping_entertainment_offers' =>  $level['shopping_entertainment_offers'],
+          'new_product_offers'  =>  $level['new_product_offers'],
+          'end_of_year_gifts' =>  $level['end_of_year_gifts'],
           'updated_at' => now(),
         ]
       );
