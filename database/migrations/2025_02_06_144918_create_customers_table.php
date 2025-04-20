@@ -29,7 +29,10 @@ return new class extends Migration
       $table->integer('reward_points')->default(0); // Điểm thưởng
       $table->integer('used_reward_points')->default(0); // Điểm thưởng đã sử dụng
       $table->decimal('total_spent', 15, 2)->default(0.00); // Tổng tiền khách đã chi tiêu
+
+      $table->timestamp('received_new_member_gift')->nullable(); // Ngày nhần quà thành viên mới
       $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
+      $table->timestamp('last_birthday_gift')->nullable(); // Ngày gần nhất nhận quà sinh nhật
       $table->timestamp('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
       $table->timestamp('last_birthday_gift')->nullable(); // Ngày gần nhất nhận quà sinh nhật
 

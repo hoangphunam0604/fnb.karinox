@@ -140,6 +140,17 @@ class CustomerService
   public function downgradeMembershipLevel($customer) {}
 
 
+  function receiveNewMemberGift($customerId)
+  {
+    $customer = Customer::findOrFail($customerId);
+    if ($customer->received_new_member_gift)
+      abort(403, "Lỗi: Đã nhận quà thành viên mới vào lúc:" . $customer->received_new_member_gift->format('H:i:s d/m/Y'));
+
+    if (!$customer->last_purchase_at)
+      abort(403, "Lỗi: Thành viên chưa phát sinh giao dịch, không thể nhận quà");
+    $customer->received_new_member_gift = now();
+    return $customer;
+  }
   public function receiveBirthdayGift(int $customerId)
   {
     $customer = Customer::findOrFail($customerId);

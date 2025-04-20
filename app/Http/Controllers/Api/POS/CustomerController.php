@@ -55,6 +55,16 @@ class CustomerController extends Controller
       'data' => new CustomerResource($customer)
     ]);
   }
+
+  public function receiveNewMemberGift(int $customerId)
+  {
+    $customer = $this->customerService->receiveNewMemberGift($customerId);
+    return response()->json([
+      'success' => true,
+      'data' => new CustomerResource($customer)
+    ]);
+  }
+
   public function receiveBirthdayGift(int $customerId)
   {
     $customer = $this->customerService->receiveBirthdayGift($customerId);

@@ -20,6 +20,7 @@ class Customer extends Model
     'reward_points',
     'used_reward_points',
     'total_spent',
+    'received_new_member_gift',
     'last_purchase_at',
     'last_birthday_bonus_date',
     'last_birthday_gift',
@@ -47,6 +48,10 @@ class Customer extends Model
     'reward_points' => 'integer',
     'used_reward_points' => 'integer',
     'total_spent' => 'integer',
+
+    'received_new_member_gift'  =>  'datetime',
+    'last_purchase_at'  =>  'datetime',
+
     'last_birthday_bonus_date'  =>  'datetime',
     'last_birthday_gift' => 'datetime',
     'status' => CustomerStatus::class,
