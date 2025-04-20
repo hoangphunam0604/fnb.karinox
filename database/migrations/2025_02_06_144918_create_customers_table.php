@@ -32,12 +32,11 @@ return new class extends Migration
 
       $table->timestamp('received_new_member_gift')->nullable(); // Ngày nhần quà thành viên mới
       $table->timestamp('last_purchase_at')->nullable(); // Ngày mua hàng gần nhất
-      $table->timestamp('last_birthday_gift')->nullable(); // Ngày gần nhất nhận quà sinh nhật
+
       $table->timestamp('last_birthday_bonus_date')->nullable(); // Ngày gần nhất nhận X2 điểm
       $table->timestamp('last_birthday_gift')->nullable(); // Ngày gần nhất nhận quà sinh nhật
 
       $table->enum('status', ['active', 'inactive', 'banned'])->default('active'); // Trạng thái khách hàng
-
 
       $table->string('referral_code')->nullable(); // Mã giới thiệu khách hàng
       $table->string('avatar')->nullable(); // Ảnh đại diện khách hàng

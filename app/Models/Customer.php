@@ -82,6 +82,10 @@ class Customer extends Model
     return Carbon::now()->format('m-d') === Carbon::parse($this->birthday)->format('m-d');
   }
 
+  public function canReceiveNewMemberGift()
+  {
+    return !$this->received_new_member_gift &&  $this->last_purchase_at;
+  }
   /**
    * Kiểm tra khách hàng có đủ điều kiện nhận quà sinh nhật không
    */

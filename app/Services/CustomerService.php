@@ -144,11 +144,12 @@ class CustomerService
   {
     $customer = Customer::findOrFail($customerId);
     if ($customer->received_new_member_gift)
-      abort(403, "Lỗi: Đã nhận quà thành viên mới vào lúc:" . $customer->received_new_member_gift->format('H:i:s d/m/Y'));
+      abort(403, "Lỗi: Đã nhận quà thành viên mới vào lúc: " . $customer->received_new_member_gift->format('H:i:s d/m/Y'));
 
     if (!$customer->last_purchase_at)
       abort(403, "Lỗi: Thành viên chưa phát sinh giao dịch, không thể nhận quà");
     $customer->received_new_member_gift = now();
+    $customer->save();
     return $customer;
   }
   public function receiveBirthdayGift(int $customerId)
