@@ -11,3 +11,9 @@ Bỏ ứng dụng cho bếp
 Xoá sản phẩm đã báo bếp (cần lý do)
 
 Đóng đơn đang mở
+
+# VNPay Sandbox
+
+## Đăng ký
+
+https://sandbox.vnpayment.vn/devreg/

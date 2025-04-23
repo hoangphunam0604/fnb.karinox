@@ -299,7 +299,7 @@ class OrderService
 
   public function extend($orderId, $oldOrderCode): Order
   {
-
+    abort(403, "Tính năng tạm thời không được sử dụng nữa");
     $order = Order::findOrFail($orderId);
     $oldOrder = Order::where('order_code', $oldOrderCode)
       ->where('customer_id', $order->customer_id)
