@@ -12,6 +12,7 @@ use App\Models\ProductTopping;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
@@ -34,24 +35,31 @@ class OrderService
     $this->kitchenService = $kitchenService;
     $this->systemSettingService = $systemSettingService;
   }
-  public function getOrderByTableId(int $tableId)
+  public function getOrdersByTableId(int $tableId)
   {
     $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
-    $order = Order::where('table_id', $tableId)
+
+    // Lấy tất cả các đơn hàng PENDING
+    $orders = Order::where('table_id', $tableId)
       ->where('branch_id', $branchId)
       ->where('order_status', OrderStatus::PENDING)
-      ->first();
+      ->with(['items.toppings', 'customer.membershipLevel', 'table'])
+      ->get();
 
-    if (!$order) {
+    // Nếu chưa có đơn nào thì tạo mới
+    if ($orders->isEmpty()) {
       $order = Order::create([
         'table_id' => $tableId,
         'branch_id' => $branchId,
         'order_status' => OrderStatus::PENDING,
         'total_price' => 0,
       ]);
+
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+      $orders->push($order);
     }
-    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
-    return $order;
+
+    return $orders;
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
@@ -326,6 +334,69 @@ class OrderService
     return $order;
   }
 
+  public function splitOrder(int $orderId, array $splitItems): array
+  {
+    DB::transaction(function () use ($orderId, $splitItems, &$originalOrder, &$newOrder) {
+      $originalOrder = Order::with('orderItems.orderToppings')->findOrFail($orderId);
+
+      // Tạo đơn hàng mới
+      $newOrder = $originalOrder->replicate();
+      $newOrder->status = OrderStatus::PENDING;
+      $newOrder->save();
+
+      $totalOriginal = 0;
+      $totalNew = 0;
+
+      foreach ($splitItems as $itemId => $quantityToSplit) {
+        $orderItem = $originalOrder->orderItems->find($itemId);
+        if (!$orderItem || $quantityToSplit > $orderItem->quantity) {
+          throw ValidationException::withMessages(['splitItems' => 'Invalid split quantity']);
+        }
+
+        // Giảm hoặc xoá sản phẩm ở đơn gốc
+        if ($orderItem->quantity == $quantityToSplit) {
+          $orderItem->delete();
+        } else {
+          $orderItem->quantity -= $quantityToSplit;
+          $orderItem->save();
+        }
+
+        // Tạo mới sản phẩm ở đơn mới
+        $newItem = $orderItem->replicate();
+        $newItem->order_id = $newOrder->id;
+        $newItem->quantity = $quantityToSplit;
+        $newItem->save();
+
+        // Copy topping nếu có
+        foreach ($orderItem->orderToppings as $topping) {
+          $newTopping = $topping->replicate();
+          $newTopping->order_item_id = $newItem->id;
+          $newTopping->save();
+        }
+
+        // Cộng dồn tổng tiền
+        $totalNew += $newItem->unit_price * $newItem->quantity;
+      }
+
+      // Cập nhật lại tổng tiền đơn gốc
+      $totalOriginal = $originalOrder->orderItems->sum(DB::raw('unit_price * quantity'));
+      $originalOrder->total_price = $totalOriginal;
+      $originalOrder->save();
+      $originalOrder->refresh();
+
+      $this->updateTotalPrice($originalOrder);
+      // Cập nhật tổng tiền đơn mới
+      $newOrder->total_price = $totalNew;
+      $newOrder->save();
+      $newOrder->refresh();
+      $this->updateTotalPrice($newOrder);
+    });
+    $originalOrder->refresh();
+    $newOrder->refresh();
+    $originalOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    $newOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    return [$originalOrder, $newOrder];
+  }
   /**
    * Chuẩn bị đơn hàng
    */

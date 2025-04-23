@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use App\Enums\OrderStatus;
 use App\Http\Resources\Api\POS\OrderItemPrintResource;
 use App\Http\Resources\Api\POS\OrderPrintResource;
-use App\Services\PointService;
 
 class OrderController extends Controller
 {
@@ -27,10 +26,10 @@ class OrderController extends Controller
     $tableId = $request->input('table_id');
 
     if (!$tableId) {
-      return response()->json(['error' => 'Table ID is required'], 400);
+      return response()->json(['error' => 'Hãy chọn bàn'], 400);
     }
-    $order = $this->orderService->getOrderByTableId($tableId);
-    return new OrderResource($order);
+    $orders = $this->orderService->getOrdersByTableId($tableId);
+    return  OrderResource::collection($orders);
   }
 
   public function update($order_id, Request $request,)
@@ -105,5 +104,21 @@ class OrderController extends Controller
   {
     $order = $this->orderService->extend($order_id, $request->old_order_code);
     return new OrderResource($order);
+  }
+
+  public function split(Request $request,  $orderID)
+  {
+    $data = $request->validate([
+      'split_items' => 'required|array',
+      'split_items.*' => 'integer|min:1',
+    ]);
+
+    [$updatedOrder, $newOrder] = $this->orderService->splitOrder($orderID, $data['split_items']);
+
+    return response()->json([
+      'message' => 'Tách đơn thành công',
+      'updated_order' => new OrderResource($updatedOrder),
+      'new_order' =>  new OrderResource($newOrder),
+    ]);
   }
 }
