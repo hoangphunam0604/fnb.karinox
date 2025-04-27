@@ -23,6 +23,7 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
   Route::post('/orders/{id}/provisional', [OrderController::class, 'provisional']);
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
+  Route::post('/orders/{id}/split', [OrderController::class, 'split']);
 
   Route::get('/customers', [CustomerController::class, 'index']);
   Route::post('/customers', [CustomerController::class, 'store']);

@@ -337,56 +337,52 @@ class OrderService
   public function splitOrder(int $orderId, array $splitItems): array
   {
     DB::transaction(function () use ($orderId, $splitItems, &$originalOrder, &$newOrder) {
-      $originalOrder = Order::with('orderItems.orderToppings')->findOrFail($orderId);
+      $originalOrder = Order::with('items.toppings')->findOrFail($orderId);
 
       // Tạo đơn hàng mới
       $newOrder = $originalOrder->replicate();
-      $newOrder->status = OrderStatus::PENDING;
+      $newOrder->order_code = $originalOrder->order_code . "-2";
       $newOrder->save();
+      $originalOrder->order_code .= "-1";
 
-      $totalOriginal = 0;
-      $totalNew = 0;
 
       foreach ($splitItems as $itemId => $quantityToSplit) {
-        $orderItem = $originalOrder->orderItems->find($itemId);
+        $orderItem = $originalOrder->items->find($itemId);
         if (!$orderItem || $quantityToSplit > $orderItem->quantity) {
           throw ValidationException::withMessages(['splitItems' => 'Invalid split quantity']);
         }
 
-        // Giảm hoặc xoá sản phẩm ở đơn gốc
+        // Nếu sản chuyển hết sản phẩm thì đổi id
         if ($orderItem->quantity == $quantityToSplit) {
-          $orderItem->delete();
+          $orderItem->order_id =  $newOrder->id;
+          $orderItem->save();
         } else {
           $orderItem->quantity -= $quantityToSplit;
+          $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
           $orderItem->save();
+          // Tạo mới sản phẩm ở đơn mới
+          $newItem = $orderItem->replicate();
+          $newItem->order_id = $newOrder->id;
+          $newItem->quantity = $quantityToSplit;
+
+          $newItem->total_price = $newItem->unit_price * $newItem->quantity;
+          $newItem->save();
+
+          // Copy topping nếu có
+          foreach ($orderItem->toppings as $topping) {
+            $newTopping = $topping->replicate();
+            $newTopping->order_item_id = $newItem->id;
+            $newTopping->save();
+          }
         }
-
-        // Tạo mới sản phẩm ở đơn mới
-        $newItem = $orderItem->replicate();
-        $newItem->order_id = $newOrder->id;
-        $newItem->quantity = $quantityToSplit;
-        $newItem->save();
-
-        // Copy topping nếu có
-        foreach ($orderItem->orderToppings as $topping) {
-          $newTopping = $topping->replicate();
-          $newTopping->order_item_id = $newItem->id;
-          $newTopping->save();
-        }
-
-        // Cộng dồn tổng tiền
-        $totalNew += $newItem->unit_price * $newItem->quantity;
       }
 
       // Cập nhật lại tổng tiền đơn gốc
-      $totalOriginal = $originalOrder->orderItems->sum(DB::raw('unit_price * quantity'));
-      $originalOrder->total_price = $totalOriginal;
       $originalOrder->save();
       $originalOrder->refresh();
 
       $this->updateTotalPrice($originalOrder);
       // Cập nhật tổng tiền đơn mới
-      $newOrder->total_price = $totalNew;
       $newOrder->save();
       $newOrder->refresh();
       $this->updateTotalPrice($newOrder);
