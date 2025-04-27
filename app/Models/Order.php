@@ -120,7 +120,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     return $this->hasMany(OrderHistory::class);
   }
 
-  public function items()
+  public function orderItems()
   {
     return $this->hasMany(OrderItem::class);
   }
