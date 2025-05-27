@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\CommonStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class ProductImportController extends Controller
   }
   public function viewImport()
   {
-    $branches = $this->branchService->getActiveBranches();
+    $branches = $this->branchService->getAll(CommonStatus::ACTIVE);
     return Inertia::render(
       'Products/Import',
       [

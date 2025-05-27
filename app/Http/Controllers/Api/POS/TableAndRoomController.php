@@ -19,7 +19,7 @@ class TableAndRoomController extends Controller
   public function list(): JsonResponse
   {
     $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
-    $areas = $this->areaService->getAreasByBranch($branchId);
+    $areas = $this->areaService->getByBranch($branchId);
 
     return response()->json([
       'success' => true,

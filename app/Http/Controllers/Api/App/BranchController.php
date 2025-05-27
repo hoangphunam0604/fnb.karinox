@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\App;
 
+use App\Enums\CommonStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\App\BranchResource;
 use App\Models\User;
@@ -20,7 +21,7 @@ class BranchController extends Controller
 
   public function getUserBranches()
   {
-    $branches = $this->branchService->getActiveBranches();
+    $branches = $this->branchService->getAll();
     return BranchResource::collection($branches);
   }
 
@@ -30,7 +31,7 @@ class BranchController extends Controller
 
     /** @var User|null $user */
     $user = Auth::user();
-    $branches = $this->branchService->getActiveBranches($user);
+    $branches = $this->branchService->getAll(CommonStatus::ACTIVE);
     // Lấy danh sách chi nhánh mà user quản lý
     $managedBranches = $branches->pluck('id')->toArray();
 
