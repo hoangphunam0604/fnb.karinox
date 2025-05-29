@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\AttributeController;
-use App\Http\Controllers\Admin\BranchController;
 
 Route::prefix('admin')/* ->middleware(['auth:sanctum']) */->group(function () {
   Route::get('areas', [AreaController::class, 'index']);
