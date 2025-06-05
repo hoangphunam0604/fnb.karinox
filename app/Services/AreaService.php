@@ -11,4 +11,9 @@ class AreaService extends BaseService
   {
     return new Area();
   }
+
+  public function getByBranch($branchId)
+  {
+    return Area::with(['tablesAndRooms'])->where('branch_id', $branchId)->get();
+  }
 }

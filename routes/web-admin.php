@@ -8,16 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\AttributeController;
 
-Route::prefix('admin')/* ->middleware(['auth:sanctum']) */->group(function () {
-  Route::get('areas', [AreaController::class, 'index']);
-  Route::post('areas', [AreaController::class, 'store']);
-  Route::get('areas/{id}', [AreaController::class, 'show']);
-  Route::put('areas/{id}', [AreaController::class, 'update']);
-  Route::delete('areas/{id}', [AreaController::class, 'destroy']);
-  Route::apiResource('attributes', AttributeController::class);
-
-  Route::apiResource('branches', BranchController::class);
-});
+    
 
 Route::middleware('auth:web')->prefix('admin')->name('admin.')->group(function () {
   Route::resource('branches', BranchController::class);
