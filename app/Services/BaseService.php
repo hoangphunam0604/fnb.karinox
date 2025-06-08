@@ -2,20 +2,33 @@
 
 namespace App\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 abstract class BaseService
 {
+  protected array $with = [];
+  protected array $withCount = [];
+
   abstract protected function model(): Model;
 
-  public function getList(array $params = [])
+  protected function applySearch($query, array $params)
   {
-    $query = $this->model()->newQuery();
-
     if (!empty($params['keyword'])) {
       $query->where('name', 'LIKE', '%' . $params['keyword'] . '%');
     }
+    return $query;
+  }
+  protected function getQueryBuilder(): Builder
+  {
+    return $this->model()->newQuery()->with($this->with)->withCount($this->withCount);
+  }
+  public function getList(array $params = [])
+  {
+    $query = $this->getQueryBuilder();
+
+    $query = $this->applySearch($query, $params);
 
     $perPage = $params['per_page'] ?? 10;
     return $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -42,6 +55,6 @@ abstract class BaseService
 
   public function find($id): Model
   {
-    return $this->model()->findOrFail($id);
+    return $this->getQueryBuilder()->findOrFail($id);
   }
 }

@@ -16,6 +16,19 @@ class BranchService extends BaseService
   {
     return new Branch();
   }
+  protected function applySearch($query, array $params)
+  {
+    if (!empty($params['keyword'])) {
+      $query->where('name', 'like', '%' . $params['keyword'] . '%');
+    }
+
+    if (!empty($params['status'])) {
+      $query->where('status', $params['status']);
+    }
+    $query->orderBy('sort_order', 'ASC');
+    return $query;
+  }
+
   public function getAll(?CommonStatus $status = null)
   {
     $query = $this->model()->newQuery();

@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\AttributeController;
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\TableAndRoomController;
 
 Route::middleware('auth')->prefix('admin')->group(function () {
   Route::apiResource('admin/print-templates', \App\Http\Controllers\Api\Admin\PrintTemplateController::class);
@@ -12,5 +14,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
   Route::get('areas/{id}', [AreaController::class, 'show']);
   Route::put('areas/{id}', [AreaController::class, 'update']);
   Route::delete('areas/{id}', [AreaController::class, 'destroy']);
+  Route::apiResource('tables-and-rooms', TableAndRoomController::class);
   Route::apiResource('attributes', AttributeController::class);
+  Route::get('branches/all', [AreaController::class, 'all']);
+  Route::apiResource('branches', BranchController::class);
 });

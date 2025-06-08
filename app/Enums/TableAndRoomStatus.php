@@ -14,10 +14,10 @@ enum TableAndRoomStatus: string
   public function getLabel(): string
   {
     return match ($this) {
-      self::AVAILABLE => "Còn trống, sẵn sàng sử dụng.",
-      self::OCCUPIED => "Đang có khách sử dụng.",
-      self::RESERVED => "Đã đặt trước.",
-      self::MAINTENANCE => "Đang bảo trì.",
+      self::AVAILABLE => "Sẵn sàng sử dụng",
+      self::OCCUPIED => "Đang sử dụng",
+      self::RESERVED => "Đã đặt trước",
+      self::MAINTENANCE => "Bảo trì",
     };
   }
 

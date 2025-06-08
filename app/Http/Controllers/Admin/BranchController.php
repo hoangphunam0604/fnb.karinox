@@ -16,7 +16,12 @@ class BranchController extends Controller
   {
     $this->branchService = $branchService;
   }
-
+  public function all(Request $request)
+  {
+    $status = $request->status;
+    $branches = $this->branchService->getAll($status);
+    return BranchResource::collection($branches);
+  }
   public function index(Request $request)
   {
     $branches = $this->branchService->getList($request->all());
