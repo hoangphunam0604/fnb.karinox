@@ -27,12 +27,15 @@ hãy giúp tôi tạo các mục dưới đây nhé
 
 Đối với frontend (vuetify)
 
-- Tạo service
-- Trang quản lý: danh sách, thêm, sửa, xoá
+- Tạo type trong thư mục types
+- Tạo service trong thư mục services
+- Tạo list và form trong thư mục views
 
 chúng ta đã xong phần Area cho cả backend Laravel và frontend với vuetify
 bây giờ sẽ tiếp tục với các phần khác nhé
-hãy ghi nhớ lại những việc cần làm sau cho từng phần, tôi sẽ gửi Service cũ để bạn tái cấu trúc
+
+hãy ghi nhớ lại những việc cần làm sau cho từng phần, tôi sẽ gửi Service cũ và Model để bạn tái cấu trúc
+
 đối với Laravel
 
 - Tái cấu trúc service đã gửi để kế thừa BaseService, giữ lại các function riêng
@@ -40,7 +43,9 @@ hãy ghi nhớ lại những việc cần làm sau cho từng phần, tôi sẽ 
 - tạo Resource trong namespace App\Http\Resource\Admin
 - tạo Controller trong namespace App\Http\Controllers\Admin (hãy sử dụng inject Service, Request và Resonse vừa tạo)
 - Tạo router
-  Đối với frontend (vuetify)
 
-- Tạo service
-- Trang quản lý: danh sách, thêm, sửa, xoá trong thư mục views/
+Đối với frontend (vuetify)
+
+- Tạo type trong thư mục types
+- Tạo service trong thư mục services
+- Tạo list và form trong thư mục views

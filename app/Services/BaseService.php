@@ -34,6 +34,11 @@ abstract class BaseService
     return $query->orderBy('created_at', 'desc')->paginate($perPage);
   }
 
+  public function getAll()
+  {
+    return $this->model()->newQuery()->orderBy('name', 'asc')->get();
+  }
+
   public function create(array $data): Model
   {
     return DB::transaction(fn() => $this->model()->create($data));

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\TableAndRoomController;
+use App\Http\Controllers\Admin\CategoryController;
 
 Route::middleware('auth')->prefix('admin')->group(function () {
   Route::apiResource('admin/print-templates', \App\Http\Controllers\Api\Admin\PrintTemplateController::class);
@@ -18,4 +19,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
   Route::apiResource('attributes', AttributeController::class);
   Route::get('branches/all', [AreaController::class, 'all']);
   Route::apiResource('branches', BranchController::class);
+
+  Route::get('categories/all', [CategoryController::class, 'all']);
+  Route::apiResource('categories', CategoryController::class);
 });
