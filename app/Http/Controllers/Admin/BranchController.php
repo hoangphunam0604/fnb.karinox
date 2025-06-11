@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\CommonStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BranchRequest;
 use App\Http\Resources\Admin\BranchResource;
@@ -18,7 +19,7 @@ class BranchController extends Controller
   }
   public function all(Request $request)
   {
-    $status = $request->status;
+    $status = CommonStatus::tryFrom($request->status) ?? null;
     $branches = $this->branchService->getAll($status);
     return BranchResource::collection($branches);
   }
