@@ -17,7 +17,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
   Route::delete('areas/{id}', [AreaController::class, 'destroy']);
   Route::apiResource('tables-and-rooms', TableAndRoomController::class);
   Route::apiResource('attributes', AttributeController::class);
-  Route::get('branches/all', [AreaController::class, 'all']);
+  Route::get('branches/all', [BranchController::class, 'all']);
   Route::apiResource('branches', BranchController::class);
 
   Route::get('categories/all', [CategoryController::class, 'all']);
