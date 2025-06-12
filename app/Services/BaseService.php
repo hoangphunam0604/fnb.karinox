@@ -10,6 +10,8 @@ abstract class BaseService
 {
   protected array $with = [];
   protected array $withCount = [];
+  protected $sortBy = 'created_at';
+  protected $sortDir = 'desc';
 
   abstract protected function model(): Model;
 
@@ -31,7 +33,11 @@ abstract class BaseService
     $query = $this->applySearch($query, $params);
 
     $perPage = $params['per_page'] ?? 10;
-    return $query->orderBy('created_at', 'desc')->paginate($perPage);
+    $sortBy = $params['sort_by'] ?? $this->sortBy;
+    $sortDir = $params['sort_direction'] ?? $this->sortDir;
+
+    $query->orderBy($sortBy, $sortDir);
+    return $query->paginate($perPage);
   }
 
   public function getAll()

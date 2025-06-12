@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class AreaService extends BaseService
 {
-  protected array $with = ['parent'];
   protected function model(): Model
   {
     return new Area();
