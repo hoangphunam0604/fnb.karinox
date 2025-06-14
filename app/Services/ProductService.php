@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use App\Models\Product;
 use App\Models\ProductBranch;
 use App\Models\ProductAttribute;
@@ -10,13 +11,19 @@ use App\Models\ProductTopping;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
-class ProductService
+class ProductService extends BaseService
 {
+  protected array $with = ['category'];
+  protected array $withCount = [];
 
+  protected function model(): Model
+  {
+    return new Product();
+  }
   /**
    * Tạo sản phẩm
    */
-  public function createProduct(array $data)
+  public function create(array $data): Model
   {
     return $this->saveProduct($data);
   }
@@ -24,7 +31,7 @@ class ProductService
   /**
    * Cập nhật sản phẩm
    */
-  public function updateProduct($productId, array $data)
+  public function update($productId, array $data): Model
   {
     return $this->saveProduct($data, $productId);
   }
@@ -32,7 +39,7 @@ class ProductService
   /**
    * Tạo hoặc cập nhật sản phẩm
    */
-  public function saveProduct(array $data, $productId = null)
+  private function saveProduct(array $data, $productId = null)
   {
     return DB::transaction(function () use ($data, $productId) {
       $product = $productId
@@ -62,30 +69,13 @@ class ProductService
     });
   }
 
-  /**
-   * Xóa sản phẩm
-   */
-  public function deleteProduct($productId)
+  protected function applySearch($query, array $params)
   {
-    return Product::findOrFail($productId)->delete();
-  }
-
-  /**
-   * Tìm kiếm sản phẩm theo tên hoặc mã (code)
-   */
-  public function findProduct($keyword)
-  {
-    return Product::where('name', 'LIKE', "%{$keyword}%")
-      ->orWhere('code', 'LIKE', "%{$keyword}%")
-      ->first();
-  }
-
-  /**
-   * Lấy danh sách tất cả sản phẩm (phân trang)
-   */
-  public function getProducts($perPage = 10)
-  {
-    return Product::orderBy('created_at', 'desc')->paginate($perPage);
+    if (!empty($params['keyword'])) {
+      $query->where('name', 'LIKE', '%' . $params['keyword'] . '%')
+        ->orWhere('code', 'LIKE', '%' . $params['keyword'] . '%');
+    }
+    return $query;
   }
 
   /**
@@ -167,35 +157,35 @@ class ProductService
     }
   }
 
-   /**
-     * Lấy danh sách sản phẩm theo chi nhánh, nhóm theo danh mục.
-     *
-     * @param int $branchId
-     * @return array
-     */
-    public function getProductsByBranch(int $branchId)
-    {
-        // Lấy danh sách sản phẩm thuộc chi nhánh được chọn
-        $products = Product::select('products.*', 'categories.name as category_name')
-            ->with('toppings.toppingProduct')
-            ->join('product_branches', 'products.id', '=', 'product_branches.product_id')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
-            ->where('product_branches.branch_id', $branchId)
-            ->where('products.allows_sale', true) // Chỉ lấy sản phẩm đang kinh doanh
-            ->orderBy('categories.name')
-            ->orderBy('products.name')
-            ->get();
+  /**
+   * Lấy danh sách sản phẩm theo chi nhánh, nhóm theo danh mục.
+   *
+   * @param int $branchId
+   * @return array
+   */
+  public function getProductsByBranch(int $branchId)
+  {
+    // Lấy danh sách sản phẩm thuộc chi nhánh được chọn
+    $products = Product::select('products.*', 'categories.name as category_name')
+      ->with('toppings.toppingProduct')
+      ->join('product_branches', 'products.id', '=', 'product_branches.product_id')
+      ->join('categories', 'products.category_id', '=', 'categories.id')
+      ->where('product_branches.branch_id', $branchId)
+      ->where('products.allows_sale', true) // Chỉ lấy sản phẩm đang kinh doanh
+      ->orderBy('categories.name')
+      ->orderBy('products.name')
+      ->get();
 
-        // Nhóm sản phẩm theo danh mục
-        $groupedProducts = $products->groupBy('category_name')->map(function ($items, $categoryName) {
-            return [
-                'category' => $categoryName,
-                'products' => $items->map(function ($product) {
-                    return $product;
-                }),
-            ];
-        })->values();
+    // Nhóm sản phẩm theo danh mục
+    $groupedProducts = $products->groupBy('category_name')->map(function ($items, $categoryName) {
+      return [
+        'category' => $categoryName,
+        'products' => $items->map(function ($product) {
+          return $product;
+        }),
+      ];
+    })->values();
 
-        return $groupedProducts;
-    }
+    return $groupedProducts;
+  }
 }

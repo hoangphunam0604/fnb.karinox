@@ -26,7 +26,7 @@ class ProductFormula extends Model
     return $this->belongsTo(Product::class);
   }
 
-  public function ingredientProduct()
+  public function ingredient()
   {
     return $this->belongsTo(Product::class, 'ingredient_id');
   }
