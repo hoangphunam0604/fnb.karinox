@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class VNPayQRService
 {
@@ -45,12 +46,16 @@ class VNPayQRService
       'terminalId' => $this->terminalId,
       'payType' => '03', //Mã dịch vụ QR. Giá trị mặc định là 03
       'productId' => '',
+      'tipAndFee' => '',
+      'txnId'   => $orderCode,
       'billNumber' => $orderCode,
       'amount' => (string)$amount,
       'ccy' => '704',
       'expDate' => $expireTime,
       'desc' => '',
     ];
+
+    // Tính checksum
 
     // Tính checksum
     $data = implode('|', [
@@ -66,18 +71,18 @@ class VNPayQRService
       $payload['productId'],
       $payload['txnId'],
       $payload['amount'],
-      '',
+      $payload['tipAndFee'],
       $payload['ccy'],
       $payload['expDate'],
       $this->secretKeyGen,
     ]);
 
     $payload['checksum'] = strtoupper(md5($data));
-
+    Log::info(json_encode($payload));
     $response = Http::withHeaders([
       'Content-Type' => 'text/plain',
     ])->post($this->endpoint, json_encode($payload));
-
+    Log::info($response);
     return $response->json();
   }
 }
