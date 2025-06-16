@@ -163,6 +163,14 @@ class OrderService
   }
 
   /**
+   * Xác nhận đơn hàng
+   */
+  public function completeOrder($orderId): Order
+  {
+    return $this->updateOrderStatus($orderId, OrderStatus::COMPLETED);
+  }
+
+  /**
    * Hủy đơn hàng
    */
   public function cancelOrder($orderId): Order
@@ -179,7 +187,7 @@ class OrderService
   /**
    * Hoàn tất đơn hàng
    */
-  public function markAsCompleted($orderId): Order
+  /* public function markAsCompleted($orderId): Order
   {
     return DB::transaction(function () use ($orderId) {
       $order = Order::findOrFail($orderId);
@@ -187,15 +195,12 @@ class OrderService
       if ($order->order_status !== OrderStatus::COMPLETED) {
         $order->markAsCompleted();
       }
-      /* 
-      if ($order->total_price > 0 && $paidAmount < $order->total_price) {
-        throw new Exception('Số tiền thanh toán không đủ.');
-      } */
+      
 
       $order->refresh();
       return $order;
     });
-  }
+  } */
 
   /**
    * Cập nhật trạng thái đơn hàng
@@ -291,7 +296,11 @@ class OrderService
       return [$order, $kitchenItems, $labels];
     });
   }
-
+  public function getPrintData($orderId)
+  {
+    return $this->notifyKitchen($orderId);
+  }
+  /* 
   public function payment($orderId)
   {
     $order = Order::findOrFail($orderId);
@@ -303,7 +312,7 @@ class OrderService
       $order->markAsCompleted();
     }
     return $this->notifyKitchen($orderId);
-  }
+  } */
 
   public function extend($orderId, $oldOrderCode): Order
   {

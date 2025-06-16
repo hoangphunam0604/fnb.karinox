@@ -76,9 +76,9 @@ class OrderController extends Controller
     $order = $this->orderService->findOrderById($orderId);
     return new OrderPrintResource($order);
   }
-  public function checkout($orderId)
+  public function getPrintData($orderId)
   {
-    [$order, $kitchenItems, $labels] = $this->orderService->payment($orderId);
+    [$order, $kitchenItems, $labels] = $this->orderService->getPrintData($orderId);
     return response()->json([
       'success'  =>  true,
       'data'  =>  [
@@ -121,4 +121,6 @@ class OrderController extends Controller
       'new_order' =>  new OrderResource($newOrder),
     ]);
   }
+
+  public function getVNPayQrCode($orderID) {}
 }
