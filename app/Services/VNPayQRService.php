@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
 
 class VNPayQRService
 {
@@ -78,11 +79,26 @@ class VNPayQRService
     ]);
 
     $payload['checksum'] = strtoupper(md5($data));
+    $client = new Client();
+    $response = $client->request('POST', $this->endpoint, [
+      'headers' => [
+        'Content-Type' => 'text/plain',
+      ],
+      'body' => json_encode($payload),
+      'verify' => false // Nếu cần tắt SSL dev
+    ]);
+
+    Log::info($response->getBody());
+    return json_decode($response->getBody(), true);
+    /* 
     Log::info(json_encode($payload));
-    $response = Http::withHeaders([
-      'Content-Type' => 'text/plain',
-    ])->post($this->endpoint, json_encode($payload));
+    $response = Http::withOptions(['verify' => false])
+      ->withHeaders([
+        'Content-Type' => 'text/plain',
+      ])->post($this->endpoint,  [
+        'body' => json_encode($payload),
+      ]);
     Log::info($response);
-    return $response->json();
+    return $response->json(); */
   }
 }
