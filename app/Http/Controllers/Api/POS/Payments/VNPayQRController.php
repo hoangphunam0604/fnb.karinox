@@ -12,27 +12,16 @@ class VNPayQRController extends Controller
 {
   public function create(Request $request, VNPayQRService $vnpayQRService)
   {
-
     $order = Order::where('order_code', $request->input('order_code'))->firstOrFail();
-
-    $amount = $order->total_price;
-    // hết hạn sau 10 phút:
-    $expire = now()->addMinutes(10)->format('ymdHi');
-
-    $qrResponse = $vnpayQRService->createQRCode($order->order_code, $amount, $expire);
-    /* $order->payment_url = $qrResponse['data'];
-    $order->save(); */
-    return response()->json([
-      'status'  =>  true,
-      'code' => $qrResponse['data']
-    ]);
+    return $vnpayQRService->createQRCode($order->order_code, $order->total_price);
   }
 
   /**
    * IPN xác thực từ VNPAY: VNPAY gọi về khi KH đã thanh toán
    */
-  public function ipn(Request $request, OrderService $orderService)
+  public function ipn(Request $request, VNPayQRService $vnpayQRService, OrderService $orderService)
   {
+    $checkIPN = $vnpayQRService->checkIPN($request->all());
     // IPN theo tài liệu Merchant Payment:
     if ($request->input('code') === '00') {
       $order = Order::where('code', $request->input('txnId'))->firstOrFail();

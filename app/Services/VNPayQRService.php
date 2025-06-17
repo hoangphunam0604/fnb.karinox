@@ -34,8 +34,10 @@ class VNPayQRService
     $this->secretKeyRefund = config('vnpayqr.secret_key_refurn');
   }
 
-  public function createQRCode(string $orderCode, int $amount, string $expireTime): array
+  public function createQRCode(string $orderCode, int $amount): array
   {
+
+    $expireTime = now()->addMinutes(10)->format('ymdHi');
     $payload = [
       'appId' => $this->appId,
       'merchantName' => $this->merchantName,
@@ -55,9 +57,31 @@ class VNPayQRService
       'expDate' => $expireTime,
       'desc' => '',
     ];
+    $payload['checksum'] = $this->checksumGen($payload);
 
-    // Tính checksum
+    $client = new Client();
+    $response = $client->request('POST', $this->endpoint, [
+      'headers' => [
+        'Content-Type' => 'text/plain',
+      ],
+      'body' => json_encode($payload),
+      'verify' => false // Nếu cần tắt SSL dev
+    ]);
+    $responseData = json_decode($response->getBody(), true);
+    $checksum_return = $this->checksumGenFromResponse($responseData);
+    if ($checksum_return !== $responseData['checksum'])
+      return ['status' => false, "data-qr" => "", "message"  =>  "Dữ liệu trả về không hợp lệ"];
+    if ($responseData['code' !== "00"])
+      return ['status' => false, "data-qr" => "", "message"  =>  $responseData['message']];
+    return ['status' => true, "data-qr" => $responseData['data'], "message"  =>  $responseData['message']];
+  }
 
+  public function checkIPN($payload) {
+    
+  }
+
+  private function checksumGen($payload)
+  {
     // Tính checksum
     $data = implode('|', [
       $payload['appId'],
@@ -77,28 +101,19 @@ class VNPayQRService
       $payload['expDate'],
       $this->secretKeyGen,
     ]);
+    return strtoupper(md5($data));
+  }
 
-    $payload['checksum'] = strtoupper(md5($data));
-    $client = new Client();
-    $response = $client->request('POST', $this->endpoint, [
-      'headers' => [
-        'Content-Type' => 'text/plain',
-      ],
-      'body' => json_encode($payload),
-      'verify' => false // Nếu cần tắt SSL dev
+  private function checksumGenFromResponse($payload)
+  {
+    // Tính checksum
+    $data = implode('|', [
+      $payload['code'],
+      $payload['message'],
+      $payload['data'],
+      $payload['url'],
+      $this->secretKeyGen,
     ]);
-
-    Log::info($response->getBody());
-    return json_decode($response->getBody(), true);
-    /* 
-    Log::info(json_encode($payload));
-    $response = Http::withOptions(['verify' => false])
-      ->withHeaders([
-        'Content-Type' => 'text/plain',
-      ])->post($this->endpoint,  [
-        'body' => json_encode($payload),
-      ]);
-    Log::info($response);
-    return $response->json(); */
+    return strtoupper(md5($data));
   }
 }
