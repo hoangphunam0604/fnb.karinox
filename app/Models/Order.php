@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\PointHistoryNote;
 use App\Events\OrderCompleted;
 
@@ -19,6 +20,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
   protected $fillable = [
     'extend_id', // Id đơn hàng kế thừa, dùng cho các chi nhánh khác nhau sử dụng chung mã giảm giá
     'order_code',
+    'order_status',
     'ordered_at',
     'creator_id',
     'receiver_id',
@@ -34,11 +36,13 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
     'voucher_id',
     'voucher_code',
-    'order_status',
+
+    'payment_status',
     'payment_method',
     'payment_url',
     'payment_started_at',
     'paid_at',
+
     'note',
     'printed_bill',
     'printed_bill_at',
@@ -52,6 +56,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'total_price' => 'integer',
     'order_status' => OrderStatus::class,
     'printed_bill'  =>  'boolean',
+    'payment_status' => PaymentStatus::class,
     'payment_started_at' =>  'datetime',
     'paid_at' =>  'datetime',
     'printed_bill_at' =>  'datetime',

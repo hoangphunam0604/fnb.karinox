@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Events\OrderUpdated;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -184,6 +185,25 @@ class OrderService
     return $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
   }
 
+  public function prevPay(string $order_code, $payment_method)
+  {
+
+    $order = Order::where('order_code', $order_code)->firstOrFail();
+    $order->payment_method = $payment_method;
+    return $order;
+  }
+
+  public function pay(Order $order)
+  {
+    if ($order->payment_status === PaymentStatus::PAID) {
+      // đã trả tiền rồi, không cần ghi đè
+      return;
+    }
+    $order->paid_at = now();
+    $order->payment_status = PaymentStatus::PAID;
+    $order->order_status = OrderStatus::COMPLETED;
+    $order->save();
+  }
   /**
    * Hoàn tất đơn hàng
    */

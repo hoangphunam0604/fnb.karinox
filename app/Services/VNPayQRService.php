@@ -76,10 +76,6 @@ class VNPayQRService
     return ['status' => true, "data-qr" => $responseData['data'], "message"  =>  $responseData['message']];
   }
 
-  public function checkIPN($payload) {
-    
-  }
-
   private function checksumGen($payload)
   {
     // Tính checksum
@@ -103,6 +99,26 @@ class VNPayQRService
     ]);
     return strtoupper(md5($data));
   }
+
+  public function checksumIPN($payload)
+  {
+    // ✅ Verify checksum
+    $raw = implode('|', [
+      $payload['code'],
+      $payload['msgType'],
+      $payload['txnId'],
+      $payload['qrTrace'],
+      $payload['bankCode'],
+      $payload['mobile'],
+      $payload['accountNo'],
+      $payload['amount'],
+      $payload['payDate'],
+      $payload['merchantCode'],
+      $this->secretKeyGen,
+    ]);
+    return strtoupper(md5($raw));
+  }
+
 
   private function checksumGenFromResponse($payload)
   {
