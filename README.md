@@ -11,6 +11,11 @@ php artisan migrate --seed
 # Khởi động Laravel Reverb (WebSocket Server)
 php artisan reverb:start
 
+
+mv public_html _public_html
+
+ln -s fnb.karinox/public public_html
+
 ```
 
 Tạo cho tôi Admin Controller cho file service và model tôi đã gửi
