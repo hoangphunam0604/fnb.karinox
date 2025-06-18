@@ -19,6 +19,7 @@ class VNPayQRService
   protected string $secretKeyGen;
   protected string $secretKeyCheck;
   protected string $secretKeyRefund;
+  protected string $secretKeyIpn;
 
   public function __construct()
   {
@@ -32,6 +33,7 @@ class VNPayQRService
     $this->secretKeyGen = config('vnpayqr.secret_key_gen');
     $this->secretKeyCheck = config('vnpayqr.secret_key_check');
     $this->secretKeyRefund = config('vnpayqr.secret_key_refurn');
+    $this->secretKeyIpn = config('vnpayqr.secret_key_ipn');
   }
 
   public function createQRCode(string $orderCode, int $amount): array
@@ -114,7 +116,7 @@ class VNPayQRService
       $payload['amount'],
       $payload['payDate'],
       $payload['merchantCode'],
-      $this->secretKeyGen,
+      $this->secretKeyIpn,
     ]);
     return strtoupper(md5($raw));
   }

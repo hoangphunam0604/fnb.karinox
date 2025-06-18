@@ -8,6 +8,9 @@ php artisan jwt:secret
 php artisan storage:link
 php artisan migrate --seed
 
+#Tạo lại database
+php artisan migrate:refresh --seed
+
 # Khởi động Laravel Reverb (WebSocket Server)
 php artisan reverb:start
 
