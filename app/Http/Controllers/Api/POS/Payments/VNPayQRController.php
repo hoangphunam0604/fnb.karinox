@@ -18,7 +18,7 @@ class VNPayQRController extends Controller
     $paymentData = $vnpayQRService->createQRCode($order->order_code, $order->total_price);
 
     $order->payment_started_at = now();
-    $order->payment_url = $paymentData['data-qr'];
+    $order->payment_url = $paymentData['qrCode'];
     $order->save();
 
     return $paymentData;

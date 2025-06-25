@@ -70,12 +70,13 @@ class VNPayQRService
       'verify' => false // Nếu cần tắt SSL dev
     ]);
     $responseData = json_decode($response->getBody(), true);
+    Log::info($response->getBody());
     $checksum_return = $this->checksumGenFromResponse($responseData);
     if ($checksum_return !== $responseData['checksum'])
-      return ['status' => false, "data-qr" => "", "message"  =>  "Dữ liệu trả về không hợp lệ"];
+      return ['status' => true, "qrCode" => $responseData['data'], 'checksum' => $responseData['checksum'],  '$checksum_return' => $checksum_return, "message"  =>  "Dữ liệu trả về không hợp lệ"];
     if ($responseData['code' !== "00"])
-      return ['status' => false, "data-qr" => "", "message"  =>  $responseData['message']];
-    return ['status' => true, "data-qr" => $responseData['data'], "message"  =>  $responseData['message']];
+      return ['status' => false, "qrCode" => "", "message"  =>  $responseData['message']];
+    return ['status' => true, "qrCode" => $responseData['data'], "message"  =>  $responseData['message']];
   }
 
   private function checksumGen($payload)
@@ -132,6 +133,6 @@ class VNPayQRService
       $payload['url'],
       $this->secretKeyGen,
     ]);
-    return strtoupper(md5($data));
+    return $data;
   }
 }
