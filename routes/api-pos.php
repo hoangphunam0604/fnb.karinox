@@ -42,7 +42,6 @@ Route::middleware('auth:api')->prefix('pos')->group(function () {
     Route::post('/cash/confirm', [CashPaymentController::class, 'confirm']);
     Route::prefix('vnpayqr')->group(function () {
       Route::post('/create', [VNPayQRController::class, 'create']);
-      Route::post('/ipn', [VNPayQRController::class, 'ipn']);
     });
   });
 });

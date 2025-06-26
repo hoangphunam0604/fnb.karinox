@@ -24,9 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
       AddLinkHeadersForPreloadedAssets::class,
     ]);
     $middleware->api(append: [
-      \App\Http\Middleware\IsKarinoxAppMiddleware::class,
-      \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
       \Illuminate\Http\Middleware\HandleCors::class,
+    ]);
+    $middleware->alias([
+      'is_karinox_app' => \App\Http\Middleware\IsKarinoxAppMiddleware::class,
+      'set_karinox_branch_id' => \App\Http\Middleware\IsKarinoxAppMiddleware::class
     ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {
