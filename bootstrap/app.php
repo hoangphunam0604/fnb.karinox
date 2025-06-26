@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ]);
     $middleware->alias([
       'is_karinox_app' => \App\Http\Middleware\IsKarinoxAppMiddleware::class,
-      'set_karinox_branch_id' => \App\Http\Middleware\IsKarinoxAppMiddleware::class
+      'set_karinox_branch_id' => \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class
     ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {

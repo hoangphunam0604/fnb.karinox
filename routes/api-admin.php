@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\TableAndRoomController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 
-Route::middleware('auth')->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('admin')->group(function () {
   Route::apiResource('admin/print-templates', \App\Http\Controllers\Api\Admin\PrintTemplateController::class);
   Route::get('areas', [AreaController::class, 'index']);
   Route::post('areas', [AreaController::class, 'store']);

@@ -12,5 +12,6 @@ Route::get('dashboard', function () {
 })->middleware(['auth:web'])->name('dashboard');
 
 require __DIR__ . '/web-auth.php';
+require __DIR__ . '/web-payment.php';
 require __DIR__ . '/web-settings.php';
 require __DIR__ . '/web-admin.php';

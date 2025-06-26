@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\POS\VoucherController;
 use App\Http\Controllers\Api\POS\PrintTemplateController;
 
 
-Route::middleware('auth:api')->prefix('pos')->group(function () {
+Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
   Route::get('/orders', [OrderController::class, 'index']);
