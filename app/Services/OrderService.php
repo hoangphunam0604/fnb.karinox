@@ -193,13 +193,14 @@ class OrderService
     return $order;
   }
 
-  public function pay(Order $order)
+  public function pay(Order $order, string $payment_method = 'cash')
   {
     if ($order->payment_status === PaymentStatus::PAID) {
       // đã trả tiền rồi, không cần ghi đè
       return;
     }
     $order->paid_at = now();
+    $order->payment_method = $payment_method;
     $order->payment_status = PaymentStatus::PAID;
     $order->order_status = OrderStatus::COMPLETED;
     $order->save();

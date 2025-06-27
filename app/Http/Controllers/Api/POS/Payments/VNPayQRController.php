@@ -62,7 +62,7 @@ class VNPayQRController extends Controller
           ]
         ]);
 
-      $orderService->pay($order);
+      $orderService->pay($order, 'vnpay');
 
       return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->order_code]]);
     } catch (\Exception $e) {
