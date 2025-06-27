@@ -110,7 +110,11 @@ class VoucherService
       })
       ->where(function ($q) use ($weeksOfMonth) {
         $q->whereNull('valid_weeks_of_month')
-          ->orWhereRaw("JSON_OVERLAPS(valid_weeks_of_month, ?)", [json_encode($weeksOfMonth)]);
+          ->orWhere(function ($q2) use ($weeksOfMonth) {
+            foreach ($weeksOfMonth as $week) {
+              $q2->orWhereRaw("JSON_CONTAINS(valid_weeks_of_month, ?)", [json_encode($week)]);
+            }
+          });
       })
       ->where(function ($q) use ($month) {
         $q->whereNull('valid_months')
