@@ -25,6 +25,7 @@ class ProductResource extends JsonResource
       'manage_stock'  =>  $this->manage_stock,
       'print_label' =>  $this->print_label,
       'print_kitchen' =>  $this->print_kitchen,
+      'unit' =>  $this->unit,
       'category' => new CategoryResource($this->whenLoaded('category')),
       'attributes' => ProductAttributeResource::collection($this->whenLoaded('attributes')),
       'toppings' => ProductResource::collection($this->whenLoaded('toppings')),

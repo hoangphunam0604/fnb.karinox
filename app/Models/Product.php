@@ -34,6 +34,9 @@ class Product extends Model
   ];
 
   protected $casts = [
+    'cost_price' => 'int',
+    'regular_price' => 'int',
+    'sale_price' => 'int',
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
     'is_topping' => 'boolean',
