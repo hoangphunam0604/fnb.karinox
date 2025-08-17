@@ -47,7 +47,7 @@ class FileUploadController extends Controller
     return response()->json([
       'success'  => true,
       'filename' => $filename,
-      'url'     => $url,
+      'url'     => asset($url),
     ]);
   }
 
