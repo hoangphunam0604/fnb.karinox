@@ -36,6 +36,12 @@ class ProductService extends BaseService
     return $this->saveProduct($data, $productId);
   }
 
+  public function manufacturingAutocomplete($params, $limit = 50)
+  {
+    $query = $this->getQueryBuilder();
+    $query = $this->applySearch($query, $params);
+    return $query->orderBy('name', 'asc')->limit($limit)->get();
+  }
   /**
    * Tạo hoặc cập nhật sản phẩm
    */

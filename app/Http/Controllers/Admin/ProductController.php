@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProductRequest;
 use App\Http\Resources\Admin\ProductResource;
+use App\Http\Resources\Admin\ProductDetailResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
@@ -19,26 +20,38 @@ class ProductController extends Controller
 
   public function index(Request $request)
   {
-    $areas = $this->service->getList($request->all());
-    return ProductResource::collection($areas);
+    $items = $this->service->getList($request->all());
+    return ProductResource::collection($items);
+  }
+
+  public function manufacturingAutocomplete(Request $request)
+  {
+    $items = $this->service->manufacturingAutocomplete($request->all());
+    return ProductResource::collection($items);
   }
 
   public function store(ProductRequest $request)
   {
-    $area = $this->service->create($request->validated());
-    return new ProductResource($area);
+    $item = $this->service->create($request->validated());
+    return new ProductResource($item);
   }
 
   public function show($id)
   {
-    $area = $this->service->find($id);
-    return new ProductResource($area);
+    $item = $this->service->find($id);
+    $item->load([
+      'category',
+      'attributes',
+      'toppings',
+      'formulas.ingredient',
+    ]);
+    return new ProductDetailResource($item);
   }
 
   public function update(ProductRequest $request, $id)
   {
-    $area = $this->service->update($id, $request->validated());
-    return new ProductResource($area);
+    $item = $this->service->update($id, $request->validated());
+    return new ProductResource($item);
   }
 
   public function destroy($id)

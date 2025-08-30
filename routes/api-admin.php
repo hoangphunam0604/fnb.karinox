@@ -25,5 +25,6 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
 
   Route::get('categories/all', [CategoryController::class, 'all']);
   Route::apiResource('categories', CategoryController::class);
+  Route::get('products/manufacturing-autocomplete', [ProductController::class, 'manufacturingAutocomplete']);
   Route::apiResource('products', ProductController::class);
 });
