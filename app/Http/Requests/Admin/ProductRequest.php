@@ -49,8 +49,8 @@ class ProductRequest extends FormRequest
       // media
       'thumbnail'       => ['nullable', 'string', 'max:2048'],
 
-      'manage_stock_branches'  => ['sometimes', 'array'],
-      'manage_stock_branches.*' => ['integer', 'exists:branches,id', 'distinct'],
+      'sell_branches'  => ['sometimes', 'array'],
+      'sell_branches.*' => ['integer', 'exists:branches,id', 'distinct'],
 
       // ====== RELATION: ATTRIBUTES (pivot: value) ======
       // attributes: [{ attribute_id: 5, value: "Size L" }, ...]
@@ -133,11 +133,11 @@ class ProductRequest extends FormRequest
       'images.*.max' => 'Mỗi hình ảnh không được vượt quá 2048 ký tự.',
 
       // ====== RELATION: BRANCHES ======
-      'manage_stock_branches.array' => 'Danh sách chi nhánh phải là mảng.',
-      'manage_stock_branches.*.required' => 'Chi nhánh là bắt buộc.',
-      'manage_stock_branches.*.boolean' => 'Chi nhánh phải là true hoặc false.',
-      'manage_stock_branches.*.exists' => 'Chi nhánh không tồn tại.',
-      'manage_stock_branches.*.distinct' => 'Chi nhánh bị trùng trong danh sách.',
+      'sell_branches.array' => 'Danh sách chi nhánh phải là mảng.',
+      'sell_branches.*.required' => 'Chi nhánh là bắt buộc.',
+      'sell_branches.*.boolean' => 'Chi nhánh phải là true hoặc false.',
+      'sell_branches.*.exists' => 'Chi nhánh không tồn tại.',
+      'sell_branches.*.distinct' => 'Chi nhánh bị trùng trong danh sách.',
 
       // ====== RELATION: ATTRIBUTES ======
       'attributes.array' => 'Danh sách thuộc tính phải là mảng.',
