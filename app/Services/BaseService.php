@@ -50,7 +50,7 @@ abstract class BaseService
     return DB::transaction(fn() => $this->model()->create($data));
   }
 
-  public function update($id, array $data): Model
+  public function update($id, array $data)
   {
     return DB::transaction(function () use ($id, $data) {
       $model = $this->model()->findOrFail($id);

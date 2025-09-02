@@ -22,16 +22,13 @@ class ProductResource extends JsonResource
       'allows_sale' => $this->allows_sale,
       'is_reward_point' => $this->is_reward_point,
       'is_topping' => $this->is_topping,
-      'manage_stock'  =>  $this->manage_stock,
       'print_label' =>  $this->print_label,
       'print_kitchen' =>  $this->print_kitchen,
       'unit' =>  $this->unit,
       'thumbnail'  =>  $this->thumbnail,
-      'images'  =>  $this->images,
+      'manage_stock'  =>  $this->manage_stock,
+      'sell_branches' => $this->sell_branches,
       'category' => new CategoryResource($this->whenLoaded('category')),
-      'attributes' => ProductAttributeResource::collection($this->whenLoaded('attributes')),
-      'toppings' => ProductResource::collection($this->whenLoaded('toppings')),
-      'formulas' => ProductFormulaResource::collection($this->whenLoaded('formulas')),
     ];
   }
 }

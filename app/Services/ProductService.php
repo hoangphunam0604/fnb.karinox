@@ -8,7 +8,7 @@ use App\Models\ProductBranch;
 use App\Models\ProductAttribute;
 use App\Models\ProductFormula;
 use App\Models\ProductTopping;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class ProductService extends BaseService
@@ -23,7 +23,7 @@ class ProductService extends BaseService
   /**
    * Tạo sản phẩm
    */
-  public function create(array $data): Model
+  public function create(array $data): Product
   {
     return $this->saveProduct($data);
   }
@@ -31,7 +31,7 @@ class ProductService extends BaseService
   /**
    * Cập nhật sản phẩm
    */
-  public function update($productId, array $data): Model
+  public function update($productId, array $data)
   {
     return $this->saveProduct($data, $productId);
   }
@@ -51,22 +51,26 @@ class ProductService extends BaseService
       $product = $productId
         ? Product::findOrFail($productId)
         : new Product();
-
-      $product->fill([
-        'code' => $data['code'] ?? $product->code,
-        'name' => $data['name'] ?? $product->name,
-        'category_id' => $data['category_id'] ?? $product->category_id,
-        'product_type' => $data['product_type'] ?? $product->product_type ?? 'goods',
-        'allows_sale' => $data['allows_sale'] ?? $product->allows_sale ?? true,
-        'is_reward_point' => $data['is_reward_point'] ?? $product->is_reward_point ?? false,
-        'is_topping' => $data['is_topping'] ?? $product->is_topping ?? false,
-        'product_group' => $data['product_group'] ?? $product->product_group ?? 1,
-      ]);
+      $defaults = [
+        'product_type'   => 'goods',
+        'allows_sale'    => true,
+        'is_reward_point' => false,
+        'is_topping'     => false,
+        'print_label'    => false,
+        'print_kitchen'  => false,
+        'product_group'  => 1,
+      ];
+      // lấy danh sách field cho phép fill
+      $fields = $product->getFillable();
+      // chỉ lấy data liên quan đến product
+      $input = Arr::only($data, $fields);
+      // gộp lại: ưu tiên $data, sau đó $product cũ, cuối cùng là default
+      $merged = array_merge($defaults, $product->only($fields), $input);
+      $product->fill($merged);
 
       $product->save();
-
       // Đồng bộ dữ liệu liên quan
-      $this->syncBranches($product->id, $data['branches'] ?? []);
+      /*  $this->syncBranches($product->id, $data['branches'] ?? []); */
       $this->syncAttributes($product->id, $data['attributes'] ?? []);
       $this->syncFormulas($product->id, $data['formulas'] ?? []);
       $this->syncToppings($product->id, $data['toppings'] ?? []);
@@ -77,10 +81,13 @@ class ProductService extends BaseService
 
   protected function applySearch($query, array $params)
   {
-    if (!empty($params['keyword'])) {
+    if (!empty($params['keyword']))
       $query->where('name', 'LIKE', '%' . $params['keyword'] . '%')
         ->orWhere('code', 'LIKE', '%' . $params['keyword'] . '%');
-    }
+
+    if (!empty($params['category_id']))
+      $query->where('category_id', $params['category_id']);
+
     return $query;
   }
 

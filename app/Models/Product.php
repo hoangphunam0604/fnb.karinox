@@ -13,25 +13,26 @@ class Product extends Model
 
   protected $fillable = [
     'product_group',
-    'product_type',
-    'category_id',
-    'category_name',
+    //info
+    'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
+    'category_id', //danh mục sản phẩm
     'code',
     'barcode',
     'name',
-    'description',
-    'cost_price',
-    'regular_price',
-    'sale_price',
-    'unit',
-    'status',
-    'allows_sale',
-    'is_reward_point',
-    'is_topping',
-    'manage_stock',
-    'print_label',
-    'print_kitchen',
-    'images',
+    'description', // Mô tả
+    'cost_price', //Giá nhập, giá gốc
+    'regular_price', //Giá bán
+    'sale_price', // Giá giảm
+    'unit', //Đơn vị
+    'status', //Bán | ngừng bán
+    'allows_sale', //Bán trực tiếp
+    'is_reward_point', //Tích điểm
+    'is_topping', //Có thể sử dụng làm topping
+    'print_label', // In tem
+    'print_kitchen', // In phiếu bếp
+    'thumbnail',
+    'manage_stock', //Cho phép quản lý tồn kho
+    'sell_branches' //Danh sách chi nhánh cần quản lý tồn kho
   ];
 
   protected $casts = [
@@ -44,9 +45,9 @@ class Product extends Model
     'manage_stock' => 'boolean',
     'print_label' => 'boolean',
     'print_kitchen' => 'boolean',
-    'images' => 'array',
     'product_type'  =>   ProductType::class,
     'status'  => CommonStatus::class,
+    'sell_branches' => 'array',
   ];
   /**
    * Thiết lập mặc định `manage_stock` dựa vào `product_type`
@@ -66,6 +67,13 @@ class Product extends Model
     static::updating(function ($product) {
       if ($product->product_type !== 'goods') {
         $product->manage_stock = false; // 🔥 Đổi loại khác sẽ tự động tắt quản lý tồn kho
+      }
+    });
+    static::saving(function ($product) {
+      // chuẩn hoá để luôn là mảng ID duy nhất, kiểu int
+      if (is_array($product->sell_branches)) {
+        $ids = array_values(array_unique(array_map('intval', $product->sell_branches)));
+        $product->sell_branches = $ids;
       }
     });
   }
@@ -94,13 +102,9 @@ class Product extends Model
   {
     return $this->hasMany(ProductTopping::class);
   }
+
   public function getPriceAttribute()
   {
     return $this->sale_price ?? $this->regular_price;
-  }
-
-  public function getThumbnailAttribute()
-  {
-    return !empty($this->images) && is_array($this->images) ? $this->images[0] : "https://cdn1-fnb-userdata.kiotviet.vn/2024/02/karinopr/images/7b6c86ec16ce4a11b3fbb9ace3fd05f5";
   }
 }

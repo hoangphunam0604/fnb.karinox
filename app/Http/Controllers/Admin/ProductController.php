@@ -41,6 +41,7 @@ class ProductController extends Controller
     $item = $this->service->find($id);
     $item->load([
       'category',
+      'branches',
       'attributes',
       'toppings',
       'formulas.ingredient',
@@ -51,6 +52,7 @@ class ProductController extends Controller
   public function update(ProductRequest $request, $id)
   {
     $item = $this->service->update($id, $request->validated());
+    return $item;
     return new ProductResource($item);
   }
 
