@@ -49,8 +49,14 @@ class ProductRequest extends FormRequest
       // media
       'thumbnail'       => ['nullable', 'string', 'max:2048'],
 
-      'sell_branches'  => ['sometimes', 'array'],
-      'sell_branches.*' => ['integer', 'exists:branches,id', 'distinct'],
+      'images'  => ['sometimes', 'array'],
+      'images.*' => ['string'],
+
+      // ====== RELATION: BRANCHES (pivot: is_selling stock_quantity) ======
+      // branches: [{ branch_id: 5, is_selling: true }, ...]
+      'branches'                           => ['sometimes', 'array'],
+      'branches.*.branch_id'               => ['required', 'integer', 'exists:branches,id', 'distinct'],
+      'branches.*.is_selling'              => ['required', 'boolean'],
 
       // ====== RELATION: ATTRIBUTES (pivot: value) ======
       // attributes: [{ attribute_id: 5, value: "Size L" }, ...]
@@ -133,11 +139,16 @@ class ProductRequest extends FormRequest
       'images.*.max' => 'Mỗi hình ảnh không được vượt quá 2048 ký tự.',
 
       // ====== RELATION: BRANCHES ======
-      'sell_branches.array' => 'Danh sách chi nhánh phải là mảng.',
-      'sell_branches.*.required' => 'Chi nhánh là bắt buộc.',
-      'sell_branches.*.boolean' => 'Chi nhánh phải là true hoặc false.',
-      'sell_branches.*.exists' => 'Chi nhánh không tồn tại.',
-      'sell_branches.*.distinct' => 'Chi nhánh bị trùng trong danh sách.',
+      'branches.array' => 'Danh sách chi nhánh phải là một mảng.',
+
+      'branches.*.branch_id.required' => 'Mã chi nhánh là bắt buộc.',
+      'branches.*.branch_id.integer'  => 'Mã chi nhánh phải là số nguyên.',
+      'branches.*.branch_id.exists'   => 'Chi nhánh không tồn tại trong hệ thống.',
+      'branches.*.branch_id.distinct' => 'Chi nhánh bị trùng trong danh sách.',
+
+      'branches.*.is_selling.required' => 'Trạng thái bán tại chi nhánh là bắt buộc.',
+      'branches.*.is_selling.boolean'  => 'Trạng thái bán tại chi nhánh phải là true hoặc false.',
+
 
       // ====== RELATION: ATTRIBUTES ======
       'attributes.array' => 'Danh sách thuộc tính phải là mảng.',

@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('product_branches', function (Blueprint $table) {
       $table->foreignId('product_id')->constrained()->onDelete('cascade');
       $table->foreignId('branch_id')->constrained()->onDelete('cascade');
+      $table->boolean('is_selling')->default(true);
       $table->decimal('stock_quantity', 10, 2)->default(0);
       $table->primary(['product_id', 'branch_id']); // Khóa chính là cặp product_id + branch_id
     });

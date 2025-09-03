@@ -32,7 +32,7 @@ class Product extends Model
     'print_kitchen', // In phiếu bếp
     'thumbnail',
     'manage_stock', //Cho phép quản lý tồn kho
-    'sell_branches' //Danh sách chi nhánh cần quản lý tồn kho
+    'images' //Danh sách chi nhánh cần quản lý tồn kho
   ];
 
   protected $casts = [
@@ -47,7 +47,7 @@ class Product extends Model
     'print_kitchen' => 'boolean',
     'product_type'  =>   ProductType::class,
     'status'  => CommonStatus::class,
-    'sell_branches' => 'array',
+    'images' => 'array',
   ];
   /**
    * Thiết lập mặc định `manage_stock` dựa vào `product_type`
@@ -84,7 +84,7 @@ class Product extends Model
 
   public function branches()
   {
-    return $this->belongsToMany(Branch::class, 'product_branches')->withPivot('stock_quantity');
+    return $this->belongsToMany(Branch::class, 'product_branches')->withPivot(['is_selling', 'stock_quantity']);
   }
 
   public function attributes()

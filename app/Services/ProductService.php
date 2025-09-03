@@ -70,7 +70,7 @@ class ProductService extends BaseService
 
       $product->save();
       // Đồng bộ dữ liệu liên quan
-      /*  $this->syncBranches($product->id, $data['branches'] ?? []); */
+      $this->syncBranches($product, $data['branches'] ?? []);
       $this->syncAttributes($product->id, $data['attributes'] ?? []);
       $this->syncFormulas($product->id, $data['formulas'] ?? []);
       $this->syncToppings($product->id, $data['toppings'] ?? []);
@@ -94,18 +94,32 @@ class ProductService extends BaseService
   /**
    * Đồng bộ chi nhánh sản phẩm
    */
-  private function syncBranches($productId, array $branches)
+  private function syncBranches(Product $product, array $branches)
   {
-    ProductBranch::where('product_id', $productId)->delete();
+    $wantMap = [];
+    foreach ($branches as $row) {
+      $branch_id = (int)($row['branch_id'] ?? 0);
+      if ($branch_id <= 0) continue;
+      $wantMap[$branch_id] = (bool)($row['is_selling'] ?? false);
+    }
+    $allBranchIds = $product->branches()->pluck('branches.id')->all(); // hiện có trên pivot
+    $incomingIds  = array_keys($wantMap);
 
-    if (!empty($branches)) {
-      $branchData = array_map(fn($branch) => [
-        'product_id' => $productId,
-        'branch_id' => $branch['branch_id'],
-        'stock_quantity' => $branch['stock_quantity'] ?? 0,
-      ], $branches);
-
-      ProductBranch::insert($branchData);
+    // Tạo mới các pivot CÒN THIẾU (không xoá cái nào)
+    $toAttach = array_diff($incomingIds, $allBranchIds);
+    if (!empty($toAttach)) {
+      $attachData = [];
+      foreach ($toAttach as $bid) {
+        $attachData[$bid] = ['is_selling' => $wantMap[$bid]];
+      }
+      $product->branches()->attach($attachData);
+    }
+    // Cập nhật các pivot đã có
+    $toUpdate = array_intersect($incomingIds, $allBranchIds);
+    foreach ($toUpdate as $bid) {
+      $product->branches()->updateExistingPivot($bid, [
+        'is_selling' => $wantMap[$bid],
+      ]);
     }
   }
 

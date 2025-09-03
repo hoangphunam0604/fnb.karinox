@@ -13,6 +13,7 @@ class ProductBranchResource extends JsonResource
       'id' => $this->id,
       'product_id' => $this->product_id,
       'branch_id' => $this->branch_id,
+      'is_selling' => $this->is_selling ?? false,
       'stock_quantity' => $this->stock_quantity
     ];
   }

@@ -33,7 +33,7 @@ return new class extends Migration
       $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
       $table->boolean('print_kitchen')->default(true); // In phiếu bếp
       $table->string('thumbnail')->default('https://karinox.vn/img/product-image.png');
-      $table->json('sell_branches')->nullable();
+      $table->json('images')->nullable();
     });
   }
 
