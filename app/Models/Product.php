@@ -89,8 +89,7 @@ class Product extends Model
 
   public function attributes()
   {
-    return $this->belongsToMany(Attribute::class, 'product_attributes')
-      ->withPivot('value');
+    return $this->belongsToMany(Attribute::class, 'product_attributes')->withPivot('value');
   }
 
   public function formulas()

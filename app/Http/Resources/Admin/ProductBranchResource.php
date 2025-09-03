@@ -10,11 +10,10 @@ class ProductBranchResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
-      'id' => $this->id,
-      'product_id' => $this->product_id,
-      'branch_id' => $this->branch_id,
-      'is_selling' => $this->is_selling ?? false,
-      'stock_quantity' => $this->stock_quantity
+      'branch_name' => $this->name,
+      'branch_id' => $this->id,
+      'is_selling' => (bool) ($this->pivot->is_selling ?? false),
+      'stock_quantity' => (int) $this->pivot->stock_quantity
     ];
   }
 }

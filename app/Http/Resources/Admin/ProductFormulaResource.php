@@ -14,6 +14,11 @@ class ProductFormulaResource extends JsonResource
       'product_id' => $this->product_id,
       'ingredient_id' => $this->ingredient_id,
       'quantity' => $this->quantity,
+
+      // Quan hệ: sản phẩm chính
+      'product' => new ProductResource($this->whenLoaded('product')),
+
+      // Quan hệ: thành phần (ingredient)
       'ingredient' => new ProductResource($this->whenLoaded('ingredient')),
     ];
   }

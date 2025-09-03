@@ -44,7 +44,7 @@ class ProductController extends Controller
       'branches',
       'attributes',
       'toppings',
-      'formulas.ingredient',
+      'formulas',
     ]);
     return new ProductDetailResource($item);
   }

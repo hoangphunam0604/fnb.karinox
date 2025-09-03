@@ -19,10 +19,7 @@ class ProductFormula extends Model
     'ingredient_id', // Sản phẩm thành phần
     'quantity', // Số lượng của thành phần trong combo
   ];
-
   protected $casts = [
-    'product_id' => 'int',
-    'ingredient_id' => 'int',
     'quantity' => 'int',
   ];
 
