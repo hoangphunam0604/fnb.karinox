@@ -10,11 +10,9 @@ class ProductFormulaResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
-      'id' => $this->id,
       'product_id' => $this->product_id,
       'ingredient_id' => $this->ingredient_id,
       'quantity' => $this->quantity,
-
       // Quan hệ: sản phẩm chính
       'product' => new ProductResource($this->whenLoaded('product')),
 
