@@ -43,7 +43,7 @@ class ProductController extends Controller
       'category',
       'branches',
       'attributes',
-      'toppings',
+      'toppings.topping',
       'formulas.ingredient',
     ]);
     return new ProductDetailResource($item);

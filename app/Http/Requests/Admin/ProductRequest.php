@@ -75,8 +75,7 @@ class ProductRequest extends FormRequest
       // ====== RELATION: TOPPINGS ======
       // toppings: [{ product_id: 99, extra_price: 5000 }, ...]
       'toppings'                         => ['sometimes', 'array'],
-      'toppings.*.product_id'            => ['required', 'integer', 'exists:products,id', 'distinct'],
-      'toppings.*.extra_price'           => ['nullable', 'integer', 'min:0'],
+      'toppings.*.topping_id'            => ['required', 'integer', 'exists:products,id', 'distinct']
     ];
   }
 
@@ -172,12 +171,10 @@ class ProductRequest extends FormRequest
 
       // ====== RELATION: TOPPINGS ======
       'toppings.array' => 'Danh sách topping phải là mảng.',
-      'toppings.*.product_id.required' => 'Sản phẩm topping là bắt buộc.',
-      'toppings.*.product_id.integer' => 'Sản phẩm topping phải là số nguyên.',
-      'toppings.*.product_id.exists' => 'Sản phẩm topping không tồn tại.',
-      'toppings.*.product_id.distinct' => 'Sản phẩm topping bị trùng trong danh sách.',
-      'toppings.*.extra_price.integer' => 'Giá thêm topping phải là số nguyên.',
-      'toppings.*.extra_price.min' => 'Giá thêm topping không được nhỏ hơn 0.',
+      'toppings.*.topping_id.required' => 'Sản phẩm topping là bắt buộc.',
+      'toppings.*.topping_id.integer' => 'Sản phẩm topping phải là số nguyên.',
+      'toppings.*.topping_id.exists' => 'Sản phẩm topping không tồn tại.',
+      'toppings.*.topping_id.distinct' => 'Sản phẩm topping bị trùng trong danh sách.',
     ];
   }
 }

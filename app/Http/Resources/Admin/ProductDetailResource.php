@@ -12,7 +12,7 @@ class ProductDetailResource extends ProductResource
       'category' => new CategoryResource($this->whenLoaded('category')),
       'branches'  =>  ProductBranchResource::collection($this->whenLoaded('branches')),
       'attributes' => ProductAttributeResource::collection($this->whenLoaded('attributes')),
-      'toppings' => ProductResource::collection($this->whenLoaded('toppings')),
+      'toppings' => ProductToppingResource::collection($this->whenLoaded('toppings')),
       'formulas' => ProductFormulaResource::collection($this->whenLoaded('formulas')),
     ]);
   }

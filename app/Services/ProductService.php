@@ -91,8 +91,10 @@ class ProductService extends BaseService
     if (!empty($params['category_id']))
       $query->where('category_id', $params['category_id']);
 
-    if (!empty($params['is_topping']))
-      $query->where('is_topping', $params['is_topping']);
+    if (!empty($params['is_topping'])):
+      $isTopping = filter_var($params['is_topping'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+      $query->where('is_topping', $isTopping);
+    endif;
 
     // excludes có thể là array hoặc chuỗi "1,2,3"
     $excludes = $params['excludes'] ?? [];
@@ -179,10 +181,10 @@ class ProductService extends BaseService
   /**
    * Đồng bộ topping sản phẩm (chỉ nhận các sản phẩm có is_topping = true)
    */
-  private function syncToppings($productId, array $toppingIds)
+  private function syncToppings($productId, array $toppings)
   {
     ProductTopping::where('product_id', $productId)->delete();
-
+    $toppingIds =  array_map(fn($topping) => $topping['topping_id'], $toppings);
     if (!empty($toppingIds)) {
       // Chỉ lấy những sản phẩm có is_topping = true
       $validToppings = Product::whereIn('id', $toppingIds)
@@ -211,7 +213,7 @@ class ProductService extends BaseService
   {
     // Lấy danh sách sản phẩm thuộc chi nhánh được chọn
     $products = Product::select('products.*', 'categories.name as category_name')
-      ->with('toppings.toppingProduct')
+      ->with('toppings.topping')
       ->join('product_branches', 'products.id', '=', 'product_branches.product_id')
       ->join('categories', 'products.category_id', '=', 'categories.id')
       ->where('product_branches.branch_id', $branchId)

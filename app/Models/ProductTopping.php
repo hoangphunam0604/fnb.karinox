@@ -25,7 +25,7 @@ class ProductTopping extends Model
     return $this->belongsTo(Product::class);
   }
 
-  public function toppingProduct()
+  public function topping()
   {
     return $this->belongsTo(Product::class, 'topping_id');
   }

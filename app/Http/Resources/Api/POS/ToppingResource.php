@@ -10,9 +10,9 @@ class ToppingResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
-      'topping_id' => $this->toppingProduct->id,
-      'topping_name' => $this->toppingProduct->name,
-      'price' => $this->toppingProduct->price,
+      'topping_id' => $this->topping->id,
+      'topping_name' => $this->topping->name,
+      'price' => $this->topping->price,
     ];
   }
 }
