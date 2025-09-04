@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->unsignedTinyInteger('product_group')->default(1);
-      $table->enum('product_type', ['goods', 'processed', 'service', 'combo'])->default('goods');
+      $table->enum('product_type', ['ingredient', 'goods', 'processed', 'service', 'combo'])->default('goods');
       $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
       $table->string('code');
       $table->string('barcode')->nullable();
@@ -26,12 +26,12 @@ return new class extends Migration
       $table->decimal('sale_price', 10, 2)->nullable();
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
-      $table->boolean('allows_sale')->default(true);
-      $table->boolean('is_reward_point')->default(true);
+      $table->boolean('allows_sale')->default(false);
+      $table->boolean('is_reward_point')->default(false);
       $table->boolean('is_topping')->default(false);
-      $table->boolean('manage_stock')->default(true);
+      $table->boolean('manage_stock')->default(false);
       $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
-      $table->boolean('print_kitchen')->default(true); // In phiếu bếp
+      $table->boolean('print_kitchen')->default(false); // In phiếu bếp
       $table->string('thumbnail')->default('https://karinox.vn/img/product-image.png');
       $table->json('images')->nullable();
     });

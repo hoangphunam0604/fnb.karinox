@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 
 enum ProductType: string
 {
+  case INGREDIENT = 'ingredient';
   case GOODS = 'goods';
   case PROCESSED = 'processed';
   case SERVICE = 'service';
@@ -14,6 +15,7 @@ enum ProductType: string
   public function getLabel(): string
   {
     return match ($this) {
+      self::INGREDIENT => 'Nguyên liệu',
       self::GOODS => 'Hoàng hóa',
       self::PROCESSED => 'Hàng chế biến',
       self::SERVICE => 'Dịch vụ',
