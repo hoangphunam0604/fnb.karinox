@@ -53,7 +53,7 @@ class ProductService extends BaseService
         : new Product();
       $defaults = [
         'product_type'   => 'goods',
-        'allows_sale'    => true,
+        'allows_sale'    => false,
         'is_reward_point' => false,
         'is_topping'     => false,
         'print_label'    => false,
@@ -65,9 +65,8 @@ class ProductService extends BaseService
       // chỉ lấy data liên quan đến product
       $input = Arr::only($data, $fields);
       // gộp lại: ưu tiên $data, sau đó $product cũ, cuối cùng là default
-      $merged = array_merge($defaults, $product->only($fields), $input);
+      $merged = array_merge($defaults, $productId ? $product->only($fields) : [], $input);
       $product->fill($merged);
-
       $product->save();
       // Đồng bộ dữ liệu liên quan
       $this->syncBranches($product, $data['branches'] ?? []);
