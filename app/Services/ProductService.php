@@ -81,13 +81,30 @@ class ProductService extends BaseService
 
   protected function applySearch($query, array $params)
   {
-    if (!empty($params['keyword']))
-      $query->where('name', 'LIKE', '%' . $params['keyword'] . '%')
-        ->orWhere('code', 'LIKE', '%' . $params['keyword'] . '%');
-
+    if (!empty($params['keyword'])):
+      $keyword = $params['keyword'];
+      $query->where(function ($subQuery) use ($keyword) {
+        $subQuery->where('name', 'LIKE', '%' . $keyword . '%')
+          ->orWhere('code', 'LIKE', '%' . $keyword . '%');
+      });
+    endif;
     if (!empty($params['category_id']))
       $query->where('category_id', $params['category_id']);
 
+    if (!empty($params['is_topping']))
+      $query->where('is_topping', $params['is_topping']);
+
+    // excludes có thể là array hoặc chuỗi "1,2,3"
+    $excludes = $params['excludes'] ?? [];
+    if (is_string($excludes)) {
+      $excludes = array_filter(array_map('intval', explode(',', $excludes)));
+    } elseif (is_array($excludes)) {
+      $excludes = array_filter(array_map('intval', $excludes));
+    }
+
+    if (!empty($excludes)) {
+      $query->whereNotIn('id', $excludes);
+    }
     return $query;
   }
 
