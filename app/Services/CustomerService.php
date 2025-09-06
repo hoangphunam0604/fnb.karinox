@@ -4,40 +4,35 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\MembershipLevel;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class CustomerService
+class CustomerService extends BaseService
 {
-  /**
-   * Tạo khách hàng mới
-   */
-  public function createCustomer(array $data)
+
+  protected function model(): Customer
   {
-    $data['membership_level_id']  = 1;
-    return Customer::create($data);
+    return new Customer();
   }
 
-  /**
-   * Cập nhật thông tin khách hàng
-   */
-  public function updateCustomer($customerId, array $data)
+  protected function applySearch($query, array $params)
   {
-    $customer = Customer::findOrFail($customerId);
-    $customer->update($data);
-    return $customer;
-  }
+    if (!empty($params['keyword'])):
+      $keyword = $params['keyword'];
+      $query->where(function ($subQuery) use ($keyword) {
+        $subQuery->where('phone', 'LIKE', '%' . $keyword . '%')
+          ->orWhere('fullname', 'LIKE', '%' . $keyword . '%')
+          ->orWhere('email', 'LIKE', '%' . $keyword . '%')
+          ->orWhere('loyalty_card_number', 'LIKE', '%' . $keyword . '%');
+      });
+    endif;
+    if (!empty($params['membership_level_id']))
+      $query->where('membership_level_id', $params['membership_level_id']);
 
-  public function saveCustomer(array $data) {}
+    if (!empty($params['status']))
+      $query->where('status', $params['status']);
 
-  /**
-   * Xóa khách hàng (chỉ khi không có đơn hàng)
-   */
-  public function deleteCustomer($customerId)
-  {
-    $customer = Customer::findOrFail($customerId);
-
-    return $customer->delete();
+    $query = parent::applySearch($query, $params);
+    return $query;
   }
 
   /**
@@ -56,21 +51,6 @@ class CustomerService
     }
   }
 
-  /**
-   * Lấy danh sách khách hàng (phân trang)
-   */
-  public function getCustomers($perPage = 10, $keyword = null)
-  {
-    return Customer::with('membershipLevel')->when($keyword, function ($query) use ($keyword) {
-      $query->where(function ($q) use ($keyword) {
-        $q->where('phone', 'like', "%$keyword%")
-          ->orWhere('email', 'like', "%$keyword%")
-          ->orWhere('loyalty_card_number', 'like', "%$keyword%")
-          ->orWhere('fullname', 'like', "%$keyword%");
-      });
-    })
-      ->orderBy('created_at', 'desc')->paginate($perPage);
-  }
 
   public function getCustomerMembershipLevel($customerId)
   {

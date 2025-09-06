@@ -17,8 +17,28 @@ abstract class BaseService
 
   protected function applySearch($query, array $params)
   {
-    if (!empty($params['keyword'])) {
-      $query->where('name', 'LIKE', '%' . $params['keyword'] . '%');
+    // ids có thể là array hoặc chuỗi "1,2,3"
+    $ids = $params['ids'] ?? [];
+    if (is_string($ids)) {
+      $ids = array_filter(array_map('intval', explode(',', $ids)));
+    } elseif (is_array($ids)) {
+      $ids = array_filter(array_map('intval', $ids));
+    }
+
+    if (!empty($ids)) {
+      $query->whereIn('id', $ids);
+    }
+
+    // excludes có thể là array hoặc chuỗi "1,2,3"
+    $excludes = $params['excludes'] ?? [];
+    if (is_string($excludes)) {
+      $excludes = array_filter(array_map('intval', explode(',', $excludes)));
+    } elseif (is_array($excludes)) {
+      $excludes = array_filter(array_map('intval', $excludes));
+    }
+
+    if (!empty($excludes)) {
+      $query->whereNotIn('id', $excludes);
     }
     return $query;
   }

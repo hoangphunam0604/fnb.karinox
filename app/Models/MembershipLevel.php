@@ -22,7 +22,9 @@ class MembershipLevel extends Model
     'end_of_year_gifts',
   ];
   protected $casts = [
+    'rank' => 'integer',
     'min_spent' => 'integer',
-    'max_spent' => 'integer'
+    'max_spent' => 'integer',
+    'reward_multiplier' => 'float',
   ];
 }

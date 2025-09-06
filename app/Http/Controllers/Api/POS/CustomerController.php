@@ -21,7 +21,7 @@ class CustomerController extends Controller
 
   public function index(Request $request)
   {
-    $customers = $this->customerService->getCustomers(10, $request->keyword);
+    $customers = $this->customerService->getList($request->all());
     return response()->json([
       'success' => true,
       'data' => CustomerResource::collection($customers)
@@ -30,7 +30,7 @@ class CustomerController extends Controller
 
   public function store(CustomerRequest $request)
   {
-    $customer = $this->customerService->createCustomer($request->validated());
+    $customer = $this->customerService->create($request->validated());
     return response()->json([
       'success' => true,
       'data' => new CustomerResource($customer)
@@ -39,7 +39,7 @@ class CustomerController extends Controller
 
   public function update(CustomerRequest $request, int $customerId)
   {
-    $customer = $this->customerService->updateCustomer($customerId, $request->validated());
+    $customer = $this->customerService->update($customerId, $request->validated());
 
     return response()->json([
       'success' => true,

@@ -24,12 +24,6 @@ class ProductController extends Controller
     return ProductResource::collection($items);
   }
 
-  public function manufacturingAutocomplete(Request $request)
-  {
-    $items = $this->service->manufacturingAutocomplete($request->all());
-    return ProductResource::collection($items);
-  }
-
   public function store(ProductRequest $request)
   {
     $item = $this->service->create($request->validated());
@@ -52,7 +46,6 @@ class ProductController extends Controller
   public function update(ProductRequest $request, $id)
   {
     $item = $this->service->update($id, $request->validated());
-    return $item;
     return new ProductResource($item);
   }
 

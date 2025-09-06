@@ -95,17 +95,7 @@ class ProductService extends BaseService
       $query->where('is_topping', $isTopping);
     endif;
 
-    // excludes có thể là array hoặc chuỗi "1,2,3"
-    $excludes = $params['excludes'] ?? [];
-    if (is_string($excludes)) {
-      $excludes = array_filter(array_map('intval', explode(',', $excludes)));
-    } elseif (is_array($excludes)) {
-      $excludes = array_filter(array_map('intval', $excludes));
-    }
-
-    if (!empty($excludes)) {
-      $query->whereNotIn('id', $excludes);
-    }
+    $query = parent::applySearch($query, $params);
     return $query;
   }
 

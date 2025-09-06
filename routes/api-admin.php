@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\TableAndRoomController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\FileUploadController;
+use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\Admin\ProductController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('admin')->group(function () {
@@ -22,6 +24,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::apiResource('attributes', AttributeController::class);
   Route::get('branches/all', [BranchController::class, 'all']);
   Route::apiResource('branches', BranchController::class);
+  Route::apiResource('customers', CustomerController::class);
+  Route::apiResource('membership-levels', MembershipLevelController::class);
 
   Route::get('categories/all', [CategoryController::class, 'all']);
   Route::apiResource('categories', CategoryController::class);

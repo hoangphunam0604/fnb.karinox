@@ -20,10 +20,11 @@ https://sandbox.vnpayment.vn/devreg/
 
 hãy giúp tôi tạo các mục dưới đây nhé
 đối với Laravel
-
-- Controller trong namespace App\Http\Controllers\Admin (hãy sử dụng inject Service)
-- Request trong namespace App\Http\Request\Admin
-- Resource trong namespace App\Http\Resource\Admin
+- Tái cấu trúc service đã gửi để kế thừa BaseService, giữ lại các function riêng
+- tạo Request trong namespace App\Http\Request\Admin
+- tạo Resource trong namespace App\Http\Resource\Admin
+- tạo Controller trong namespace App\Http\Controllers\Admin (hãy sử dụng inject Service, Request và Resonse vừa tạo)
+- Tạo router
 
 Đối với frontend (vuetify)
 
@@ -38,11 +39,6 @@ hãy ghi nhớ lại những việc cần làm sau cho từng phần, tôi sẽ 
 
 đối với Laravel
 
-- Tái cấu trúc service đã gửi để kế thừa BaseService, giữ lại các function riêng
-- tạo Request trong namespace App\Http\Request\Admin
-- tạo Resource trong namespace App\Http\Resource\Admin
-- tạo Controller trong namespace App\Http\Controllers\Admin (hãy sử dụng inject Service, Request và Resonse vừa tạo)
-- Tạo router
 
 Đối với frontend (vuetify)
 
