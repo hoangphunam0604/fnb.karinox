@@ -89,8 +89,8 @@ class InvoiceService extends BaseService
         'total_price_without_vat' => $taxData['total_price_without_vat'],
 
         'paid_amount' => $paidAmount,
-        'invoice_status' => InvoiceStatus::PENDING,
-        'payment_status' => PaymentStatus::UNPAID,
+        'invoice_status' => InvoiceStatus::COMPLETED,
+        'payment_status' => $paidAmount == $order->total_price ? PaymentStatus::PAID : PaymentStatus::UNPAID,
         'note' => $order->note,
       ]);
       $this->voucherService->transferUsedPointsToInvoice($order->id, $invoice->id);

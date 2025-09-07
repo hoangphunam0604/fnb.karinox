@@ -10,6 +10,7 @@ class InvoiceResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
+      'id' =>  $this->id,
       'branch_id' =>  $this->branch_id,
       'order_id'  =>  $this->order_id,
       'code'  =>  $this->code,
