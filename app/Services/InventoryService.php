@@ -192,11 +192,11 @@ class InventoryService
       ]);
 
       // Lấy danh sách các món trong đơn hàng
-      $orderItems = $invoice->order->items;
+      $items = $invoice->order->items;
 
       // Lấy danh sách tất cả sản phẩm và topping trong đơn hàng
-      $productIds = $orderItems->pluck('product_id')->merge(
-        $orderItems->flatMap->toppings->pluck('product_id')
+      $productIds = $items->pluck('product_id')->merge(
+        $items->flatMap->toppings->pluck('product_id')
       )->unique();
 
       // Kiểm tra sản phẩm nào đã được trừ kho trước đó khi bếp chế biến
@@ -207,7 +207,7 @@ class InventoryService
         ->pluck('product_id')
         ->toArray();
 
-      foreach ($orderItems as $orderItem) {
+      foreach ($items as $orderItem) {
         // Nếu món chính đã được trừ kho trước đó, bỏ qua
         if (in_array($orderItem->product_id, $alreadyDeductedProducts)) {
           continue;

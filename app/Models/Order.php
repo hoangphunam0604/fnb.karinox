@@ -125,7 +125,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     return $this->hasMany(OrderHistory::class);
   }
 
-  public function orderItems()
+  public function items()
   {
     return $this->hasMany(OrderItem::class);
   }
@@ -135,10 +135,11 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     return $this->belongsTo(Voucher::class)->withDefault([]);
   }
 
-  public function markAsCompleted()
+  public function markAsCompleted(): Order
   {
     $this->update(['order_status' => OrderStatus::COMPLETED]);
     event(new OrderCompleted($this));
+    return $this;
   }
   /**
    * Kiểm tra đơn hàng đã hoàn tất chưa

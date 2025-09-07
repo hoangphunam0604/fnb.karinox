@@ -15,9 +15,9 @@ class CashPaymentController extends Controller
    */
   public function confirm(Request $request, OrderService $orderService)
   {
-    $order = Order::where('code', $request->input('order_code'))->firstOrFail();
+    $order = Order::where('order_code', $request->input('order_code'))->firstOrFail();
 
-    $orderService->completeOrder($order);
+    $order = $orderService->completeOrder($order);
 
     return response()->json([
       'message' => 'Thanh toán tiền mặt thành công',

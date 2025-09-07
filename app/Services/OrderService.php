@@ -44,7 +44,7 @@ class OrderService
     $orders = Order::where('table_id', $tableId)
       ->where('branch_id', $branchId)
       ->where('order_status', OrderStatus::PENDING)
-      ->with(['orderItems.toppings', 'customer.membershipLevel', 'table'])
+      ->with(['items.toppings', 'customer.membershipLevel', 'table'])
       ->get();
 
     // Nếu chưa có đơn nào thì tạo mới
@@ -56,7 +56,7 @@ class OrderService
         'total_price' => 0,
       ]);
 
-      $order->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
       $orders->push($order);
     }
 
@@ -67,14 +67,14 @@ class OrderService
    */
   public function findOrderByCode($code)
   {
-    return Order::with(['orderItems.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
   public function findOrderById($id)
   {
-    return Order::with(['orderItems.toppings', 'customer.membershipLevel', 'table'])->where('id', $id)->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('id', $id)->first();
   }
   /**
    * Lấy danh sách đơn đặt hàng (phân trang)
@@ -109,8 +109,8 @@ class OrderService
     return DB::transaction(function () use ($data, $orderId) {
       $order = $this->prepareOrder($data, $orderId);
 
-      if (!empty($data['order_items'])) {
-        $this->updateOrderItems($order, $data['order_items']);
+      if (!empty($data['items'])) {
+        $this->updateItems($order, $data['items']);
       } else {
         // Nếu không có sản phẩm, xóa tất cả sản phẩm cũ
         OrderItem::where('order_id', $order->id)->delete();
@@ -134,7 +134,7 @@ class OrderService
   public function updateTotalPrice(Order $order): void
   {
     // 1️⃣ Tính tổng tiền sản phẩm & topping (trước giảm giá)
-    $subtotal = $order->orderItems->sum(fn($item) => $item->total_price);
+    $subtotal = $order->items->sum(fn($item) => $item->total_price);
 
     // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
     $discountAmount = $order->discount_amount ?? 0;
@@ -166,9 +166,9 @@ class OrderService
   /**
    * Xác nhận đơn hàng
    */
-  public function completeOrder($orderId): Order
+  public function completeOrder(Order $order): Order
   {
-    return $this->updateOrderStatus($orderId, OrderStatus::COMPLETED);
+    return $order->markAsCompleted();
   }
 
   /**
@@ -258,7 +258,7 @@ class OrderService
     $order->customer_id = null;
     $order->save();
     $order->refresh();
-    $order->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
@@ -267,7 +267,7 @@ class OrderService
     $order = Order::findOrFail($orderId);
     $this->pointService->restoreTransactionRewardPoints($order);
     $order->refresh();
-    $order->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
@@ -276,7 +276,7 @@ class OrderService
     $order = Order::findOrFail($orderId);
     $this->voucherService->restoreVoucherUsage($order);
     $order->refresh();
-    $order->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
@@ -284,11 +284,11 @@ class OrderService
   {
     return DB::transaction(function () use ($orderId) {
       $now = now()->toDateTimeString();
-      $order = Order::with(['orderItems.toppings', 'customer.membershipLevel', 'table'])
+      $order = Order::with(['items.toppings', 'customer.membershipLevel', 'table'])
         ->findOrFail($orderId);
 
       // Cập nhật toàn bộ item chưa in tem
-      $order->orderItems()
+      $order->items()
         ->where('print_label', true)
         ->where('printed_label', false)
         ->update([
@@ -297,7 +297,7 @@ class OrderService
         ]);
 
       // Cập nhật toàn bộ item chưa in bếp
-      $order->orderItems()
+      $order->items()
         ->where('print_kitchen', true)
         ->where('printed_kitchen', false)
         ->update([
@@ -306,7 +306,7 @@ class OrderService
         ]);
 
       // Lấy lại dữ liệu để in (sau khi đã cập nhật)
-      $allItems = $order->orderItems()->with('toppings')->get();
+      $allItems = $order->items()->with('toppings')->get();
       // Tách lại dữ liệu theo mục đích in (phân loại in trước/sau)
       $labels = $allItems->filter(fn($item) => optional($item->printed_label_at)?->toDateTimeString() === $now);
       $kitchenItems = $allItems->filter(fn($item) => optional($item->printed_kitchen_at)?->toDateTimeString() === $now);
@@ -360,14 +360,14 @@ class OrderService
     $order->save();
     $this->voucherService->applyVoucher($order, $oldOrder->voucher_code);
     $this->updateTotalPrice($order);
-    $order->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
   public function splitOrder(int $orderId, array $splitItems): array
   {
     DB::transaction(function () use ($orderId, $splitItems, &$originalOrder, &$newOrder) {
-      $originalOrder = Order::with('orderItems.toppings')->findOrFail($orderId);
+      $originalOrder = Order::with('items.toppings')->findOrFail($orderId);
 
       // Tạo đơn hàng mới
       $newOrder = $originalOrder->replicate();
@@ -377,7 +377,7 @@ class OrderService
 
 
       foreach ($splitItems as $itemId => $quantityToSplit) {
-        $orderItem = $originalOrder->orderItems->find($itemId);
+        $orderItem = $originalOrder->items->find($itemId);
         if (!$orderItem || $quantityToSplit > $orderItem->quantity) {
           throw ValidationException::withMessages(['splitItems' => 'Invalid split quantity']);
         }
@@ -419,8 +419,8 @@ class OrderService
     });
     $originalOrder->refresh();
     $newOrder->refresh();
-    $originalOrder->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
-    $newOrder->loadMissing(['orderItems.toppings', 'customer.membershipLevel', 'table']);
+    $originalOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    $newOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return [$originalOrder, $newOrder];
   }
   /**
@@ -447,7 +447,7 @@ class OrderService
   /**
    * Cập nhật danh sách sản phẩm trong đơn hàng
    */
-  private function updateOrderItems(Order $order, array $items)
+  private function updateItems(Order $order, array $items)
   {
     $orderItemIds = [];
 
