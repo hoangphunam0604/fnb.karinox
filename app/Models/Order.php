@@ -19,7 +19,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   protected $fillable = [
     'extend_id', // Id đơn hàng kế thừa, dùng cho các chi nhánh khác nhau sử dụng chung mã giảm giá
-    'order_code',
+    'code',
     'order_status',
     'ordered_at',
     'creator_id',
@@ -67,8 +67,8 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     parent::boot();
 
     static::creating(function ($order) {
-      if (!$order->order_code)
-        $order->order_code = self::generateOrderCode($order->branch_id);
+      if (!$order->code)
+        $order->code = self::generateOrderCode($order->branch_id);
     });
 
     static::updating(function ($order) {
@@ -90,7 +90,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
       ->orderBy('id', 'desc')
       ->first();
 
-    $increment = $latestOrder ? ((int) substr($latestOrder->order_code, -4)) + 1 : 1;
+    $increment = $latestOrder ? ((int) substr($latestOrder->code, -4)) + 1 : 1;
 
     return sprintf("ORD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
   }

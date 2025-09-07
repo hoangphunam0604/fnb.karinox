@@ -13,9 +13,9 @@ class VNPayQRController extends Controller
 {
   public function create(Request $request, VNPayQRService $vnpayQRService)
   {
-    $order = Order::where('order_code', $request->input('order_code'))->firstOrFail();
+    $order = Order::where('code', $request->input('code'))->firstOrFail();
 
-    $paymentData = $vnpayQRService->createQRCode($order->order_code, $order->total_price);
+    $paymentData = $vnpayQRService->createQRCode($order->code, $order->total_price);
 
     $order->payment_started_at = now();
     $order->payment_url = $paymentData['qrCode'];
@@ -49,7 +49,7 @@ class VNPayQRController extends Controller
       if ($code !== '00' && $msgType !== '1')
         return response()->json(['code' => '02',  'message' => 'Invalid payment status']);
 
-      $order = Order::where('order_code', $txnId)->first();
+      $order = Order::where('code', $txnId)->first();
       if (!$order)
         return response()->json(['code' => '01', 'message' => 'Order not found']);
 
@@ -64,7 +64,7 @@ class VNPayQRController extends Controller
 
       $orderService->pay($order, 'vnpay');
 
-      return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->order_code]]);
+      return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->code]]);
     } catch (\Exception $e) {
       return response()->json(['code' => '99', 'message' => 'Internal error']);
     }

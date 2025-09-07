@@ -15,7 +15,7 @@ class CashPaymentController extends Controller
    */
   public function confirm(Request $request, OrderService $orderService)
   {
-    $order = Order::where('order_code', $request->input('order_code'))->firstOrFail();
+    $order = Order::where('code', $request->input('code'))->firstOrFail();
 
     $order = $orderService->completeOrder($order);
 

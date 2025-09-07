@@ -32,15 +32,15 @@ class KitchenTicketUpdated implements ShouldBroadcastNow
   public function broadcastWith()
   {
     Log::info('kitchen.updated');
-    $order_code = $this->ticket->order_id;
+    $code = $this->ticket->order_code;
     $table_name = $this->ticket->table_id ? $this->ticket->table->name : 'Mang đi';
     return [
       'ticket_id' => $this->ticket->id,
       'status' => $this->ticket->status,
-      'items' => $this->ticket->items->map(function ($item) use ($order_code, $table_name) {
+      'items' => $this->ticket->items->map(function ($item) use ($code, $table_name) {
         return [
           'id' => $item->id,
-          'order_code' => $order_code,
+          'code' => $code,
           'table_name' => $table_name,
           'product_id' => $item->product_id,
           'product_name' => $item->product_name,

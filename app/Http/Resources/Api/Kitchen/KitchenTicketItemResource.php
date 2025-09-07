@@ -16,7 +16,7 @@ class KitchenTicketItemResource extends JsonResource
   {
     return [
       'id' => $this->id,
-      'order_code' => $this->ticket_id ? $this->ticket->order->order_code : "",
+      'code' => $this->ticket_id ? $this->ticket->order->code : "",
       'table_name' => $this->ticket_id ? $this->ticket->table->name : "Mang đi",
       'product_id' => $this->product_id,
       'product_name' => $this->product_name,

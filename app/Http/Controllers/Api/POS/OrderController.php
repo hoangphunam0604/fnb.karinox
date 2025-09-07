@@ -102,7 +102,7 @@ class OrderController extends Controller
 
   public function extend($order_id, Request $request)
   {
-    $order = $this->orderService->extend($order_id, $request->old_order_code);
+    $order = $this->orderService->extend($order_id, $request->old_code);
     return new OrderResource($order);
   }
 

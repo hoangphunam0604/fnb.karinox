@@ -67,7 +67,7 @@ class OrderService
    */
   public function findOrderByCode($code)
   {
-    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('code', strtoupper($code))->first();
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
@@ -185,10 +185,10 @@ class OrderService
     return $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
   }
 
-  public function prevPay(string $order_code, $payment_method)
+  public function prevPay(string $code, $payment_method)
   {
 
-    $order = Order::where('order_code', $order_code)->firstOrFail();
+    $order = Order::where('code', $code)->firstOrFail();
     $order->payment_method = $payment_method;
     return $order;
   }
@@ -339,7 +339,7 @@ class OrderService
   {
     abort(403, "Tính năng tạm thời không được sử dụng nữa");
     $order = Order::findOrFail($orderId);
-    $oldOrder = Order::where('order_code', $oldOrderCode)
+    $oldOrder = Order::where('code', $oldOrderCode)
       ->where('customer_id', $order->customer_id)
       ->firstOrFail();
     if (!$oldOrder->voucher_code) {
@@ -371,9 +371,9 @@ class OrderService
 
       // Tạo đơn hàng mới
       $newOrder = $originalOrder->replicate();
-      $newOrder->order_code = $originalOrder->order_code . "-2";
+      $newOrder->code = $originalOrder->code . "-2";
       $newOrder->save();
-      $originalOrder->order_code .= "-1";
+      $originalOrder->code .= "-1";
 
 
       foreach ($splitItems as $itemId => $quantityToSplit) {
