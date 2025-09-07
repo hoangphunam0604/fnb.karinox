@@ -92,7 +92,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
     $increment = $latestOrder ? ((int) substr($latestOrder->code, -4)) + 1 : 1;
 
-    return sprintf("ORD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
+    return sprintf("CN%02dN%sORD%04d", $branchId, now()->format('ymd'), $increment);
   }
 
   public function receiver()

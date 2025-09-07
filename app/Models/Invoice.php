@@ -83,7 +83,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
 
     $increment = $latest ? ((int) substr($latest->code, -4)) + 1 : 1;
 
-    return sprintf("HD-%02d-%s-%04d", $branchId, now()->format('ymd'), $increment);
+    return sprintf("CN%02dN%sHD%04d", $branchId, now()->format('ymd'), $increment);
   }
   public function items()
   {
