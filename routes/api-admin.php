@@ -9,26 +9,37 @@ use App\Http\Controllers\Admin\TableAndRoomController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\FileUploadController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PrintTemplateController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('admin')->group(function () {
-  Route::apiResource('admin/print-templates', \App\Http\Controllers\Api\Admin\PrintTemplateController::class);
+
+
   Route::post('upload', [FileUploadController::class, 'upload']);
-  Route::get('areas', [AreaController::class, 'index']);
-  Route::post('areas', [AreaController::class, 'store']);
-  Route::get('areas/{id}', [AreaController::class, 'show']);
-  Route::put('areas/{id}', [AreaController::class, 'update']);
-  Route::delete('areas/{id}', [AreaController::class, 'destroy']);
-  Route::apiResource('tables-and-rooms', TableAndRoomController::class);
+
+  Route::apiResource('areas', AreaController::class);
+
   Route::apiResource('attributes', AttributeController::class);
+
   Route::get('branches/all', [BranchController::class, 'all']);
   Route::apiResource('branches', BranchController::class);
-  Route::apiResource('customers', CustomerController::class);
-  Route::apiResource('membership-levels', MembershipLevelController::class);
 
   Route::get('categories/all', [CategoryController::class, 'all']);
   Route::apiResource('categories', CategoryController::class);
+
+  Route::apiResource('customers', CustomerController::class);
+
+  Route::apiResource('membership-levels', MembershipLevelController::class);
+
+  Route::apiResource('tables-and-rooms', TableAndRoomController::class);
+
+  Route::get('invoices', [InvoiceController::class, 'index']);
+  Route::get('invoices/{id}', [InvoiceController::class, 'show']);
+
   Route::get('products/manufacturing-autocomplete', [ProductController::class, 'manufacturingAutocomplete']);
+
   Route::apiResource('products', ProductController::class);
+  Route::apiResource('print-templates', PrintTemplateController::class);
 });

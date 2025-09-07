@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CustomerRequest;
 use App\Http\Resources\Admin\CustomerResource;
-use App\Http\Resources\Admin\CustomerDetailResource;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 
@@ -36,7 +35,7 @@ class CustomerController extends Controller
     $item->load([
       'membershipLevel'
     ]);
-    return new CustomerDetailResource($item);
+    return new CustomerResource($item);
   }
 
   public function update(CustomerRequest $request, $id)

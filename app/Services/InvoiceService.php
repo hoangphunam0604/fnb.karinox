@@ -14,7 +14,7 @@ use App\Models\Order;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\DB;
 
-class InvoiceService
+class InvoiceService extends BaseService
 {
   protected TaxService $taxService;
   protected PointService $pointService;
@@ -32,6 +32,12 @@ class InvoiceService
     $this->voucherService = $voucherService;
     $this->stockDeductionService = $stockDeductionService;
   }
+
+  protected function model(): Invoice
+  {
+    return new Invoice();
+  }
+
   public function findInvoiceByCode(string $code): ?Invoice
   {
     return Invoice::where('code', strtoupper($code))->first();

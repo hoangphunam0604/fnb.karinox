@@ -21,9 +21,6 @@ class CustomerResource extends JsonResource
       'birthday' => $this->birthday,
       'gender' => $this->gender,
       'membership_level_id' => $this->membership_level_id,
-      'membership_level' => $this->whenLoaded('membershipLevel', function () {
-        return $this->membershipLevel->name ?? null;
-      }),
       'loyalty_card_number' => $this->loyalty_card_number,
       'loyalty_points' => $this->loyalty_points,
       'reward_points' => $this->reward_points,
@@ -31,6 +28,9 @@ class CustomerResource extends JsonResource
       'total_spent' => $this->total_spent,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
+      'membership_level' => $this->whenLoaded('membershipLevel', function () {
+        return $this->membershipLevel->name ?? null;
+      }),
     ];
   }
 }

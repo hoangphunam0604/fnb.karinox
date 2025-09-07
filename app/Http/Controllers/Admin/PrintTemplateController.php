@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api\Admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Admin\StorePrintTemplateRequest;
 use App\Http\Requests\Api\Admin\UpdatePrintTemplateRequest;
 use Illuminate\Http\Request;
 use App\Services\PrintTemplateService;
-use App\Http\Resources\Api\Admin\PrintTemplateResource;
+use App\Http\Resources\Admin\PrintTemplateResource;
 use App\Models\PrintTemplate;
 
 class PrintTemplateController extends Controller
