@@ -4,13 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\POS\OrderController;
 use App\Http\Controllers\Api\POS\ProductController;
 use App\Http\Controllers\Api\POS\CustomerController;
-use App\Http\Controllers\Api\POS\Payments\CashPaymentController;
-use App\Http\Controllers\Api\POS\Payments\VNPayPaymentController;
-use App\Http\Controllers\Api\POS\Payments\VNPayQRController;
+use App\Http\Controllers\Payments\CashPaymentController;
+use App\Http\Controllers\Payments\InfoPlusController;
+use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Api\POS\TableAndRoomController;
 use App\Http\Controllers\Api\POS\VoucherController;
 use App\Http\Controllers\Api\POS\PrintTemplateController;
-
+use App\Http\Controllers\Payments\CashController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
@@ -39,9 +39,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('print-templates', [PrintTemplateController::class, 'index']);
 
   Route::prefix('payments')->group(function () {
-    Route::post('/cash/confirm', [CashPaymentController::class, 'confirm']);
-    Route::prefix('vnpayqr')->group(function () {
-      Route::post('/create', [VNPayQRController::class, 'create']);
-    });
+    Route::post('/cash/confirm', [CashController::class, 'confirm']);
+    Route::post('/vnpayqr/{code}/get-qr-code', [VNPayController::class, 'getQrCode']);
+    Route::post('/infoplus/{code}/get-qr-code', [InfoPlusController::class, 'getQrCode']);
   });
 });

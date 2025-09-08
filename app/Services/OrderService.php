@@ -163,13 +163,6 @@ class OrderService
     return $this->updateOrderStatus($orderId, OrderStatus::CONFIRMED);
   }
 
-  /**
-   * Xác nhận đơn hàng
-   */
-  public function completeOrder(Order $order): Order
-  {
-    return $order->markAsCompleted();
-  }
 
   /**
    * Hủy đơn hàng

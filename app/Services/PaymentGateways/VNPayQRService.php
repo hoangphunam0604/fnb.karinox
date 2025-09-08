@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\PaymentGateways;
 
+use App\Models\Order;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 
-class VNPayQRService
+class VNPayQRService  extends BaseGateway
 {
   protected string $endpoint;
   protected string $appId;
@@ -36,7 +38,18 @@ class VNPayQRService
     $this->secretKeyIpn = config('vnpayqr.secret_key_ipn');
   }
 
-  public function createQRCode(string $orderCode, int $amount): array
+  /**
+   * Return the payment method identifier for this gateway.
+   *
+   * @return string
+   */
+
+  protected function getPaymentMethod(): string
+  {
+    return 'vnpay';
+  }
+
+  public function createQRCode(Order $order): array
   {
 
     $expireTime = now()->addMinutes(10)->format('ymdHi');
@@ -52,9 +65,9 @@ class VNPayQRService
       'payType' => '03', //Mã dịch vụ QR. Giá trị mặc định là 03
       'productId' => '',
       'tipAndFee' => '',
-      'txnId'   => $orderCode,
-      'billNumber' => $orderCode,
-      'amount' => (string)$amount,
+      'txnId'   => $order->code,
+      'billNumber' => $order->code,
+      'amount' => (string)$order->total_price,
       'ccy' => '704',
       'expDate' => $expireTime,
       'desc' => '',
@@ -73,10 +86,16 @@ class VNPayQRService
     Log::info($response->getBody());
     $checksum_return = $this->checksumGenFromResponse($responseData);
     if ($checksum_return !== $responseData['checksum'])
-      return ['status' => true, "qrCode" => $responseData['data'], 'checksum' => $responseData['checksum'],  '$checksum_return' => $checksum_return, "message"  =>  "Dữ liệu trả về không hợp lệ"];
+      return ['status' => true, "qrCode" => $responseData['data'], 'checksum' => $responseData['checksum'],  'checksum_return' => $checksum_return, "message"  =>  "Dữ liệu trả về không hợp lệ"];
     if ($responseData['code' !== "00"])
       return ['status' => false, "qrCode" => "", "message"  =>  $responseData['message']];
-    return ['status' => true, "qrCode" => $responseData['data'], "message"  =>  $responseData['message']];
+
+    return  DB::transaction(function () use ($order, $responseData) {
+      $order->payment_started_at = now();
+      $order->payment_url = $responseData['data'];
+      $order->save();
+      return ['status' => true, "qrCode" => $responseData['data'], "message"  =>  $responseData['message']];
+    });
   }
 
   private function checksumGen($payload)

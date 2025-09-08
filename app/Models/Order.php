@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PointHistoryNote;
-use App\Events\OrderCompleted;
 
 class Order extends Model implements RewardPointUsable, VoucherApplicable
 {
@@ -133,13 +132,6 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault([]);
-  }
-
-  public function markAsCompleted(): Order
-  {
-    $this->update(['order_status' => OrderStatus::COMPLETED]);
-    event(new OrderCompleted($this));
-    return $this;
   }
   /**
    * Kiểm tra đơn hàng đã hoàn tất chưa

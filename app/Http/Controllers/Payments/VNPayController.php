@@ -1,21 +1,27 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS\Payments;
+namespace App\Http\Controllers\Payments;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
-use App\Services\VNPayQRService;
+use App\Services\PaymentGateways\VNPayQRService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class VNPayQRController extends Controller
+class VNPayController extends Controller
 {
-  public function create(Request $request, VNPayQRService $vnpayQRService)
-  {
-    $order = Order::where('code', $request->input('code'))->firstOrFail();
+  protected VNPayQRService $service;
 
-    $paymentData = $vnpayQRService->createQRCode($order->code, $order->total_price);
+  public function __construct(VNPayQRService $service)
+  {
+    $this->service = $service;
+  }
+  public function getQrCode(string $code)
+  {
+    $order = Order::where('code', $code)->firstOrFail();
+
+    $paymentData =  $this->service->createQRCode($order->code, $order->total_price);
 
     $order->payment_started_at = now();
     $order->payment_url = $paymentData['qrCode'];
@@ -27,7 +33,7 @@ class VNPayQRController extends Controller
   /**
    * IPN xác thực từ VNPAY: VNPAY gọi về khi KH đã thanh toán
    */
-  public function ipn(Request $request, VNPayQRService $vnpayQRService, OrderService $orderService)
+  public function callback(Request $request)
   {
     try {
       Log::info($request->getContent());
@@ -37,7 +43,7 @@ class VNPayQRController extends Controller
         return response()->json(['code' => '11', 'message' => 'Format data is wrong']);
 
       $checksum = $data['checksum'] ?? null;
-      $verifyChecksum = $vnpayQRService->checksumIPN($data);
+      $verifyChecksum = $this->service->checksumIPN($data);
       if ($checksum !== $verifyChecksum)
         return response()->json(['code' => '01', 'message' => 'Checksum is wrong.',]);
 
@@ -61,10 +67,10 @@ class VNPayQRController extends Controller
             'amount'  => (string)$order->total_price
           ]
         ]);
-
-      $orderService->pay($order, 'vnpay');
-
-      return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->code]]);
+      $payStatus = $this->service->pay($order);
+      if ($payStatus)
+        return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->code]]);
+      return response()->json(['code' => '99', 'message' => 'Internal error']);
     } catch (\Exception $e) {
       return response()->json(['code' => '99', 'message' => 'Internal error']);
     }
