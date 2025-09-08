@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\POS\CustomerResource;
-use App\Http\Resources\Api\POS\VoucherResource;
+use App\Http\Resources\POS\CustomerResource;
+use App\Http\Resources\POS\VoucherResource;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 

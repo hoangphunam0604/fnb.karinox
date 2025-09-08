@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\POS\CategoryProductResource;
+use App\Http\Resources\POS\CategoryProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 

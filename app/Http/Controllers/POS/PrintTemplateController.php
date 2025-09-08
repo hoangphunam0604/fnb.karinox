@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
 use App\Services\PrintTemplateService;
-use App\Http\Resources\Api\POS\PrintTemplateResource;
+use App\Http\Resources\POS\PrintTemplateResource;
 
 class PrintTemplateController extends Controller
 {

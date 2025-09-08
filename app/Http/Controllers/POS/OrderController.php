@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\POS\OrderRequest;
-use App\Http\Resources\Api\POS\OrderResource;
+use App\Http\Requests\POS\OrderRequest;
+use App\Http\Resources\POS\OrderResource;
 use Illuminate\Http\JsonResponse;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use App\Enums\OrderStatus;
-use App\Http\Resources\Api\POS\OrderItemPrintResource;
-use App\Http\Resources\Api\POS\OrderPrintResource;
+use App\Http\Resources\POS\OrderItemPrintResource;
+use App\Http\Resources\POS\OrderPrintResource;
 
 class OrderController extends Controller
 {

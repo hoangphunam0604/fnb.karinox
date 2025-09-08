@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Api\Admin;
+namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePrintTemplateRequest extends FormRequest
+class StorePrintTemplateRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    return true;
+    return true; // Nếu cần có thể thêm quyền admin sau
   }
 
   public function rules(): array

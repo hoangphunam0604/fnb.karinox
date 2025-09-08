@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\POS\AreaResource;
+use App\Http\Resources\POS\AreaResource;
 use App\Services\AreaService;
 use Illuminate\Http\JsonResponse;
 

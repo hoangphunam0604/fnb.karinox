@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api\POS;
+namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\POS\CustomerRequest;
-use App\Http\Resources\Api\POS\CategoryProductResponse;
-use App\Http\Resources\Api\POS\CustomerResource;
+use App\Http\Requests\POS\CustomerRequest;
+use App\Http\Resources\POS\CategoryProductResponse;
+use App\Http\Resources\POS\CustomerResource;
 use App\Services\CustomerService;
 use App\Services\ProductService;
 use Illuminate\Http\Request;

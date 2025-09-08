@@ -21,9 +21,9 @@ class CashController extends Controller
    * Xác nhận thanh toán tiền mặt tại quầy.
    * Gọi khi thu ngân bấm "Xác nhận đã thu tiền".
    */
-  public function confirm(Request $request)
+  public function confirm(string $code)
   {
-    $order = Order::where('code', $request->input('code'))->firstOrFail();
+    $order = Order::where('code', $code)->firstOrFail();
 
     $payStatus = $this->service->pay($order);
     if ($payStatus)
