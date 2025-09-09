@@ -37,7 +37,7 @@ class InfoPlusController extends Controller
   /**
    * IPN xác thực từ VNPAY: VNPAY gọi về khi KH đã thanh toán
    */
-  public function ipn(Request $request)
+  public function callback(Request $request)
   {
     try {
       $signature = $request->header('CMS-RSA-Signature');
@@ -62,7 +62,7 @@ class InfoPlusController extends Controller
 
       if ($payStatus)
         return $this->responseData('000000', 'OK.');
-      
+
       return $this->responseData("000001", "Server ERROR");
     } catch (\Exception $e) {
       return $this->responseData("000001", "Server ERROR");
