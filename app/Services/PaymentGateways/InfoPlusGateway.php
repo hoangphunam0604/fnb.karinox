@@ -27,9 +27,9 @@ class InfoPlusGateway extends BaseGateway
   private $client;
   private $base_url;
   private $endpoint_login = "/ocms/v1/auth/login";
-  private $endpoint_create_qr_code = "/ocms/v2/ec/po_create_qr";
+  private $endpoint_create_qr_code = "/ocms/v3/ec/po_create_qr";
 
-  private $userAgent = "Touch Cinema Pleiku";
+  private $userAgent = "Karinox FNB";
   public function __construct()
   {
     $this->userId = config('infoplus.userId');
@@ -70,7 +70,7 @@ class InfoPlusGateway extends BaseGateway
     $payload = [
       'data'  =>  [
         'transactionUuid' => $order->code,
-        'depositAmt' => (string) $order->total_price . ".00",
+        'depositAmt' => (int) $order->total_price,
         'posUniqueId' => $this->posUniqueId,
         'posFranchiseeName' => $this->posFranchiseeName,
         'posCompanyName' => $this->posCompanyName,
