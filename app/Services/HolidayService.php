@@ -55,6 +55,6 @@ class HolidayService
   public function isHoliday(?Carbon $date = null): bool
   {
     $date = $date ?? now();
-    return Holiday::whereDate('date', $date->toDateString())->exists();
+    return Holiday::forDate($date)->exists();
   }
 }
