@@ -10,15 +10,18 @@ class Holiday extends Model
 {
   protected $fillable = [
     'name',
-    'date',
-    'is_lunar',
     'description',
+    'calendar',
+    'year',
+    'month',
+    'day',
     'is_recurring',
   ];
 
   protected $casts = [
-    'date' => 'date',
-    'is_lunar' => 'boolean',
+    'year' => 'integer',
+    'month' => 'integer',
+    'day' => 'integer',
     'is_recurring' => 'boolean',
   ];
 
@@ -36,18 +39,23 @@ class Holiday extends Model
   public function scopeForDate(Builder $query, $date): Builder
   {
     $date = $date instanceof Carbon ? $date : Carbon::parse($date);
-    $dateStr = $date->toDateString();
-    $month = $date->format('m');
-    $day = $date->format('d');
+    $year = (int) $date->year;
+    $month = (int) $date->month;
+    $day = (int) $date->day;
 
-    return $query->where(function ($q) use ($dateStr, $month, $day) {
-      // exact match (year included)
-      $q->whereDate('date', $dateStr)
-        // or recurring entries that repeat every year (match month/day)
+    return $query->where(function ($q) use ($year, $month, $day) {
+      // exact (non-recurring) holidays must match year/month/day
+      $q->where(function ($q1) use ($year, $month, $day) {
+        $q1->where('is_recurring', false)
+          ->where('year', $year)
+          ->where('month', $month)
+          ->where('day', $day);
+      })
+        // or recurring holidays that match by month/day (ignore year)
         ->orWhere(function ($q2) use ($month, $day) {
           $q2->where('is_recurring', true)
-            ->whereMonth('date', $month)
-            ->whereDay('date', $day);
+            ->where('month', $month)
+            ->where('day', $day);
         });
     });
   }

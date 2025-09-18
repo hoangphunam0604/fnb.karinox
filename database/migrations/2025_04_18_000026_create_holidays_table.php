@@ -15,10 +15,14 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->string('name');
-      $table->date('date'); // ngày dương lịch
-      $table->boolean('is_lunar')->default(false); // true nếu là ngày âm lịch
       $table->text('description')->nullable();
-      $table->boolean('is_recurring')->default(true); // true nếu lặp lại mỗi năm
+      $table->enum('calendar', ['solar', 'lunar'])->default('solar');
+      $table->smallInteger('year')->nullable();
+      $table->tinyInteger('month')->nullable();
+      $table->tinyInteger('day')->nullable();
+      $table->boolean('is_recurring')->default(true); // true nếu lặp lại mỗi năm (solar recurring)
+      $table->index(['is_recurring', 'month', 'day']); // indexes to speed up common queries
+      $table->index(['calendar']);
     });
   }
 

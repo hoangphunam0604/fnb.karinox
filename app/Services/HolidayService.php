@@ -4,54 +4,18 @@ namespace App\Services;
 
 use App\Models\Holiday;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
-class HolidayService
+class HolidayService extends BaseService
 {
-  public function getAll(array $filters = [])
+  protected function model(): Model
   {
-    $query = Holiday::query();
-
-    if (!empty($filters['year'])) {
-      $query->whereYear('date', $filters['year']);
-    }
-    return $query->orderBy('date')->get();
+    return new Holiday();
   }
 
-  public function getPaginated(array $filters = [], int $perPage = 20)
-  {
-    $query = Holiday::query();
-
-    if (!empty($filters['year'])) {
-      $query->whereYear('date', $filters['year']);
-    }
-
-    return $query->orderBy('date')->paginate($perPage);
-  }
-
-  public function getById(int $id): ?Holiday
-  {
-    return Holiday::find($id);
-  }
-
-  public function create(array $data): Holiday
-  {
-    return Holiday::create($data);
-  }
-
-  public function update(int $id, array $data): ?Holiday
-  {
-    $holiday = Holiday::find($id);
-    if ($holiday) {
-      $holiday->update($data);
-    }
-    return $holiday;
-  }
-
-  public function delete(int $id): bool
-  {
-    return Holiday::where('id', $id)->delete() > 0;
-  }
-
+  /**
+   * Helper to check if a given date is a holiday.
+   */
   public function isHoliday(?Carbon $date = null): bool
   {
     $date = $date ?? now();
