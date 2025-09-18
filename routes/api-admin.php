@@ -40,6 +40,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('invoices/{id}', [InvoiceController::class, 'show']);
 
   Route::get('products/manufacturing-autocomplete', [ProductController::class, 'manufacturingAutocomplete']);
+  Route::post('products/import', [ProductController::class, 'import']);
 
   Route::apiResource('products', ProductController::class);
   Route::apiResource('print-templates', PrintTemplateController::class);

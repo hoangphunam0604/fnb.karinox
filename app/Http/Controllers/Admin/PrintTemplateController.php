@@ -11,12 +11,8 @@ use App\Models\PrintTemplate;
 
 class PrintTemplateController extends Controller
 {
-  protected PrintTemplateService $service;
 
-  public function __construct(PrintTemplateService $service)
-  {
-    $this->service = $service;
-  }
+  public function __construct(protected PrintTemplateService $service) {}
 
   public function index(Request $request)
   {

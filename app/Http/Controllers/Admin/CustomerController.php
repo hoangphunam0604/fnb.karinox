@@ -10,12 +10,8 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-  protected CustomerService $service;
 
-  public function __construct(CustomerService $service)
-  {
-    $this->service = $service;
-  }
+  public function __construct(protected CustomerService $service) {}
 
   public function index(Request $request)
   {

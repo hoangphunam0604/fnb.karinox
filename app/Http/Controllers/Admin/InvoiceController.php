@@ -9,12 +9,8 @@ use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-  protected InvoiceService $service;
 
-  public function __construct(InvoiceService $service)
-  {
-    $this->service = $service;
-  }
+  public function __construct(protected InvoiceService $service) {}
 
   public function index(Request $request)
   {

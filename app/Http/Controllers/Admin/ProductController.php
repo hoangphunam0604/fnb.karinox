@@ -7,16 +7,13 @@ use App\Http\Requests\Admin\ProductRequest;
 use App\Http\Resources\Admin\ProductResource;
 use App\Http\Resources\Admin\ProductDetailResource;
 use App\Services\ProductService;
+use App\Services\ProductImportService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-  protected ProductService $service;
 
-  public function __construct(ProductService $service)
-  {
-    $this->service = $service;
-  }
+  public function __construct(protected ProductService $service, protected ProductImportService $importService) {}
 
   public function index(Request $request)
   {
@@ -53,5 +50,38 @@ class ProductController extends Controller
   {
     $this->service->delete($id);
     return response()->json(['message' => 'Deleted successfully.']);
+  }
+
+
+  public function import(Request $request)
+  {
+    $request->validate(['branch_id' => 'required', 'file' => 'required|mimes:xlsx']);
+
+    if (!$request->hasFile('file')) {
+      return response()->json(['error' => 'Không có file nào được tải lên.'], 400);
+    }
+
+    $file = $request->file('file');
+
+    if (!$file->isValid()) {
+      return response()->json(['error' => 'File tải lên bị lỗi.'], 400);
+    }
+    // Kiểm tra tên file và kích thước
+
+    // Lưu file vào storage/temp
+    //$filePath = $file->store('temp');
+    $filePath = $file->move(public_path('uploads'), time() . '-' . $file->getClientOriginalName());
+
+    if (!$filePath) {
+      return response()->json(['error' => 'Lưu file thất bại.'], 500);
+    }
+
+
+    $fullPath = public_path('uploads/' . basename($filePath));
+
+    $branch_id = $request->branch_id;
+    $result = $this->importService->importFromExcel($branch_id, $fullPath);
+
+    return response()->json($result);
   }
 }

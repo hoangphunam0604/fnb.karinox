@@ -11,12 +11,8 @@ use Illuminate\Http\Request;
 
 class MembershipLevelController extends Controller
 {
-  protected MembershipLevelService $service;
 
-  public function __construct(MembershipLevelService $service)
-  {
-    $this->service = $service;
-  }
+  public function __construct(protected MembershipLevelService $service) {}
 
   public function index(Request $request)
   {
