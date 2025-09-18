@@ -10,12 +10,7 @@ use Inertia\Response;
 
 class CustomerImportController extends Controller
 {
-  protected $importService;
-
-  public function __construct(CustomerImportService $importService)
-  {
-    $this->importService = $importService;
-  }
+  public function __construct(protected CustomerImportService $service) {}
 
   public function viewImport(): Response
   {
@@ -47,7 +42,7 @@ class CustomerImportController extends Controller
 
     $fullPath = public_path('uploads/' . basename($filePath));
 
-    $result = $this->importService->import($fullPath);
+    $result = $this->service->import($fullPath);
 
     return response()->json($result);
   }

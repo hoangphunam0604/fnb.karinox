@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Admin\StorePrintTemplateRequest;
-use App\Http\Requests\Api\Admin\UpdatePrintTemplateRequest;
+use App\Http\Requests\Admin\PrintTemplateRequest;
 use Illuminate\Http\Request;
 use App\Services\PrintTemplateService;
 use App\Http\Resources\Admin\PrintTemplateResource;
@@ -35,13 +34,13 @@ class PrintTemplateController extends Controller
     return new PrintTemplateResource($template);
   }
 
-  public function store(StorePrintTemplateRequest $request)
+  public function store(PrintTemplateRequest $request)
   {
     $template = $this->service->create($request->validated());
     return new PrintTemplateResource($template);
   }
 
-  public function update(UpdatePrintTemplateRequest $request, $id)
+  public function update(PrintTemplateRequest $request, $id)
   {
     $template = PrintTemplate::findOrFail($id);
     $updated = $this->service->update($template, $request->validated());

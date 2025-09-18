@@ -10,37 +10,35 @@ use Illuminate\Http\Request;
 
 class TableAndRoomController extends Controller
 {
-  public function __construct(
-    protected TableAndRoomService $tableAndRoomService
-  ) {}
+  public function __construct(protected TableAndRoomService $service) {}
 
   public function index(Request $request)
   {
-    $items = $this->tableAndRoomService->getList($request->all());
+    $items = $this->service->getList($request->all());
     return TableAndRoomResource::collection($items);
   }
 
   public function store(TableAndRoomRequest $request)
   {
-    $item = $this->tableAndRoomService->create($request->validated());
+    $item = $this->service->create($request->validated());
     return new TableAndRoomResource($item);
   }
 
   public function show($id)
   {
-    $item = $this->tableAndRoomService->find($id);
+    $item = $this->service->find($id);
     return new TableAndRoomResource($item);
   }
 
   public function update(TableAndRoomRequest $request, $id)
   {
-    $item = $this->tableAndRoomService->update($id, $request->validated());
+    $item = $this->service->update($id, $request->validated());
     return new TableAndRoomResource($item);
   }
 
   public function destroy($id)
   {
-    $this->tableAndRoomService->delete($id);
+    $this->service->delete($id);
     return response()->json(['message' => 'Deleted successfully']);
   }
 }

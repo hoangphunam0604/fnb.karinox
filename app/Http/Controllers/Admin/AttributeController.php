@@ -10,40 +10,35 @@ use Illuminate\Http\Request;
 
 class AttributeController extends Controller
 {
-  protected AttributeService $attributeService;
-
-  public function __construct(AttributeService $attributeService)
-  {
-    $this->attributeService = $attributeService;
-  }
+  public function __construct(protected AttributeService $service) {}
 
   public function index(Request $request)
   {
-    $attributes = $this->attributeService->getList($request->all());
+    $attributes = $this->service->getList($request->all());
     return AttributeResource::collection($attributes);
   }
 
   public function store(AttributeRequest $request)
   {
-    $attribute = $this->attributeService->create($request->validated());
+    $attribute = $this->service->create($request->validated());
     return new AttributeResource($attribute);
   }
 
   public function show($id)
   {
-    $attribute = $this->attributeService->find($id);
+    $attribute = $this->service->find($id);
     return new AttributeResource($attribute);
   }
 
   public function update(AttributeRequest $request, $id)
   {
-    $attribute = $this->attributeService->update($id, $request->validated());
+    $attribute = $this->service->update($id, $request->validated());
     return new AttributeResource($attribute);
   }
 
   public function destroy($id)
   {
-    $this->attributeService->delete($id);
+    $this->service->delete($id);
     return response()->json(['message' => 'Deleted successfully.']);
   }
 }

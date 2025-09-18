@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePrintTemplateRequest extends FormRequest
+class PrintTemplateRequest extends FormRequest
 {
   public function authorize(): bool
   {

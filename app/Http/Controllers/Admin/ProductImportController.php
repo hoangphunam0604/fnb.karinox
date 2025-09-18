@@ -13,13 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductImportController extends Controller
 {
-  protected $branchService;
-  protected $productImportService;
+  protected BranchService $branchService;
 
-  public function __construct(BranchService $branchService, ProductImportService $productImportService)
+  public function __construct(BranchService $branchService, protected ProductImportService $service)
   {
     $this->branchService = $branchService;
-    $this->productImportService = $productImportService;
   }
   public function viewImport()
   {
@@ -59,7 +57,7 @@ class ProductImportController extends Controller
     $fullPath = public_path('uploads/' . basename($filePath));
 
     $branch_id = $request->branch_id;
-    $result = $this->productImportService->importFromExcel($branch_id, $fullPath);
+    $result = $this->service->importFromExcel($branch_id, $fullPath);
 
     return response()->json($result);
   }
