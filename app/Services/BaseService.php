@@ -46,18 +46,23 @@ abstract class BaseService
   {
     return $this->model()->newQuery()->with($this->with)->withCount($this->withCount);
   }
+
   public function getList(array $params = [])
   {
     $query = $this->getQueryBuilder();
 
     $query = $this->applySearch($query, $params);
-
+    $query = $this->orderBy($query, $params);
     $perPage = $params['per_page'] ?? 10;
+    return $query->paginate($perPage);
+  }
+
+  protected function orderBy($query, $params)
+  {
     $sortBy = $params['sort_by'] ?? $this->sortBy;
     $sortDir = $params['sort_direction'] ?? $this->sortDir;
-
     $query->orderBy($sortBy, $sortDir);
-    return $query->paginate($perPage);
+    return $query;
   }
 
   public function getAll()
