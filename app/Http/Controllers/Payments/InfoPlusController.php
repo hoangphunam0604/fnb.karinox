@@ -9,6 +9,7 @@ use App\Services\OrderService;
 use App\Services\PaymentGateways\InfoPlusGateway;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
@@ -23,15 +24,17 @@ class InfoPlusController extends Controller
   }
   public function getQrCode(string $code)
   {
-    $order = Order::where('code', $code)->firstOrFail();
-
-    $paymentData =  $this->service->createQRCode($order->code, $order->total_price);
-
-    $order->payment_started_at = now();
-    $order->payment_url = $paymentData['qrCode'];
-    $order->save();
-
-    return $paymentData;
+    return DB::transaction(function () use ($code) {
+      return Cache::remember("infoplus_qr_code_{$code}", 20, function () use ($code) {
+        $order = Order::where('code', $code)->firstOrFail();
+        $paymentData =  $this->service->createQRCode($order);
+        $order->payment_started_at = now();
+        $order->payment_url = $paymentData['qrCode'];
+        $order->save();
+        return $paymentData;
+      });
+      return $paymentData;
+    });
   }
 
   /**
