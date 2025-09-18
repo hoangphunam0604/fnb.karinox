@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Holiday;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class HolidayService extends BaseService
 {
@@ -19,6 +20,10 @@ class HolidayService extends BaseService
   public function isHoliday(?Carbon $date = null): bool
   {
     $date = $date ?? now();
-    return Holiday::forDate($date)->exists();
+    $key = 'holiday:isHoliday:' . $date->toDateString();
+    // cache result for 24 hours to reduce DB lookups; invalidate manually when holidays change
+    return Cache::remember($key, now()->addDay(), function () use ($date) {
+      return Holiday::forDate($date)->exists();
+    });
   }
 }
