@@ -30,6 +30,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('categories/all', [CategoryController::class, 'all']);
   Route::apiResource('categories', CategoryController::class);
 
+  Route::post('customers/import', [CustomerController::class, 'import']);
   Route::apiResource('customers', CustomerController::class);
 
   Route::apiResource('membership-levels', MembershipLevelController::class);

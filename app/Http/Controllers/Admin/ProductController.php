@@ -70,14 +70,14 @@ class ProductController extends Controller
 
     // Lưu file vào storage/temp
     //$filePath = $file->store('temp');
-    $filePath = $file->move(public_path('uploads'), time() . '-' . $file->getClientOriginalName());
+    $filePath = $file->move(public_path('imports/product'), time() . '-' . $file->getClientOriginalName());
 
     if (!$filePath) {
       return response()->json(['error' => 'Lưu file thất bại.'], 500);
     }
 
 
-    $fullPath = public_path('uploads/' . basename($filePath));
+    $fullPath = public_path('imports/product/' . basename($filePath));
 
     $branch_id = $request->branch_id;
     $result = $this->importService->importFromExcel($branch_id, $fullPath);
