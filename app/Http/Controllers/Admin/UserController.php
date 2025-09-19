@@ -6,26 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\Admin\UserResource;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+  protected UserService $service;
+
+  public function __construct(UserService $service)
+  {
+    $this->service = $service;
+  }
   /**
    * Display a paginated list of users.
    */
   public function index(Request $request)
   {
-    $query = User::query();
-
-    if ($q = $request->input('q')) {
-      $query->where(function ($qb) use ($q) {
-        $qb->where('fullname', 'like', "%{$q}%")
-          ->orWhere('username', 'like', "%{$q}%");
-      });
-    }
-
-    $users = $query->with('currentBranch')->orderBy('id', 'desc')->paginate($request->input('per_page', 15));
-
+    $params = $request->all();
+    $users = $this->service->getList($params);
     return UserResource::collection($users);
   }
 
@@ -35,16 +33,11 @@ class UserController extends Controller
   public function store(UserRequest $request)
   {
     $data = $request->validated();
+    $roles = $request->input('roles', null);
 
-    if (!empty($data['password'])) {
-      $data['password'] = bcrypt($data['password']);
-    } else {
-      unset($data['password']);
-    }
+    $user = $this->service->createUser($data, $roles);
 
-    $user = User::create($data);
-
-    return new UserResource($user->load('currentBranch'));
+    return new UserResource($user);
   }
 
   /**
@@ -52,7 +45,7 @@ class UserController extends Controller
    */
   public function show(User $user)
   {
-    return new UserResource($user->load('currentBranch'));
+    return new UserResource($user->load('roles'));
   }
 
   /**
@@ -61,16 +54,11 @@ class UserController extends Controller
   public function update(UserRequest $request, User $user)
   {
     $data = $request->validated();
+    $roles = $request->has('roles') ? $request->input('roles', []) : null;
 
-    if (isset($data['password']) && $data['password'] !== null) {
-      $data['password'] = bcrypt($data['password']);
-    } else {
-      unset($data['password']);
-    }
+    $user = $this->service->updateUser($user, $data, $roles);
 
-    $user->update($data);
-
-    return new UserResource($user->fresh()->load('currentBranch'));
+    return new UserResource($user);
   }
 
   /**
