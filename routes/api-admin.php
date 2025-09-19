@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PrintTemplateController;
 use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\UserController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('admin')->group(function () {
 
@@ -46,4 +47,5 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::apiResource('products', ProductController::class);
   Route::apiResource('print-templates', PrintTemplateController::class);
   Route::apiResource('holidays', HolidayController::class);
+  Route::apiResource('users', UserController::class);
 });
