@@ -46,6 +46,7 @@ Tệp này theo dõi tiến độ thực hiện API cho phần Admin, nhóm theo
 
     - [x] Seed roles, RoleController, PermissionController
     - [ ] Map permission -> endpoints (policies/gates)
+    - Note: Roles and permissions are configured and seeded in the system. Admin CRUD APIs for roles/permissions are not required by default. I previously added `roles` and `permissions` routes to `routes/api-admin.php` but these can be removed (revert) if you prefer role/permission management to remain fixed via seeders/migrations.
 
 - Module: Notifications & Realtime
 
@@ -84,6 +85,82 @@ php artisan reverb:start
     1. Liệt kê tất cả `FormRequest` hiện có dưới `app/Http/Requests/Admin`.
     2. Tạo/chuẩn hoá `StoreUserRequest` và `UpdateUserRequest` làm mẫu.
     3. Cập nhật TODO khi xong.
+
+## Coverage matrix (tóm tắt)
+
+Mục này liệt kê nhanh module chính, trạng thái API admin hiện tại và đề xuất endpoint còn thiếu cho frontend.
+
+- Users
+
+    - Status: Controller (apiResource), Service, Resource present.
+    - Missing: Split FormRequests (StoreUserRequest / UpdateUserRequest); optional endpoints: change-password, activity logs.
+
+- Roles & Permissions
+
+    - Status: `RoleController` and `PermissionController` exist; Resource classes present.
+    - Missing: Routes not registered in `routes/api-admin.php`. If admin UI manages roles/permissions, add `Route::apiResource('roles', RoleController::class)` and `Route::apiResource('permissions', PermissionController::class)`.
+
+- Products
+
+    - Status: Controller (apiResource), Service, Import endpoint, Resources present.
+    - Missing: Feature tests for import/CRUD; optional bulk actions (bulk-update, bulk-delete).
+
+- Categories
+
+    - Status: Controller + Resource + Request + `all()` endpoint present.
+    - Missing: FormRequest split/authorize and tests.
+
+- Branches
+
+    - Status: Controller (apiResource) and `branches/all` endpoint present.
+    - Missing: Branch-user linking APIs (assign/unassign users to branches) if needed by admin UI.
+
+- Customers
+
+    - Status: Controller (apiResource), import endpoint, Service and Resources present.
+    - Missing: Customer points endpoints (points summary, points history), manual point adjustment endpoints.
+
+- Membership Levels
+
+    - Status: Controller (apiResource), Service, Resources present.
+    - Missing: Tests and any admin actions for forced upgrades/downgrades.
+
+- Invoices / Billing
+
+    - Status: `InvoiceController` exposes index/show; InvoiceService and InvoiceResource present.
+    - Missing: Admin actions for cancel/refund/reprint (add `PUT admin/invoices/{id}/cancel`, `POST admin/invoices/{id}/refund` if needed).
+
+- Orders (Admin view)
+
+    - Status: OrderService exists; POS order endpoints live under POS routes.
+    - Missing: If admin needs order management, add `Admin\OrderController` with index/show/update status endpoints wired to `OrderService`.
+
+- Vouchers
+
+    - Status: VoucherService and unit tests exist; POS has voucher usage endpoints.
+    - Missing: Admin CRUD for vouchers (no `Admin\VoucherController` present). Recommend `apiResource('vouchers', VoucherController::class)` and an `Admin\VoucherController`.
+
+- Points / Loyalty
+
+    - Status: `PointService` and `PointHistory` model present.
+    - Missing: Admin endpoints for viewing and adjusting points (per-customer endpoints).
+
+- TableAndRoom, PrintTemplates, Areas, Attributes, Holidays
+    - Status: Controllers + Services + Resources present and registered.
+    - Missing: Mostly tests and FormRequest `authorize()` enforcement.
+
+## Short implementation checklist (recommended next commits)
+
+1. Register Role/Permission routes in `routes/api-admin.php` (quick patch).
+2. Scaffold `Admin\VoucherController` and `Admin\VoucherResource` + FormRequests, and add routes.
+3. Add customer points endpoints in `CustomerController` (points summary & history) and create `PointHistoryResource`.
+4. Add invoice admin actions (cancel/refund) in `InvoiceController` and tests.
+5. Split/normalize FormRequests for critical modules (User, Product, Customer, Voucher) and implement `authorize()` calling Spatie permissions.
+6. Add feature tests for the new admin endpoints (happy path + permission denied).
+
+---
+
+Tôi có thể bắt đầu với bước (1) tự động: thêm routes cho roles/permissions vào `routes/api-admin.php` và commit nhanh. Bạn muốn tôi thực hiện bước đó bây giờ chứ?
 
 ---
 

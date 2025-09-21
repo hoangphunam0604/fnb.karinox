@@ -16,7 +16,8 @@ use App\Http\Controllers\Admin\PrintTemplateController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\UserController;
 
-Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('admin')->group(function () {
+// Admin routes: require API auth, app check, branch context and only allow users with role admin or manager
+Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:admin|manager'])->prefix('admin')->group(function () {
 
 
   Route::post('upload', [FileUploadController::class, 'upload']);
