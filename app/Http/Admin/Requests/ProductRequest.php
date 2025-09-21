@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin;
+namespace App\Http\Admin\Requests;
 
 use App\Enums\CommonStatus;
 use App\Enums\ProductType;
