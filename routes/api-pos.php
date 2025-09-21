@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\POS\OrderController;
-use App\Http\Controllers\POS\ProductController;
-use App\Http\Controllers\POS\CustomerController;
-use App\Http\Controllers\POS\TableAndRoomController;
-use App\Http\Controllers\POS\VoucherController;
-use App\Http\Controllers\POS\PrintTemplateController;
+use App\Http\POS\Controllers\OrderController;
+use App\Http\POS\Controllers\ProductController;
+use App\Http\POS\Controllers\CustomerController;
+use App\Http\POS\Controllers\TableAndRoomController;
+use App\Http\POS\Controllers\VoucherController;
+use App\Http\POS\Controllers\PrintTemplateController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;

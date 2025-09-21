@@ -2,19 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Admin\AreaController;
-use App\Http\Controllers\Admin\AttributeController;
-use App\Http\Controllers\Admin\BranchController;
-use App\Http\Controllers\Admin\TableAndRoomController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\CustomerController;
-use App\Http\Controllers\Admin\FileUploadController;
-use App\Http\Controllers\Admin\InvoiceController;
-use App\Http\Controllers\Admin\MembershipLevelController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\PrintTemplateController;
-use App\Http\Controllers\Admin\HolidayController;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Admin\Controllers\AreaController;
+use App\Http\Admin\Controllers\AttributeController;
+use App\Http\Admin\Controllers\BranchController;
+use App\Http\Admin\Controllers\TableAndRoomController;
+use App\Http\Admin\Controllers\CategoryController;
+use App\Http\Admin\Controllers\CustomerController;
+use App\Http\Admin\Controllers\FileUploadController;
+use App\Http\Admin\Controllers\InvoiceController;
+use App\Http\Admin\Controllers\MembershipLevelController;
+use App\Http\Admin\Controllers\ProductController;
+use App\Http\Admin\Controllers\PrintTemplateController;
+use App\Http\Admin\Controllers\HolidayController;
+use App\Http\Admin\Controllers\UserController;
 
 // Admin routes: require API auth, app check, branch context and only allow users with role admin or manager
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:admin|manager'])->prefix('admin')->group(function () {
