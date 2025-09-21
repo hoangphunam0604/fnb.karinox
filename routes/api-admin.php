@@ -15,6 +15,8 @@ use App\Http\Admin\Controllers\ProductController;
 use App\Http\Admin\Controllers\PrintTemplateController;
 use App\Http\Admin\Controllers\HolidayController;
 use App\Http\Admin\Controllers\UserController;
+use App\Http\Admin\Controllers\RoleController;
+use App\Http\Admin\Controllers\PermissionController;
 
 // Admin routes: require API auth, app check, branch context and only allow users with role admin or manager
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:admin|manager'])->prefix('admin')->group(function () {
@@ -49,4 +51,10 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   Route::apiResource('print-templates', PrintTemplateController::class);
   Route::apiResource('holidays', HolidayController::class);
   Route::apiResource('users', UserController::class);
+
+  // Roles & Permissions (read-only endpoints for frontend user-role assignment)
+  Route::get('roles', [RoleController::class, 'index']);
+  Route::get('roles/{role}', [RoleController::class, 'show']);
+  Route::get('permissions', [PermissionController::class, 'index']);
+  Route::get('permissions/{permission}', [PermissionController::class, 'show']);
 });

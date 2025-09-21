@@ -43,10 +43,12 @@ Tệp này theo dõi tiến độ thực hiện API cho phần Admin, nhóm theo
     - [ ] Tests for invoice creation and refund flow
 
 - Module: Roles & Permissions
+- Module: Roles & Permissions
 
     - [x] Seed roles, RoleController, PermissionController
+    - [x] Read-only endpoints (index/show) registered in `routes/api-admin.php` for frontend assignment
     - [ ] Map permission -> endpoints (policies/gates)
-    - Note: Roles and permissions are configured and seeded in the system. Admin CRUD APIs for roles/permissions are not required by default. I previously added `roles` and `permissions` routes to `routes/api-admin.php` but these can be removed (revert) if you prefer role/permission management to remain fixed via seeders/migrations.
+    - Note: Roles and permissions are seeded in the system. Controllers support CRUD but only read endpoints (index/show) have been exposed in admin routes to allow the frontend to fetch lists when assigning roles/permissions to users. If you want full CRUD exposed later, we can add protected routes and gate them appropriately.
 
 - Module: Notifications & Realtime
 
