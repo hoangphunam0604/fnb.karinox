@@ -32,97 +32,31 @@ class UserService extends BaseService
   }
 
 
-  /**
-   * Create a user and optionally sync roles.
-   *
-   * @param array $data
-   * @param array|string|null $roles
-   * @return User
-   */
-  /**
-   * Compatibility wrapper for BaseService::create
-   * Creates a user without syncing roles.
-   *
-   * @param array $data
-   * @return Model
-   */
   public function create(array $data): Model
   {
-    // Keep behavior similar to BaseService but reuse createUser for full feature set
-    return $this->createUser($data, null);
-  }
-
-  /**
-   * Create a user and optionally sync roles.
-   *
-   * @param array $data
-   * @param array|string|null $roles
-   * @return User
-   */
-  public function createUser(array $data, array|string|null $roles = null): User
-  {
-    return DB::transaction(function () use ($data, $roles) {
+    return DB::transaction(function () use ($data) {
       if (!empty($data['password'])) {
         $data['password'] = bcrypt($data['password']);
       } else {
         unset($data['password']);
       }
 
-      /** @var User $user */
-      $user = $this->model()->create($data);
-
-      if ($roles !== null) {
-        $roleNames = $this->resolveRoleNames($roles);
-        if (!empty($roleNames)) {
-          $user->syncRoles($roleNames);
-        }
+      $role = null;
+      if (array_key_exists('role', $data)) {
+        $role = $data['role'];
+        unset($data['role']);
       }
+      unset($data['role']);
+      $user = $this->model()->create($data);
+      $this->syncRole($user, $role);
 
       return $user->fresh()->load($this->with);
     });
   }
-
-  /**
-   * Update a user and optionally sync roles. If $roles is null, roles are left unchanged.
-   *
-   * @param User $user
-   * @param array $data
-   * @param array|string|null $roles
-   * @return User
-   */
-  /**
-   * Compatibility wrapper for BaseService::update($id, array $data)
-   * If the incoming data contains 'roles', it will be used to sync roles.
-   *
-   * @param mixed $id
-   * @param array $data
-   * @return Model
-   */
   public function update($id, array $data)
   {
     return DB::transaction(function () use ($id, $data) {
-      $model = $this->model()->findOrFail($id);
-      $roles = null;
-      if (array_key_exists('roles', $data)) {
-        $roles = $data['roles'];
-        unset($data['roles']);
-      }
-
-      return $this->updateUser($model, $data, $roles);
-    });
-  }
-
-  /**
-   * Update a user and optionally sync roles. If $roles is null, roles are left unchanged.
-   *
-   * @param User $user
-   * @param array $data
-   * @param array|string|null $roles
-   * @return User
-   */
-  public function updateUser(User $user, array $data, array|string|null $roles = null): User
-  {
-    return DB::transaction(function () use ($user, $data, $roles) {
+      $user = $this->model()->findOrFail($id);
       if (array_key_exists('password', $data)) {
         if (!empty($data['password'])) {
           $data['password'] = bcrypt($data['password']);
@@ -130,17 +64,27 @@ class UserService extends BaseService
           unset($data['password']);
         }
       }
+      $role = null;
+      if (array_key_exists('role', $data)) {
+        $role = $data['role'];
+        unset($data['role']);
+      }
 
       $user->update($data);
-
-      if ($roles !== null) {
-        $roleNames = $this->resolveRoleNames($roles);
-        $user->syncRoles($roleNames);
-      }
+      $this->syncRole($user, $role);
 
       return $user->fresh()->load($this->with);
     });
   }
+  
+  protected function syncRole(User $user, $roles)
+  {
+    if ($roles !== null) {
+      $roleNames = $this->resolveRoleNames($roles);
+      $user->syncRoles($roleNames);
+    }
+  }
+
 
   /**
    * Accepts array of ids or names, or comma separated string, and returns role names array.

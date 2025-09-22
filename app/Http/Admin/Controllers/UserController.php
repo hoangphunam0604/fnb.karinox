@@ -32,10 +32,8 @@ class UserController extends Controller
    */
   public function store(UserRequest $request)
   {
-    $data = $request->validated();
-    $roles = $request->input('roles', null);
 
-    $user = $this->service->createUser($data, $roles);
+    $user = $this->service->create($request->validated());
 
     return new UserResource($user);
   }
@@ -51,14 +49,10 @@ class UserController extends Controller
   /**
    * Update the specified user.
    */
-  public function update(UserRequest $request, User $user)
+  public function update(UserRequest $request,  $id)
   {
-    $data = $request->validated();
-    $roles = $request->has('roles') ? $request->input('roles', []) : null;
-
-    $user = $this->service->updateUser($user, $data, $roles);
-
-    return new UserResource($user);
+    $user = $this->service->update($id, $request->validated());
+    return new UserResource($user->load('roles'));
   }
 
   /**
