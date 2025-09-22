@@ -2,6 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Http\Admin\Resources\UserResource;
@@ -33,9 +34,9 @@ class UserController extends Controller
   public function store(UserRequest $request)
   {
     $data = $request->validated();
-    $roles = $request->input('roles', null);
+    $role = $request->has('role') ? $request->input('role') : UserRole::CASHIER->value;
 
-    $user = $this->service->createUser($data, $roles);
+    $user = $this->service->createUser($data, $role);
 
     return new UserResource($user);
   }
@@ -45,7 +46,7 @@ class UserController extends Controller
    */
   public function show(User $user)
   {
-    return new UserResource($user->load('roles'));
+    return new UserResource($user->load(['roles']));
   }
 
   /**
@@ -54,9 +55,9 @@ class UserController extends Controller
   public function update(UserRequest $request, User $user)
   {
     $data = $request->validated();
-    $roles = $request->has('roles') ? $request->input('roles', []) : null;
+    $role = $request->has('role') ? $request->input('role') : UserRole::CASHIER->value;
 
-    $user = $this->service->updateUser($user, $data, $roles);
+    $user = $this->service->updateUser($user, $data, $role);
 
     return new UserResource($user);
   }

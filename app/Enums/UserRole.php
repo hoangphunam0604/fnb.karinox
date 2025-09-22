@@ -13,6 +13,21 @@ enum UserRole: string
   case CASHIER = 'cashier'; // Thu ngân: Xử lý thanh toán, áp dụng voucher, quản lý hóa đơn
   case DELIVERY_STAFF = 'delivery_staff'; // Nhân viên giao hàng: Giao đơn, cập nhật trạng thái giao hàng
   case INVENTORY_STAFF = 'inventory_staff'; // Nhân viên kho: Quản lý nhập/xuất kho, kiểm tra tồn kho
+  /**
+   * Lấy mô tả của vai trò
+   */
+  public function name(): string
+  {
+    return match ($this) {
+      self::ADMIN => 'Quản trị viên',
+      self::MANAGER => 'Quản lý chi nhánh',
+      self::WAITER => 'Nhân viên phục vụ',
+      self::KITCHEN_STAFF => 'Nhân viên bếp',
+      self::CASHIER => 'Thu ngân',
+      self::DELIVERY_STAFF => 'Nhân viên giao hàng',
+      self::INVENTORY_STAFF => 'Nhân viên kho',
+    };
+  }
 
   /**
    * Lấy mô tả của vai trò

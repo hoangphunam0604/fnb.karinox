@@ -17,7 +17,16 @@ class UserResource extends JsonResource
       'username' => $this->username,
       'is_active' => (bool) $this->is_active,
       'last_seen_at' => $this->last_seen_at ? $this->last_seen_at->toDateTimeString() : null,
-
+      'role' => $this->whenLoaded('roles', function () {
+        return $this->roles->pluck('name')->first();
+      }),
+      'role_name' => $this->whenLoaded('roles', function () {
+        $role = $this->roles->pluck('name')->first();
+        return $role ? \App\Enums\UserRole::tryFrom($role)?->name() : null;
+      }),
+      'permissions' => $this->whenLoaded('permissions', function () {
+        return $this->permissions->pluck('name');
+      }),
       'created_at' => $this->created_at?->toDateTimeString(),
       'updated_at' => $this->updated_at?->toDateTimeString(),
     ];

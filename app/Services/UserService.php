@@ -59,9 +59,9 @@ class UserService extends BaseService
    * @param array|string|null $roles
    * @return User
    */
-  public function createUser(array $data, array|string|null $roles = null): User
+  public function createUser(array $data, string|null $role = null): User
   {
-    return DB::transaction(function () use ($data, $roles) {
+    return DB::transaction(function () use ($data, $role) {
       if (!empty($data['password'])) {
         $data['password'] = bcrypt($data['password']);
       } else {
@@ -71,10 +71,15 @@ class UserService extends BaseService
       /** @var User $user */
       $user = $this->model()->create($data);
 
-      if ($roles !== null) {
-        $roleNames = $this->resolveRoleNames($roles);
+      if ($role !== null) {
+        $roleNames = $this->resolveRoleNames($role);
         if (!empty($roleNames)) {
-          $user->syncRoles($roleNames);
+          $name = $roleNames[0];
+          $roleModel = Role::where('name', $name)->first();
+          if (!$roleModel) {
+            $roleModel = Role::create(['name' => $name, 'guard_name' => config('auth.defaults.guard')]);
+          }
+          $user->syncRoles([$roleModel->name]);
         }
       }
 
@@ -103,9 +108,9 @@ class UserService extends BaseService
     return DB::transaction(function () use ($id, $data) {
       $model = $this->model()->findOrFail($id);
       $roles = null;
-      if (array_key_exists('roles', $data)) {
-        $roles = $data['roles'];
-        unset($data['roles']);
+      if (array_key_exists('role', $data)) {
+        $roles = $data['role'];
+        unset($data['role']);
       }
 
       return $this->updateUser($model, $data, $roles);
@@ -120,9 +125,9 @@ class UserService extends BaseService
    * @param array|string|null $roles
    * @return User
    */
-  public function updateUser(User $user, array $data, array|string|null $roles = null): User
+  public function updateUser(User $user, array $data, string|null $role = null): User
   {
-    return DB::transaction(function () use ($user, $data, $roles) {
+    return DB::transaction(function () use ($user, $data, $role) {
       if (array_key_exists('password', $data)) {
         if (!empty($data['password'])) {
           $data['password'] = bcrypt($data['password']);
@@ -133,9 +138,19 @@ class UserService extends BaseService
 
       $user->update($data);
 
-      if ($roles !== null) {
-        $roleNames = $this->resolveRoleNames($roles);
-        $user->syncRoles($roleNames);
+      if ($role !== null) {
+        $roleNames = $this->resolveRoleNames($role);
+        if (!empty($roleNames)) {
+          $name = $roleNames[0];
+          $roleModel = Role::where('name', $name)->first();
+          if (!$roleModel) {
+            $roleModel = Role::create(['name' => $name, 'guard_name' => config('auth.defaults.guard')]);
+          }
+          $user->syncRoles([$roleModel->name]);
+        } else {
+          // if role provided but none resolved, remove all roles
+          $user->syncRoles([]);
+        }
       }
 
       return $user->fresh()->load($this->with);

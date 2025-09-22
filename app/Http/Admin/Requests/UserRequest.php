@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Admin\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -8,7 +8,7 @@ class UserRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    // Nếu muốn kiểm soát quyền, thay bằng logic kiểm tra quyền admin ở đây
+    // Admin requests should be protected by controller middleware / gates
     return true;
   }
 
@@ -21,9 +21,8 @@ class UserRequest extends FormRequest
       'username' => ['required', 'string', 'max:100', 'unique:users,username' . ($userId ? ",{$userId},id" : '')],
       'password' => [$this->isMethod('post') ? 'required' : 'sometimes', 'nullable', 'string', 'min:6'],
       'is_active' => ['sometimes', 'boolean'],
-      'current_branch' => ['nullable', 'exists:branches,id'],
       'last_seen_at' => ['nullable', 'date'],
-      'role' => ['sometimes', 'nullable', 'string', 'in:admin,manager,cashier'],
+      'role' => ['string', 'in:admin,manager,cashier'],
     ];
   }
 
@@ -32,6 +31,8 @@ class UserRequest extends FormRequest
     if ($this->has('is_active')) {
       $this->merge(['is_active' => filter_var($this->input('is_active'), FILTER_VALIDATE_BOOLEAN)]);
     }
+
+    // normalize: accept 'roles' or 'role' input, prefer single 'role' string
     if ($this->has('roles')) {
       $roles = $this->input('roles');
       if (is_string($roles)) {
