@@ -2,6 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Http\Admin\Resources\UserResource;
@@ -32,9 +33,7 @@ class UserController extends Controller
    */
   public function store(UserRequest $request)
   {
-
     $user = $this->service->create($request->validated());
-
     return new UserResource($user);
   }
 
@@ -43,7 +42,7 @@ class UserController extends Controller
    */
   public function show(User $user)
   {
-    return new UserResource($user->load('roles'));
+    return new UserResource($user->load(['roles']));
   }
 
   /**

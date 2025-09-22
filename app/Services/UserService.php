@@ -76,7 +76,7 @@ class UserService extends BaseService
       return $user->fresh()->load($this->with);
     });
   }
-  
+
   protected function syncRole(User $user, $roles)
   {
     if ($roles !== null) {
