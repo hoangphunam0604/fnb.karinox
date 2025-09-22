@@ -20,7 +20,10 @@ class UserResource extends JsonResource
       'fullname' => $this->fullname,
       'role' => $this->getRoleNames()->first(), // Lấy vai trò đầu tiên
       'permissions' => $this->getAllPermissions()->pluck('name'), // Lấy danh sách quyền hạn
-      'current_branch' => $this->currentBranch ? new BranchResource($this->currentBranch) : null
+      'current_branch' => $this->currentBranch ? new BranchResource($this->currentBranch) : null,
+      'branches' => $this->whenLoaded('branches', function () {
+        return $this->branches->pluck('id')->all();
+      }, $this->branches->pluck('id')->all()),
     ];
   }
 }

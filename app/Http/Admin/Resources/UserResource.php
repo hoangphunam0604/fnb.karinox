@@ -27,6 +27,7 @@ class UserResource extends JsonResource
       'permissions' => $this->whenLoaded('permissions', function () {
         return $this->permissions->pluck('name');
       }),
+      'branches' => $this->branches->pluck('id')->all(),
       'created_at' => $this->created_at?->toDateTimeString(),
       'updated_at' => $this->updated_at?->toDateTimeString(),
     ];
