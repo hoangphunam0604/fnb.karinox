@@ -1,69 +1,71 @@
-# TODO API Admin (theo module)
+# DANH SÁCH CÔNG VIỆC API QUẢN TRỊ (theo module)
 
-Tệp này theo dõi tiến độ thực hiện API cho phần Admin, nhóm theo module chính để dễ theo dõi.
+Tệp này theo dõi tiến độ thực hiện API cho phần Quản trị, nhóm theo module chính để dễ theo dõi.
 
-## Tổng quan trạng thái (cập nhật)
+## Tổng quan trạng thái (cập nhật mới nhất)
 
 - [x] Xác thực (Auth) — `app/Http/Controllers/Api/Auth/AuthController.php`, `routes/api-auth.php`, `config/jwt.php`
-- [x] Users — `app/Http/Controllers/Admin/UserController.php`, `app/Services/UserService.php`, `app/Http/Resources/Admin/UserResource.php`, `database/seeders/UserSeeder.php`
-- [x] Products — controller/service/request/resource, migration `create_products_table.php`
-- [x] Categories — controller, resource, request
-- [x] Branches — controller, resource, request, branch-user linking
-- [x] Invoices / Billing — `InvoiceService`, `InvoiceResource` (create invoice, payment status, refunds)
-- [x] Roles & Permissions — Spatie + Role/Permission controllers and seeders
-- [x] Notifications & Real-time — Reverb & events/listeners
-- [-] FormRequests & Validation — đang audit/chuẩn hoá (FormRequest tồn tại nhiều, cần tách Store/Update và thêm `authorize()`)
+- [x] Người dùng (Users) — `app/Http/Controllers/Admin/UserController.php`, `app/Services/UserService.php`, `app/Http/Resources/Admin/UserResource.php`, `database/seeders/UserSeeder.php`
+- [x] Sản phẩm (Products) — controller/service/request/resource, migration `create_products_table.php`
+- [x] Danh mục (Categories) — controller, resource, request
+- [x] Chi nhánh (Branches) — controller, resource, request, liên kết branch-user
+- [x] Hoá đơn / Thanh toán (Invoices/Billing) — `InvoiceService`, `InvoiceResource` (tạo hoá đơn, trạng thái thanh toán, hoàn tiền)
+- [x] Vai trò & Quyền (Roles & Permissions) — Spatie + controllers Role/Permission và seeders
+- [x] Thông báo & Thời gian thực (Notifications & Real-time) — Reverb & events/listeners
+- [-] FormRequests & Validation — đang kiểm tra/chuẩn hoá (FormRequest tồn tại nhiều, cần tách Store/Update và thêm `authorize()`)
 
-## Checklist theo module (chi tiết)
+## Danh sách kiểm tra theo module (chi tiết)
 
-- Module: Users
+### Module: Người dùng (Users)
 
-    - [x] Controller + Service + Resource
-    - [x] Seeder admin
-    - [ ] Hoàn thiện FormRequests (Store/Update) và `authorize()`
+- [x] Controller + Service + Resource
+- [x] Seeder admin
+- [x] Xử lý vai trò (role) và chi nhánh (branches)
+- [ ] Hoàn thiện FormRequests (Store/Update) và `authorize()`
 
-- Module: Products
+### Module: Sản phẩm (Products)
 
-    - [x] Controller + Service + Requests + Resources
-    - [x] Import, branch pivot sync
-    - [ ] Tests feature cho import/CRUD
+- [x] Controller + Service + Requests + Resources
+- [x] Import, đồng bộ pivot chi nhánh
+- [ ] Tests tính năng cho import/CRUD
 
-- Module: Categories
+### Module: Danh mục (Categories)
 
-    - [x] Controller + Resource + Request
+- [x] Controller + Resource + Request
+- [ ] Kiểm tra phân cấp danh mục (nếu có)
 
-- Module: Branches
+### Module: Chi nhánh (Branches)
 
-    - [x] Controller + Resource + Request
-    - [ ] Kiểm tra branch-user linking & permissions
+- [x] Controller + Resource + Request
+- [ ] Kiểm tra liên kết branch-user & quyền hạn
 
-- Module: Invoices / Billing
+### Module: Hoá đơn / Thanh toán (Invoices/Billing)
 
-    - [x] Invoice creation from order, payment status handling
-    - [ ] Tests for invoice creation and refund flow
+- [x] Tạo hoá đơn từ đơn hàng, xử lý trạng thái thanh toán
+- [ ] Tests cho luồng tạo hoá đơn và hoàn tiền
 
-- Module: Roles & Permissions
-- Module: Roles & Permissions
+### Module: Vai trò & Quyền (Roles & Permissions)
 
-    - [x] Seed roles, RoleController, PermissionController
-    - [x] Read-only endpoints (index/show) registered in `routes/api-admin.php` for frontend assignment
-    - [ ] Map permission -> endpoints (policies/gates)
-    - Note: Roles and permissions are seeded in the system. Controllers support CRUD but only read endpoints (index/show) have been exposed in admin routes to allow the frontend to fetch lists when assigning roles/permissions to users. If you want full CRUD exposed later, we can add protected routes and gate them appropriately.
+- [x] Seed roles, RoleController, PermissionController
+- [x] Endpoints chỉ đọc (index/show) đã đăng ký trong `routes/api-admin.php` cho frontend gán quyền
+- [ ] Ánh xạ permission -> endpoints (policies/gates)
+- **Ghi chú**: Roles và permissions đã được seed trong hệ thống. Controllers hỗ trợ CRUD nhưng chỉ có endpoints đọc (index/show) được expose trong admin routes để frontend có thể lấy danh sách khi gán roles/permissions cho users. Nếu muốn CRUD đầy đủ sau này, có thể thêm routes được bảo vệ và gate phù hợp.
 
-- Module: Notifications & Realtime
+### Module: Thông báo & Thời gian thực (Notifications & Realtime)
 
-    - [x] Broadcasting config (Reverb), events & listeners
-    - [ ] Healthcheck / production setup for Reverb
+- [x] Cấu hình Broadcasting (Reverb), events & listeners
+- [ ] Kiểm tra sức khoẻ / cài đặt production cho Reverb
 
-- Cross-cutting tasks
-    - [ ] Mapping quyền & Authorization (Policies/Gates) — chưa xong
-    - [ ] Tests: Unit & Feature cho Admin API (auth + User/Product/Invoice) — chưa xong
-    - [ ] Tài liệu Admin API (OpenAPI / Scribe / README_admin_api.md) — chưa xong
-    - [ ] CI: PHPUnit & Lint workflow — chưa xong
-    - [ ] README - Hướng dẫn Admin API & setup — chưa xong
-    - [ ] Bảo mật & Triển khai (CORS production, secrets, queue, monitoring) — chưa xong
+## Nhiệm vụ chung (Cross-cutting tasks)
 
-## Ghi chú cài đặt nhanh (local)
+- [ ] Ánh xạ quyền & Phân quyền (Policies/Gates) — chưa hoàn thành
+- [ ] Tests: Unit & Feature cho Admin API (auth + User/Product/Invoice) — chưa hoàn thành
+- [ ] Tài liệu Admin API (OpenAPI / Scribe / README_admin_api.md) — chưa hoàn thành
+- [ ] CI: PHPUnit & Lint workflow — chưa hoàn thành
+- [ ] README - Hướng dẫn Admin API & cài đặt — chưa hoàn thành
+- [ ] Bảo mật & Triển khai (CORS production, secrets, queue, monitoring) — chưa hoàn thành
+
+## Hướng dẫn cài đặt nhanh (môi trường local)
 
 1. Sao chép `.env.example` -> `.env` và cấu hình DB, JWT, REVERB.
 2. Chạy các lệnh:
@@ -81,88 +83,90 @@ php artisan migrate --seed
 php artisan reverb:start
 ```
 
-## Tiếp theo (gợi ý)
+## Kế hoạch tiếp theo (gợi ý)
 
-- Tôi đang audit và chuẩn hoá `FormRequest` cho Admin (Store/Update). Nếu bạn muốn, tôi sẽ:
-    1. Liệt kê tất cả `FormRequest` hiện có dưới `app/Http/Requests/Admin`.
-    2. Tạo/chuẩn hoá `StoreUserRequest` và `UpdateUserRequest` làm mẫu.
-    3. Cập nhật TODO khi xong.
+Tôi đang kiểm tra và chuẩn hoá `FormRequest` cho Admin (Store/Update). Nếu bạn muốn, tôi sẽ:
 
-## Coverage matrix (tóm tắt)
+1. Liệt kê tất cả `FormRequest` hiện có dưới `app/Http/Requests/Admin`.
+2. Tạo/chuẩn hoá `StoreUserRequest` và `UpdateUserRequest` làm mẫu.
+3. Cập nhật TODO khi hoàn thành.
 
-Mục này liệt kê nhanh module chính, trạng thái API admin hiện tại và đề xuất endpoint còn thiếu cho frontend.
+## Ma trận bao phủ tính năng (tóm tắt)
 
-- Users
+Phần này liệt kê nhanh module chính, trạng thái API admin hiện tại và đề xuất endpoint còn thiếu cho frontend.
 
-    - Status: Controller (apiResource), Service, Resource present.
-    - Missing: Split FormRequests (StoreUserRequest / UpdateUserRequest); optional endpoints: change-password, activity logs.
+### Người dùng (Users)
 
-- Roles & Permissions
+- **Trạng thái**: Controller (apiResource), Service, Resource có sẵn.
+- **Thiếu**: Tách FormRequests (StoreUserRequest / UpdateUserRequest); endpoints tùy chọn: change-password, activity logs.
 
-    - Status: `RoleController` and `PermissionController` exist; Resource classes present.
-    - Missing: Routes not registered in `routes/api-admin.php`. If admin UI manages roles/permissions, add `Route::apiResource('roles', RoleController::class)` and `Route::apiResource('permissions', PermissionController::class)`.
+### Vai trò & Quyền (Roles & Permissions)
 
-- Products
+- **Trạng thái**: `RoleController` và `PermissionController` tồn tại; Resource classes có sẵn.
+- **Thiếu**: Routes chưa được đăng ký trong `routes/api-admin.php`. Nếu admin UI quản lý roles/permissions, thêm `Route::apiResource('roles', RoleController::class)` và `Route::apiResource('permissions', PermissionController::class)`.
 
-    - Status: Controller (apiResource), Service, Import endpoint, Resources present.
-    - Missing: Feature tests for import/CRUD; optional bulk actions (bulk-update, bulk-delete).
+### Sản phẩm (Products)
 
-- Categories
+- **Trạng thái**: Controller (apiResource), Service, Import endpoint, Resources có sẵn.
+- **Thiếu**: Feature tests cho import/CRUD; hành động hàng loạt tùy chọn (bulk-update, bulk-delete).
 
-    - Status: Controller + Resource + Request + `all()` endpoint present.
-    - Missing: FormRequest split/authorize and tests.
+### Danh mục (Categories)
 
-- Branches
+- **Trạng thái**: Controller + Resource + Request + endpoint `all()` có sẵn.
+- **Thiếu**: Tách FormRequest/authorize và tests.
 
-    - Status: Controller (apiResource) and `branches/all` endpoint present.
-    - Missing: Branch-user linking APIs (assign/unassign users to branches) if needed by admin UI.
+### Chi nhánh (Branches)
 
-- Customers
+- **Trạng thái**: Controller (apiResource) và endpoint `branches/all` có sẵn.
+- **Thiếu**: APIs liên kết Branch-user (gán/bỏ gán users cho branches) nếu admin UI cần.
 
-    - Status: Controller (apiResource), import endpoint, Service and Resources present.
-    - Missing: Customer points endpoints (points summary, points history), manual point adjustment endpoints.
+### Khách hàng (Customers)
 
-- Membership Levels
+- **Trạng thái**: Controller (apiResource), import endpoint, Service và Resources có sẵn.
+- **Thiếu**: Endpoints điểm khách hàng (tóm tắt điểm, lịch sử điểm), endpoints điều chỉnh điểm thủ công.
 
-    - Status: Controller (apiResource), Service, Resources present.
-    - Missing: Tests and any admin actions for forced upgrades/downgrades.
+### Cấp độ thành viên (Membership Levels)
 
-- Invoices / Billing
+- **Trạng thái**: Controller (apiResource), Service, Resources có sẵn.
+- **Thiếu**: Tests và hành động admin cho nâng cấp/hạ cấp cưỡng bức.
 
-    - Status: `InvoiceController` exposes index/show; InvoiceService and InvoiceResource present.
-    - Missing: Admin actions for cancel/refund/reprint (add `PUT admin/invoices/{id}/cancel`, `POST admin/invoices/{id}/refund` if needed).
+### Hoá đơn / Thanh toán (Invoices/Billing)
 
-- Orders (Admin view)
+- **Trạng thái**: `InvoiceController` expose index/show; InvoiceService và InvoiceResource có sẵn.
+- **Thiếu**: Hành động admin cho huỷ/hoàn tiền/in lại (thêm `PUT admin/invoices/{id}/cancel`, `POST admin/invoices/{id}/refund` nếu cần).
 
-    - Status: OrderService exists; POS order endpoints live under POS routes.
-    - Missing: If admin needs order management, add `Admin\OrderController` with index/show/update status endpoints wired to `OrderService`.
+### Đơn hàng - Góc nhìn Admin (Orders Admin view)
 
-- Vouchers
+- **Trạng thái**: OrderService tồn tại; POS order endpoints nằm dưới POS routes.
+- **Thiếu**: Nếu admin cần quản lý đơn hàng, thêm `Admin\OrderController` với endpoints index/show/update status kết nối với `OrderService`.
 
-    - Status: VoucherService and unit tests exist; POS has voucher usage endpoints.
-    - Missing: Admin CRUD for vouchers (no `Admin\VoucherController` present). Recommend `apiResource('vouchers', VoucherController::class)` and an `Admin\VoucherController`.
+### Voucher/Phiếu giảm giá
 
-- Points / Loyalty
+- **Trạng thái**: VoucherService và unit tests tồn tại; POS có endpoints sử dụng voucher.
+- **Thiếu**: Admin CRUD cho vouchers (không có `Admin\VoucherController`). Đề xuất `apiResource('vouchers', VoucherController::class)` và một `Admin\VoucherController`.
 
-    - Status: `PointService` and `PointHistory` model present.
-    - Missing: Admin endpoints for viewing and adjusting points (per-customer endpoints).
+### Điểm / Chương trình khách hàng thân thiết (Points/Loyalty)
 
-- TableAndRoom, PrintTemplates, Areas, Attributes, Holidays
-    - Status: Controllers + Services + Resources present and registered.
-    - Missing: Mostly tests and FormRequest `authorize()` enforcement.
+- **Trạng thái**: `PointService` và model `PointHistory` có sẵn.
+- **Thiếu**: Endpoints admin để xem và điều chỉnh điểm (endpoints theo từng khách hàng).
 
-## Short implementation checklist (recommended next commits)
+### TableAndRoom, PrintTemplates, Areas, Attributes, Holidays
 
-1. Register Role/Permission routes in `routes/api-admin.php` (quick patch).
-2. Scaffold `Admin\VoucherController` and `Admin\VoucherResource` + FormRequests, and add routes.
-3. Add customer points endpoints in `CustomerController` (points summary & history) and create `PointHistoryResource`.
-4. Add invoice admin actions (cancel/refund) in `InvoiceController` and tests.
-5. Split/normalize FormRequests for critical modules (User, Product, Customer, Voucher) and implement `authorize()` calling Spatie permissions.
-6. Add feature tests for the new admin endpoints (happy path + permission denied).
+- **Trạng thái**: Controllers + Services + Resources có sẵn và đã đăng ký.
+- **Thiếu**: Chủ yếu là tests và thực thi `authorize()` trong FormRequest.
+
+## Danh sách triển khai ngắn (đề xuất commit tiếp theo)
+
+1. Đăng ký Role/Permission routes trong `routes/api-admin.php` (patch nhanh).
+2. Tạo khung `Admin\VoucherController` và `Admin\VoucherResource` + FormRequests, thêm routes.
+3. Thêm endpoints điểm khách hàng trong `CustomerController` (tóm tắt & lịch sử điểm) và tạo `PointHistoryResource`.
+4. Thêm hành động admin hoá đơn (huỷ/hoàn tiền) trong `InvoiceController` và tests.
+5. Tách/chuẩn hoá FormRequests cho modules quan trọng (User, Product, Customer, Voucher) và triển khai `authorize()` gọi Spatie permissions.
+6. Thêm feature tests cho endpoints admin mới (happy path + từ chối quyền).
 
 ---
 
-Tôi có thể bắt đầu với bước (1) tự động: thêm routes cho roles/permissions vào `routes/api-admin.php` và commit nhanh. Bạn muốn tôi thực hiện bước đó bây giờ chứ?
+**Tôi có thể bắt đầu với bước (1) tự động: thêm routes cho roles/permissions vào `routes/api-admin.php` và commit nhanh. Bạn có muốn tôi thực hiện bước đó ngay bây giờ không?**
 
 ---
 
