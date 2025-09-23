@@ -9,6 +9,8 @@ return new class extends Migration {
   {
     Schema::create('vouchers', function (Blueprint $table) {
       $table->id();
+      $table->timestamps();
+      $table->foreignId('campaign_id')->nullable()->constrained('voucher_campaigns')->onDelete('set null');
       $table->string('code')->unique();
       $table->string('description')->nullable();
       $table->enum('voucher_type', ['common', 'private'])->default('private');
@@ -31,7 +33,7 @@ return new class extends Migration {
       $table->json('valid_time_ranges')->nullable();
       $table->json('excluded_dates')->nullable();
       $table->boolean('warn_if_used')->default(false);
-      $table->timestamps();
+      $table->index('campaign_id');
     });
   }
 

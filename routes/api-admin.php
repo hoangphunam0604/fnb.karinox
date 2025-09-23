@@ -15,6 +15,7 @@ use App\Http\Admin\Controllers\ProductController;
 use App\Http\Admin\Controllers\PrintTemplateController;
 use App\Http\Admin\Controllers\HolidayController;
 use App\Http\Admin\Controllers\UserController;
+use App\Http\Admin\Controllers\VoucherCampaignController;
 use App\Http\Admin\Controllers\RoleController;
 use App\Http\Admin\Controllers\PermissionController;
 
@@ -51,6 +52,15 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   Route::apiResource('print-templates', PrintTemplateController::class);
   Route::apiResource('holidays', HolidayController::class);
   Route::apiResource('users', UserController::class);
+
+  // Voucher Campaigns with additional endpoints
+  Route::apiResource('voucher-campaigns', VoucherCampaignController::class);
+  Route::post('voucher-campaigns/{voucherCampaign}/generate-vouchers', [VoucherCampaignController::class, 'generateVouchers']);
+  Route::get('voucher-campaigns/{voucherCampaign}/analytics', [VoucherCampaignController::class, 'analytics']);
+  Route::get('voucher-campaigns/{voucherCampaign}/export-codes', [VoucherCampaignController::class, 'exportCodes']);
+  Route::put('voucher-campaigns/{voucherCampaign}/activate-vouchers', [VoucherCampaignController::class, 'activateVouchers']);
+  Route::put('voucher-campaigns/{voucherCampaign}/deactivate-vouchers', [VoucherCampaignController::class, 'deactivateVouchers']);
+  Route::get('voucher-campaigns/{voucherCampaign}/vouchers', [VoucherCampaignController::class, 'vouchers']);
 
   // Roles & Permissions (read-only endpoints for frontend user-role assignment)
   Route::get('roles', [RoleController::class, 'index']);

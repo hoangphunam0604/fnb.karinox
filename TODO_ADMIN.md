@@ -12,7 +12,7 @@ Tệp này theo dõi tiến độ thực hiện API cho phần Quản trị, nh�
 - [x] Hoá đơn / Thanh toán (Invoices/Billing) — `InvoiceService`, `InvoiceResource` (tạo hoá đơn, trạng thái thanh toán, hoàn tiền)
 - [x] Vai trò & Quyền (Roles & Permissions) — Spatie + controllers Role/Permission và seeders
 - [x] Thông báo & Thời gian thực (Notifications & Real-time) — Reverb & events/listeners
-- [-] FormRequests & Validation — đang kiểm tra/chuẩn hoá (FormRequest tồn tại nhiều, cần tách Store/Update và thêm `authorize()`)
+- [x] FormRequests & Validation — đã review, quyết định giữ chung FormRequest
 
 ## Danh sách kiểm tra theo module (chi tiết)
 
@@ -21,7 +21,9 @@ Tệp này theo dõi tiến độ thực hiện API cho phần Quản trị, nh�
 - [x] Controller + Service + Resource
 - [x] Seeder admin
 - [x] Xử lý vai trò (role) và chi nhánh (branches)
-- [ ] Hoàn thiện FormRequests (Store/Update) và `authorize()`
+- [x] Review FormRequests - quyết định giữ chung thay vì tách Store/Update
+- [x] Quyết định authorization - sử dụng route middleware thay vì FormRequest authorize()
+- [ ] Tạo Admin VoucherController và VoucherResource + FormRequest
 
 ### Module: Sản phẩm (Products)
 
@@ -85,11 +87,12 @@ php artisan reverb:start
 
 ## Kế hoạch tiếp theo (gợi ý)
 
-Tôi đang kiểm tra và chuẩn hoá `FormRequest` cho Admin (Store/Update). Nếu bạn muốn, tôi sẽ:
+Đã hoàn thành review FormRequests và quyết định giữ chung FormRequest. Tiếp theo sẽ:
 
-1. Liệt kê tất cả `FormRequest` hiện có dưới `app/Http/Requests/Admin`.
-2. Tạo/chuẩn hoá `StoreUserRequest` và `UpdateUserRequest` làm mẫu.
-3. Cập nhật TODO khi hoàn thành.
+1. ✅ Liệt kê tất cả `FormRequest` hiện có dưới `app/Http/Admin/Requests/`.
+2. ✅ Quyết định giữ chung FormRequest thay vì tách Store/Update (chỉ Product/User có khác biệt).
+3. 🔄 Cải thiện `authorize()` method cho các Admin requests để sử dụng Spatie permissions.
+4. 📋 Thêm routes cho roles/permissions vào `routes/api-admin.php`.
 
 ## Ma trận bao phủ tính năng (tóm tắt)
 

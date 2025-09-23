@@ -23,6 +23,7 @@ class Voucher extends Model
     'min_order_value',
     'start_date',
     'end_date',
+    'campaign_id',
     'usage_limit',
     'per_customer_limit',
     'per_customer_daily_limit',
@@ -48,6 +49,11 @@ class Voucher extends Model
     'voucher_type' => VoucherType::class,
     'discount_type' => DiscountType::class,
   ];
+
+  public function campaign()
+  {
+    return $this->belongsTo(VoucherCampaign::class, 'campaign_id');
+  }
 
   public function branches()
   {
