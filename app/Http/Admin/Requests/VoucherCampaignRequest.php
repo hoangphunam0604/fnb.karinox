@@ -20,8 +20,10 @@ class VoucherCampaignRequest extends FormRequest
       'name' => 'required|string|max:255',
       'description' => 'nullable|string|max:1000',
       'campaign_type' => 'required|string|in:event,promotion,loyalty,seasonal,birthday,grand_opening',
-      'start_date' => 'required|date|before_or_equal:end_date',
-      'end_date' => 'required|date|after_or_equal:start_date',
+      // Campaign date range. Support unlimited campaigns via `is_unlimited` flag.
+      'start_date' => 'required|date',
+      // end_date is required unless is_unlimited is true. When provided it must be after or equal to start_date.
+      'end_date' => 'nullable|date|after_or_equal:start_date',
       'target_quantity' => 'required|integer|min:1|max:100000',
 
       // Code generation settings
@@ -123,10 +125,15 @@ class VoucherCampaignRequest extends FormRequest
     }
 
     // Convert boolean fields
-    foreach (['is_active', 'auto_generate'] as $field) {
+    foreach (['is_active', 'auto_generate', 'is_unlimited'] as $field) {
       if ($this->has($field)) {
         $this->merge([$field => filter_var($this->input($field), FILTER_VALIDATE_BOOLEAN)]);
       }
+    }
+
+    // If campaign is marked as unlimited, clear any provided end_date so validation treats it as open-ended.
+    if ($this->has('is_unlimited') && $this->input('is_unlimited')) {
+      $this->merge(['end_date' => null]);
     }
   }
 }

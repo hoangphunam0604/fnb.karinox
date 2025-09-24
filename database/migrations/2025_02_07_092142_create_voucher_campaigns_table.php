@@ -18,7 +18,8 @@ return new class extends Migration
       $table->text('description')->nullable();
       $table->enum('campaign_type', ['event', 'promotion', 'loyalty', 'seasonal', 'birthday', 'grand_opening'])->default('promotion');
       $table->datetime('start_date');
-      $table->datetime('end_date');
+      // Allow null end_date to represent an "unlimited" campaign
+      $table->datetime('end_date')->nullable();
       $table->integer('target_quantity')->comment('Số voucher dự kiến tạo');
       $table->integer('generated_quantity')->default(0)->comment('Số voucher đã tạo');
       $table->integer('used_quantity')->default(0)->comment('Số voucher đã sử dụng');

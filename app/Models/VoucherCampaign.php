@@ -60,7 +60,10 @@ class VoucherCampaign extends Model
   {
     return $query->where('is_active', true)
       ->where('start_date', '<=', now())
-      ->where('end_date', '>=', now());
+      // Campaign is active if end_date is null (unlimited) OR end_date >= now
+      ->where(function ($q) {
+        $q->whereNull('end_date')->orWhere('end_date', '>=', now());
+      });
   }
 
   public function scopeByType($query, string $type)
@@ -73,39 +76,53 @@ class VoucherCampaign extends Model
   {
     return $this->is_active &&
       $this->start_date <= now() &&
-      $this->end_date >= now();
+      (
+        $this->end_date === null ||
+        $this->end_date >= now()
+      );
   }
 
   public function canGenerateMore(): bool
   {
-    return $this->generated_quantity < $this->target_quantity;
+    return ((int) $this->generated_quantity) < ((int) $this->target_quantity);
   }
 
   public function getRemainingQuantity(): int
   {
-    return max(0, $this->target_quantity - $this->generated_quantity);
+    $target = (int) ($this->target_quantity ?? 0);
+    $generated = (int) ($this->generated_quantity ?? 0);
+
+    return max(0, $target - $generated);
   }
 
   public function getUsageRate(): float
   {
-    if ($this->generated_quantity === 0) {
-      return 0;
+    $generated = (int) ($this->generated_quantity ?? 0);
+    if ($generated <= 0) {
+      return 0.0;
     }
 
-    return round(($this->used_quantity / $this->generated_quantity) * 100, 2);
+    $used = (int) ($this->used_quantity ?? 0);
+    return round(($used / $generated) * 100, 2);
   }
 
   public function getGenerationRate(): float
   {
-    if ($this->target_quantity === 0) {
-      return 0;
+    $target = (int) ($this->target_quantity ?? 0);
+    if ($target <= 0) {
+      return 0.0;
     }
 
-    return round(($this->generated_quantity / $this->target_quantity) * 100, 2);
+    $generated = (int) ($this->generated_quantity ?? 0);
+    return round(($generated / $target) * 100, 2);
   }
 
   public function getDaysRemaining(): int
   {
+    if ($this->end_date === null) {
+      return PHP_INT_MAX; // represent effectively unlimited
+    }
+
     return max(0, now()->diffInDays($this->end_date, false));
   }
 
