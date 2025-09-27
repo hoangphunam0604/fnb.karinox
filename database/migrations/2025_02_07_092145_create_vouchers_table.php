@@ -13,7 +13,7 @@ return new class extends Migration {
       $table->foreignId('campaign_id')->nullable()->constrained('voucher_campaigns')->onDelete('set null');
       $table->string('code')->unique();
       $table->string('description')->nullable();
-      $table->enum('voucher_type', ['common', 'private'])->default('private');
+      $table->enum('voucher_type', ['membership', 'standard'])->default('standard');
       $table->enum('discount_type', ['fixed', 'percentage']);
       $table->decimal('discount_value', 10, 2);
       $table->decimal('max_discount', 10, 2)->nullable();
@@ -32,7 +32,6 @@ return new class extends Migration {
       $table->json('valid_months')->nullable();
       $table->json('valid_time_ranges')->nullable();
       $table->json('excluded_dates')->nullable();
-      $table->boolean('warn_if_used')->default(false);
       $table->index('campaign_id');
     });
   }

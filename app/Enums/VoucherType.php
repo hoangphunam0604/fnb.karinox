@@ -6,14 +6,14 @@ use Illuminate\Support\Arr;
 
 enum VoucherType: string
 {
-  case COMMON = 'common';
-  case PRIVATE = 'private';
+  case STANDARD = 'standard';
+  case MEMBERSHIP = 'membership';
 
   public function getLabel(): string
   {
     return match ($this) {
-      self::COMMON => 'Voucher chung',
-      self::PRIVATE => 'Voucher riêng',
+      self::STANDARD => 'Voucher chuẩn',
+      self::MEMBERSHIP => 'Voucher thành viên',
     };
   }
 

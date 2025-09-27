@@ -48,49 +48,46 @@ class VoucherCampaignService extends BaseService
     $vouchers = [];
     $template = $campaign->voucher_template;
 
-    return DB::transaction(function () use ($campaign, $maxGenerate, $template, &$vouchers) {
-      for ($i = 0; $i < $maxGenerate; $i++) {
-        $code = $this->generateUniqueCode($campaign);
+    for ($i = 0; $i < $maxGenerate; $i++) {
+      $code = $this->generateUniqueCode($campaign);
 
-        $voucherData = [
-          'campaign_id' => $campaign->id,
-          'code' => $code,
-          'description' => $template['description'] ?? $campaign->name,
-          'voucher_type' => $template['voucher_type'] ?? VoucherType::PRIVATE->value,
-          'discount_type' => $template['discount_type'],
-          'discount_value' => $template['discount_value'],
-          'max_discount' => $template['max_discount'] ?? null,
-          'min_order_value' => $template['min_order_value'] ?? null,
-          'start_date' => $template['start_date'] ?? $campaign->start_date,
-          'end_date' => $template['end_date'] ?? $campaign->end_date,
-          'usage_limit' => $template['usage_limit'] ?? 1, // Default: single use
-          'per_customer_limit' => $template['per_customer_limit'] ?? null,
-          'per_customer_daily_limit' => $template['per_customer_daily_limit'] ?? null,
-          'is_active' => $template['is_active'] ?? true,
-          'disable_holiday' => $template['disable_holiday'] ?? false,
-          'applicable_membership_levels' => $template['applicable_membership_levels'] ?? null,
-          'valid_days_of_week' => $template['valid_days_of_week'] ?? null,
-          'valid_weeks_of_month' => $template['valid_weeks_of_month'] ?? null,
-          'valid_months' => $template['valid_months'] ?? null,
-          'valid_time_ranges' => $template['valid_time_ranges'] ?? null,
-          'excluded_dates' => $template['excluded_dates'] ?? null,
-          'warn_if_used' => $template['warn_if_used'] ?? false,
-        ];
+      $voucherData = [
+        'campaign_id' => $campaign->id,
+        'start_date' =>  $campaign->start_date,
+        'end_date' => $campaign->end_date,
+        'code' => $code,
+        'description' => $template['description'] ?? $campaign->name,
+        'voucher_type' => $template['voucher_type'] ?? VoucherType::STANDARD->value,
+        'discount_type' => $template['discount_type'],
+        'discount_value' => $template['discount_value'],
+        'max_discount' => $template['max_discount'] ?? null,
+        'min_order_value' => $template['min_order_value'] ?? null,
+        'usage_limit' => $template['usage_limit'] ?? 1, // Default: single use
+        'per_customer_limit' => $template['per_customer_limit'] ?? null,
+        'per_customer_daily_limit' => $template['per_customer_daily_limit'] ?? null,
+        'is_active' => $template['is_active'] ?? true,
+        'disable_holiday' => $template['disable_holiday'] ?? false,
+        'applicable_membership_levels' => $template['applicable_membership_levels'] ?? null,
+        'valid_days_of_week' => $template['valid_days_of_week'] ?? null,
+        'valid_weeks_of_month' => $template['valid_weeks_of_month'] ?? null,
+        'valid_months' => $template['valid_months'] ?? null,
+        'valid_time_ranges' => $template['valid_time_ranges'] ?? null,
+        'excluded_dates' => $template['excluded_dates'] ?? null,
+      ];
 
-        $voucher = Voucher::create($voucherData);
+      $voucher = Voucher::create($voucherData);
 
-        // Sync branches if specified in template
-        if (isset($template['branch_ids']) && is_array($template['branch_ids'])) {
-          $voucher->branches()->sync($template['branch_ids']);
-        }
-
-        $vouchers[] = $voucher;
+      // Sync branches if specified in template
+      if (isset($template['branch_ids']) && is_array($template['branch_ids'])) {
+        $voucher->branches()->sync($template['branch_ids']);
       }
 
-      $campaign->incrementGenerated($maxGenerate);
+      $vouchers[] = $voucher;
+    }
 
-      return $vouchers;
-    });
+    $campaign->incrementGenerated($maxGenerate);
+
+    return $vouchers;
   }
 
   /**
@@ -104,7 +101,7 @@ class VoucherCampaignService extends BaseService
     do {
       $random = $this->generateRandomString($campaign->code_length);
       $code = str_replace(
-        ['{PREFIX}', '{RANDOM_' . $campaign->code_length . '}', '{RANDOM}'],
+        ['{PREFIX}', '{RANDOM' . $campaign->code_length . '}', '{RANDOM}'],
         [$campaign->code_prefix, $random, $random],
         $campaign->code_format
       );

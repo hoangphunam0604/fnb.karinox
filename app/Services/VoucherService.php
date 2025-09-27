@@ -71,7 +71,7 @@ class VoucherService
   public function getCommonVouchers()
   {
     return Voucher::where('is_active', true)
-      ->where('voucher_type', VoucherType::COMMON)
+      ->where('voucher_type', VoucherType::STANDARD)
       ->get();
   }
   /**
@@ -93,7 +93,7 @@ class VoucherService
     $time = $now->format('H:i');
     $dailyUsageCounts = [];
     $query = Voucher::where('is_active', true)
-      ->where('voucher_type', VoucherType::COMMON)
+      ->where('voucher_type', VoucherType::STANDARD)
       ->where(function ($q) use ($now) {
         $q->whereNull('start_date')
           ->orWhere('start_date',  '<=', $now);

@@ -21,7 +21,7 @@ class VoucherCampaignRequest extends FormRequest
       'description' => 'nullable|string|max:1000',
       'campaign_type' => 'required|string|in:event,promotion,loyalty,seasonal,birthday,grand_opening',
       // Campaign date range. Support unlimited campaigns via `is_unlimited` flag.
-      'start_date' => 'required|date',
+      'start_date' => 'nullable|date',
       // end_date is required unless is_unlimited is true. When provided it must be after or equal to start_date.
       'end_date' => 'nullable|date|after_or_equal:start_date',
       'target_quantity' => 'required|integer|min:1|max:100000',
@@ -47,7 +47,7 @@ class VoucherCampaignRequest extends FormRequest
       // Voucher template validation
       'voucher_template' => 'required|array',
       'voucher_template.description' => 'nullable|string|max:255',
-      'voucher_template.voucher_type' => 'required|string|in:common,private',
+      'voucher_template.voucher_type' => 'required|string|in:standard,membership',
       'voucher_template.discount_type' => 'required|string|in:fixed,percentage',
       'voucher_template.discount_value' => 'required|numeric|min:0',
       'voucher_template.max_discount' => 'nullable|numeric|min:0|required_if:voucher_template.discount_type,percentage',
@@ -57,7 +57,6 @@ class VoucherCampaignRequest extends FormRequest
       'voucher_template.per_customer_daily_limit' => 'nullable|integer|min:1',
       'voucher_template.is_active' => 'sometimes|boolean',
       'voucher_template.disable_holiday' => 'sometimes|boolean',
-      'voucher_template.warn_if_used' => 'sometimes|boolean',
 
       // Date overrides for vouchers (optional)
       'voucher_template.start_date' => 'nullable|date',
@@ -69,7 +68,7 @@ class VoucherCampaignRequest extends FormRequest
       'voucher_template.valid_days_of_week' => 'nullable|array',
       'voucher_template.valid_days_of_week.*' => 'integer|min:0|max:6',
       'voucher_template.valid_weeks_of_month' => 'nullable|array',
-      'voucher_template.valid_weeks_of_month.*' => 'integer|min:1|max:5',
+      'voucher_template.valid_weeks_of_month.*' => 'integer|min:1|max:6',
       'voucher_template.valid_months' => 'nullable|array',
       'voucher_template.valid_months.*' => 'integer|min:1|max:12',
       'voucher_template.valid_time_ranges' => 'nullable|array',
@@ -111,11 +110,10 @@ class VoucherCampaignRequest extends FormRequest
       // Set defaults
       $template['is_active'] = $template['is_active'] ?? true;
       $template['disable_holiday'] = $template['disable_holiday'] ?? false;
-      $template['warn_if_used'] = $template['warn_if_used'] ?? false;
       $template['usage_limit'] = $template['usage_limit'] ?? 1; // Single use by default
 
       // Convert boolean fields
-      foreach (['is_active', 'disable_holiday', 'warn_if_used'] as $field) {
+      foreach (['is_active', 'disable_holiday'] as $field) {
         if (isset($template[$field])) {
           $template[$field] = filter_var($template[$field], FILTER_VALIDATE_BOOLEAN);
         }

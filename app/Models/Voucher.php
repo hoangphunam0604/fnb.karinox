@@ -13,29 +13,28 @@ class Voucher extends Model
   use HasFactory;
 
   protected $fillable = [
-    'code',
-    'description',
-    'voucher_type',
-    'discount_type',
-    'discount_value',
-    'applied_count',
-    'max_discount',
-    'min_order_value',
-    'start_date',
-    'end_date',
-    'campaign_id',
-    'usage_limit',
-    'per_customer_limit',
-    'per_customer_daily_limit',
-    'is_active',
-    'disable_holiday',
-    'applicable_membership_levels',
-    'valid_days_of_week',
-    'valid_weeks_of_month',
-    'valid_months',
-    'valid_time_ranges',
-    'excluded_dates',
-    'warn_if_used',
+    'code', // Mã voucher duy nhất hiển thị cho khách hàng
+    'description', // Mô tả ngắn của voucher
+    'voucher_type', // Loại voucher: 'standard' | 'membership'
+    'discount_type', // 'fixed' hoặc 'percentage'
+    'discount_value', // Giá trị giảm (tiền hoặc phần trăm)
+    'applied_count', // Số lần voucher đã được áp dụng
+    'max_discount', // Giảm tối đa (áp dụng cho percentage)
+    'min_order_value', // Giá trị đơn hàng tối thiểu để áp dụng
+    'start_date', // Bắt đầu hiệu lực
+    'end_date', // Hết hạn
+    'campaign_id', // FK tới voucher_campaigns nếu thuộc chiến dịch
+    'usage_limit', // Tổng số lần voucher có thể được dùng
+    'per_customer_limit', // Số lần tối đa một khách hàng có thể dùng
+    'per_customer_daily_limit', // Giới hạn dùng theo ngày cho mỗi khách hàng
+    'is_active', // Có đang kích hoạt không (on/off)
+    'disable_holiday', // Nếu true thì không áp dụng vào ngày lễ
+    'applicable_membership_levels', // Mảng id hạng thành viên được áp dụng
+    'valid_days_of_week', // Mảng các ngày trong tuần được phép [0-6]
+    'valid_weeks_of_month', // Mảng các tuần trong tháng (1-5, 6=tuần cuối)
+    'valid_months', // Mảng tháng trong năm [1-12]
+    'valid_time_ranges', // Mảng ranges giờ trong ngày (ví dụ 09:00-12:00)
+    'excluded_dates', // Ngày cụ thể không áp dụng
   ];
 
   protected $casts = [
