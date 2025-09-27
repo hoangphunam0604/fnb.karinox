@@ -11,6 +11,7 @@ return new class extends Migration {
       $table->id();
       $table->timestamps();
       $table->foreignId('campaign_id')->nullable()->constrained('voucher_campaigns')->onDelete('set null');
+      $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('set null');
       $table->string('code')->unique();
       $table->string('description')->nullable();
       $table->enum('voucher_type', ['membership', 'standard'])->default('standard');

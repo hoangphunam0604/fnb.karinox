@@ -24,6 +24,7 @@ class Voucher extends Model
     'start_date', // Bắt đầu hiệu lực
     'end_date', // Hết hạn
     'campaign_id', // FK tới voucher_campaigns nếu thuộc chiến dịch
+    'customer_id', // Nếu voucher được phát trực tiếp cho khách hàng, lưu customer_id
     'usage_limit', // Tổng số lần voucher có thể được dùng
     'per_customer_limit', // Số lần tối đa một khách hàng có thể dùng
     'per_customer_daily_limit', // Giới hạn dùng theo ngày cho mỗi khách hàng
