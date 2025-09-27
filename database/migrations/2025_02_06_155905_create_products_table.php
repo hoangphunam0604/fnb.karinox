@@ -21,9 +21,9 @@ return new class extends Migration
       $table->string('barcode')->nullable();
       $table->string('name');
       $table->text('description')->nullable();
-      $table->integer('cost_price')->nullable(0);
-      $table->integer('regular_price')->nullable();
-      $table->integer('sale_price')->nullable();
+      $table->unsignedInteger('cost_price')->nullable();
+      $table->unsignedInteger('regular_price')->nullable();
+      $table->unsignedInteger('sale_price')->nullable();
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
       $table->boolean('allows_sale')->default(false);
