@@ -31,7 +31,7 @@ class VoucherCampaignRequest extends FormRequest
         'required',
         'string',
         'max:20',
-        'regex:/^[A-Z0-9_]+$/', // Only uppercase letters, numbers, and underscores
+        'regex:/^[A-Z0-9]+$/', // Only uppercase letters, numbers, and underscores
         $campaignId
           ? 'unique:voucher_campaigns,code_prefix,' . $campaignId
           : 'unique:voucher_campaigns,code_prefix'
@@ -99,7 +99,7 @@ class VoucherCampaignRequest extends FormRequest
     // Set default code format if not provided
     if (!$this->has('code_format') && $this->has('code_prefix')) {
       $this->merge([
-        'code_format' => '{PREFIX}_{RANDOM_' . ($this->input('code_length', 8)) . '}'
+        'code_format' => '{PREFIX}{RANDOM_' . ($this->input('code_length', 8)) . '}'
       ]);
     }
 
@@ -127,11 +127,6 @@ class VoucherCampaignRequest extends FormRequest
       if ($this->has($field)) {
         $this->merge([$field => filter_var($this->input($field), FILTER_VALIDATE_BOOLEAN)]);
       }
-    }
-
-    // If campaign is marked as unlimited, clear any provided end_date so validation treats it as open-ended.
-    if ($this->has('is_unlimited') && $this->input('is_unlimited')) {
-      $this->merge(['end_date' => null]);
     }
   }
 }
