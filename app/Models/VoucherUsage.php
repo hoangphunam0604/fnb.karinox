@@ -18,6 +18,7 @@ class VoucherUsage extends Model
     'discount_amount',
     'invoice_total_before_discount',
     'invoice_total_after_discount',
+    'voucher_snapshot',
   ];
 
   public $timestamps = false; // Không cần timestamps vì đã có `used_at`

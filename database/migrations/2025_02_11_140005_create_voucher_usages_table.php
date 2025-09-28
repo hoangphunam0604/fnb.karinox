@@ -19,6 +19,7 @@ return new class extends Migration {
       $table->decimal('discount_amount', 10, 2); // Số tiền giảm giá thực tế
       $table->decimal('invoice_total_before_discount', 10, 2);
       $table->decimal('invoice_total_after_discount', 10, 2);
+      $table->json('voucher_snapshot')->nullable(); // Snapshot of voucher details at time of use
 
       $table->primary(['voucher_id', 'order_id']); // Đảm bảo mỗi khách hàng chỉ dùng 1 voucher trên mỗi đơn hàng
     });

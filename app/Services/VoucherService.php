@@ -77,7 +77,7 @@ class VoucherService
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
-  public function getValidVouchers($customerId = null, $totalPrice = null)
+  public function getValidVouchers($customerId, $totalPrice = null)
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;
@@ -93,7 +93,7 @@ class VoucherService
     $time = $now->format('H:i');
     $dailyUsageCounts = [];
     $query = Voucher::where('is_active', true)
-      ->where('voucher_type', VoucherType::STANDARD)
+      ->where('voucher_type', VoucherType::MEMBERSHIP)
       ->where(function ($q) use ($now) {
         $q->whereNull('start_date')
           ->orWhere('start_date',  '<=', $now);
@@ -417,7 +417,19 @@ class VoucherService
       // Tăng số lần sử dụng voucher
       $voucher->increment('applied_count');
 
-      // Lưu thông tin voucher đã sử dụng
+      // Lưu thông tin voucher đã sử dụng kèm snapshot để lưu lịch sử
+      $voucherSnapshot = [
+        'id' => $voucher->id,
+        'code' => $voucher->code,
+        'description' => $voucher->description,
+        'voucher_type' => $voucher->voucher_type,
+        'discount_type' => $voucher->discount_type,
+        'discount_value' => $voucher->discount_value,
+        'max_discount' => $voucher->max_discount,
+        'min_order_value' => $voucher->min_order_value,
+        'campaign_id' => $voucher->campaign_id,
+      ];
+
       VoucherUsage::create([
         'voucher_id' => $voucher->id,
         'customer_id' => $order->customer_id,
@@ -427,6 +439,7 @@ class VoucherService
         'invoice_total_after_discount' => $totalBeforeDiscount - $discount,
         'discount_amount' => $discount,
         'used_at' => now(),
+        'voucher_snapshot' => json_encode($voucherSnapshot),
       ]);
       $order->update([
         'voucher_id' => $voucher->id,

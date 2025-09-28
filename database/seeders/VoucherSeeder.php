@@ -28,7 +28,7 @@ class VoucherSeeder extends Seeder
       [
         'code' => 'HAPPYMONDAY',
         'description' =>  'Giảm giá 10% cho tất cả thành viên vào ngày thứ 2 cuối cùng của tháng (không áp dụng lễ, tết)',
-        'voucher_type'  =>  'standard',
+        'voucher_type'  =>  'membership',
         'discount_type' => 'percentage',
         'discount_value' => 10,
         'min_order_value' => null,
@@ -43,7 +43,7 @@ class VoucherSeeder extends Seeder
       [
         'code' => 'GOLD_MEMBER',
         'description' =>  'Giảm trực tiếp 5% cho mỗi hóa đơn (tối đa 2 hóa đơn/ngày)',
-        'voucher_type'  =>  'standard',
+        'voucher_type'  =>  'membership',
         'discount_type' => 'percentage',
         'discount_value' => 5,
         'per_customer_daily_limit' => 2,
@@ -53,7 +53,7 @@ class VoucherSeeder extends Seeder
       [
         'code' => 'DIAMOND_MEMBER',
         'description' =>  'Giảm trực tiếp 8% cho mỗi hóa đơn (tối đa 3 hóa đơn/ngày)',
-        'voucher_type'  =>  'standard',
+        'voucher_type'  =>  'membership',
         'discount_type' => 'percentage',
         'discount_value' => 8,
         'per_customer_daily_limit' => 3,
