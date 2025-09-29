@@ -21,7 +21,7 @@ class VoucherController extends Controller
   {
     $customerId = $request->customerId;
     $totalPrice = $request->totalPrice;
-    $vouchers = $this->voucherService->getValidVouchers($customerId, $totalPrice);
+    $vouchers = $this->voucherService->getMemberRewards($customerId, $totalPrice);
     return VoucherResource::collection($vouchers);
   }
 }

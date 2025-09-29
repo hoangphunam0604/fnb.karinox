@@ -77,7 +77,7 @@ class VoucherService
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
-  public function getValidVouchers($customerId, $totalPrice = null)
+  public function getMemberRewards($customerId = null, $totalPrice = null)
   {
     $now = Carbon::now();
     $dayOfWeek = $now->dayOfWeek;

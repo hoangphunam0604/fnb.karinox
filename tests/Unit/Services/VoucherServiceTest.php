@@ -11,12 +11,12 @@ use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use App\Services\CustomerService;
+use App\Services\HolidayService;
 use App\Services\VoucherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -28,6 +28,7 @@ class VoucherServiceTest extends TestCase
 
   protected $voucherService;
   protected $customerService;
+  protected $holidayService;
 
   protected function setUp(): void
   {
@@ -35,8 +36,9 @@ class VoucherServiceTest extends TestCase
 
     /** @var CustomerService $customerService */
     $this->customerService = Mockery::mock(CustomerService::class);
+    $this->holidayService = Mockery::mock(HolidayService::class);
 
-    $this->voucherService = new VoucherService($this->customerService);
+    $this->voucherService = new VoucherService($this->customerService, $this->holidayService);
   }
 
   #[Test]
@@ -112,7 +114,7 @@ class VoucherServiceTest extends TestCase
       'end_date' => now()->subDays(5),
     ]);
 
-    $validVouchers = $this->voucherService->getValidVouchers();
+    $validVouchers = $this->voucherService->getMemberRewards(1, 200000);
 
     $this->assertCount(1, $validVouchers);
     $this->assertEquals($validVoucher->id, $validVouchers->first()->id);
@@ -678,7 +680,7 @@ class VoucherServiceTest extends TestCase
       'used_at' => Carbon::now(),
     ]);
 
-    $validVouchers = $this->voucherService->getValidVouchers($customer->id);
+    $validVouchers = $this->voucherService->getMemberRewards($customer->id);
     $this->assertTrue($validVouchers->contains($validVoucher));
     $this->assertTrue($validVouchers->contains($validVoucher2));
     $this->assertFalse($validVouchers->contains($exceededDailyLimitVoucher));
