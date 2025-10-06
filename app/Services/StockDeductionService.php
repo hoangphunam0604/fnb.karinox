@@ -85,17 +85,16 @@ class StockDeductionService
       throw new Exception("Chỉ có thể nhập kho khi hóa đơn bị hoàn tiền.");
     }
 
-    DB::transaction(function () use ($invoice) {
-      $transaction = $this->createInventoryTransaction(InventoryTransactionType::RETURN, $invoice->id, $invoice->branch_id);
+    // Không dùng DB::transaction ở đây - để caller quản lý transaction
+    $transaction = $this->createInventoryTransaction(InventoryTransactionType::RETURN, $invoice->id, $invoice->branch_id);
 
-      foreach ($invoice->order->items as $orderItem) {
-        $this->restoreStock($transaction->id, $orderItem->product_id, $orderItem->quantity, $invoice->branch_id);
+    foreach ($invoice->order->items as $orderItem) {
+      $this->restoreStock($transaction->id, $orderItem->product_id, $orderItem->quantity, $invoice->branch_id);
 
-        foreach ($orderItem->toppings as $topping) {
-          $this->restoreStock($transaction->id, $topping->product_id, $topping->quantity, $invoice->branch_id);
-        }
+      foreach ($orderItem->toppings as $topping) {
+        $this->restoreStock($transaction->id, $topping->product_id, $topping->quantity, $invoice->branch_id);
       }
-    });
+    }
   }
 
   /**

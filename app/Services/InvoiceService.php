@@ -38,18 +38,10 @@ class InvoiceService extends BaseService
     return new Invoice();
   }
 
-  public function findInvoiceByCode(string $code): ?Invoice
+  public function findByCode(string $code): ?Invoice
   {
     return Invoice::where('code', strtoupper($code))->first();
   }
-
-  public function getInvoices(int $perPage = 10): LengthAwarePaginator
-  {
-    return Invoice::with(['customer', 'order'])
-      ->orderBy('created_at', 'desc')
-      ->paginate($perPage);
-  }
-
 
   public function createInvoiceFromOrder(int $orderId, float $paidAmount = 0): Invoice
   {
@@ -91,6 +83,7 @@ class InvoiceService extends BaseService
         'paid_amount' => $paidAmount,
         'invoice_status' => InvoiceStatus::COMPLETED,
         'payment_status' => $paidAmount == $order->total_price ? PaymentStatus::PAID : PaymentStatus::UNPAID,
+        'payment_method' => $order->payment_method,
         'note' => $order->note,
       ]);
       $this->voucherService->transferUsedPointsToInvoice($order->id, $invoice->id);
@@ -155,19 +148,17 @@ class InvoiceService extends BaseService
     });
   }
 
-  public function canBeRefunded(Invoice $invoice): bool
-  {
-    return $invoice->payment_status === PaymentStatus::PAID;
-  }
-
   public function refunded(int $invoiceId): Invoice
   {
     return DB::transaction(function () use ($invoiceId) {
       $invoice = Invoice::findOrFail($invoiceId);
-      if (!$this->canBeRefunded($invoice)) {
-        throw new \Exception("Đơn hàng chưa thanh toán, không thể hoàn tiền.");
-      }
-      $invoice = $this->updatePaymentStatus($invoice->id, PaymentStatus::REFUNDED);
+      if (!$invoice->canBeRefunded())
+        throw new \Exception("Đơn hàng chưa thanh toán hoặc được giảm giá, không thể hoàn tiền.");
+
+      $invoice->payment_status = PaymentStatus::REFUNDED;
+      $invoice->invoice_status = InvoiceStatus::CANCELED;
+      $invoice->save();
+      // Hoàn trả tồn kho
       $this->stockDeductionService->restoreStockForRefundedInvoice($invoice);
       return $invoice;
     });

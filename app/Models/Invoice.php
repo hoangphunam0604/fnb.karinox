@@ -125,6 +125,16 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   }
 
   /**
+   * Kiểm tra hóa đơn đủ điều kiện để hoàn tiền chưa
+   * - Hóa đơn phải ở trạng thái đã thanh toán đầy đủ
+   * - Hóa đơn không được áp dụng voucher
+   */
+  public function canBeRefunded()
+  {
+    return $this->payment_status === PaymentStatus::PAID && $this->discount_amount == 0;
+  }
+
+  /**
    * Đánh dấu hóa đơn là hoàn tất nếu đã thanh toán đầy đủ
    */
   public function markAsCompleted()
