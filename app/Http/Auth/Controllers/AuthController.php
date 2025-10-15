@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace App\Http\Auth\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\Api\App\UserResource;
+use App\Http\Auth\Resources\UserResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 
