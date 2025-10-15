@@ -50,9 +50,9 @@ class StockDeductionService
    */
   public function deductStockForPreparation(OrderItem $orderItem)
   {
-    if (!in_array($orderItem->status, [OrderItemStatus::PENDING, OrderItemStatus::ACCEPTED])) {
+    /* if (!in_array($orderItem->status, [OrderItemStatus::PENDING, OrderItemStatus::ACCEPTED])) {
       return; // Chỉ trừ kho nếu đơn hàng đang ở trạng thái chờ xác nhận hoặc đã xác nhận
-    }
+    } */
 
     DB::transaction(function () use ($orderItem) {
       $transaction = $this->createInventoryTransaction(InventoryTransactionType::SALE, $orderItem->order_id, $orderItem->order->branch_id);

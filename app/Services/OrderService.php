@@ -22,19 +22,22 @@ class OrderService
   protected InvoiceService $invoiceService;
   protected KitchenService $kitchenService;
   protected SystemSettingService $systemSettingService;
+  protected StockDeductionService $stockDeductionService;
 
   public function __construct(
     PointService $pointService,
     VoucherService $voucherService,
     InvoiceService $invoiceService,
     KitchenService $kitchenService,
-    SystemSettingService $systemSettingService
+    SystemSettingService $systemSettingService,
+    StockDeductionService $stockDeductionService
   ) {
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
     $this->invoiceService = $invoiceService;
     $this->kitchenService = $kitchenService;
     $this->systemSettingService = $systemSettingService;
+    $this->stockDeductionService = $stockDeductionService;
   }
   public function getOrdersByTableId(int $tableId)
   {
@@ -192,11 +195,21 @@ class OrderService
       // đã trả tiền rồi, không cần ghi đè
       return;
     }
-    $order->paid_at = now();
-    $order->payment_method = $payment_method;
-    $order->payment_status = PaymentStatus::PAID;
-    $order->order_status = OrderStatus::COMPLETED;
-    $order->save();
+
+    return DB::transaction(function () use ($order, $payment_method) {
+      $oldStatus = $order->order_status;
+
+      $order->paid_at = now();
+      $order->payment_method = $payment_method;
+      $order->payment_status = PaymentStatus::PAID;
+      $order->order_status = OrderStatus::COMPLETED;
+      $order->save();
+
+      // Trừ kho khi đơn hàng chuyển sang COMPLETED
+      if ($oldStatus !== OrderStatus::COMPLETED) {
+        $this->deductStockForCompletedOrder($order);
+      }
+    });
   }
   /**
    * Hoàn tất đơn hàng
@@ -221,9 +234,19 @@ class OrderService
    */
   public function updateOrderStatus(int $orderId, OrderStatus $status): Order
   {
-    $order = Order::findOrFail($orderId);
-    $order->update(['order_status' => $status]);
-    return $order;
+    return DB::transaction(function () use ($orderId, $status) {
+      $order = Order::findOrFail($orderId);
+      $oldStatus = $order->order_status;
+
+      $order->update(['order_status' => $status]);
+
+      // Trừ kho khi đơn hàng chuyển sang COMPLETED
+      if ($status === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
+        $this->deductStockForCompletedOrder($order);
+      }
+
+      return $order;
+    });
   }
 
 
@@ -563,6 +586,22 @@ class OrderService
   private function getProduct($productId)
   {
     return Product::findOrFail($productId);
+  }
+
+  /**
+   * Trừ kho cho đơn hàng đã hoàn tất
+   */
+  private function deductStockForCompletedOrder(Order $order): void
+  {
+    // Load order items với relationships cần thiết
+    $order->loadMissing(['items.product.formulas', 'items.toppings']);
+
+    foreach ($order->items as $orderItem) {
+      // Chỉ trừ kho cho sản phẩm có quản lý tồn kho
+      if ($orderItem->product->manage_stock) {
+        $this->stockDeductionService->deductStockForPreparation($orderItem);
+      }
+    }
   }
 
   /**
