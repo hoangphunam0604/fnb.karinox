@@ -15,6 +15,12 @@ class ProductService extends BaseService
 {
   protected array $with = ['category'];
   protected array $withCount = [];
+  protected ProductDependencyService $dependencyService;
+
+  public function __construct(ProductDependencyService $dependencyService)
+  {
+    $this->dependencyService = $dependencyService;
+  }
 
   protected function model(): Model
   {
@@ -73,6 +79,24 @@ class ProductService extends BaseService
       $this->syncAttributes($product->id, $data['attributes'] ?? []);
       $this->syncFormulas($product->id, $data['formulas'] ?? []);
       $this->syncToppings($product->id, $data['toppings'] ?? []);
+
+      // Cập nhật stock dependencies trong các trường hợp sau:
+      // 1. Khi có formulas (sản phẩm chế biến/combo)
+      // 2. Khi sản phẩm có thể là topping và có formulas
+      $shouldUpdateDependencies = false;
+
+      if (isset($data['formulas']) && !empty($data['formulas'])) {
+        $shouldUpdateDependencies = true;
+      }
+
+      // Nếu sản phẩm có thể làm topping và có formulas, cũng cần update dependencies
+      if ($product->is_topping && $product->formulas && $product->formulas->isNotEmpty()) {
+        $shouldUpdateDependencies = true;
+      }
+
+      if ($shouldUpdateDependencies) {
+        $this->dependencyService->updateDependencies($product);
+      }
 
       return $product;
     });

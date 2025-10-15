@@ -13,6 +13,7 @@ use App\Models\ProductTopping;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class OrderService
@@ -594,12 +595,32 @@ class OrderService
   private function deductStockForCompletedOrder(Order $order): void
   {
     // Load order items với relationships cần thiết
-    $order->loadMissing(['items.product.formulas', 'items.toppings']);
+    $order->loadMissing(['items.product', 'items.toppings']);
 
     foreach ($order->items as $orderItem) {
-      // Chỉ trừ kho cho sản phẩm có quản lý tồn kho
-      if ($orderItem->product->manage_stock) {
-        $this->stockDeductionService->deductStockForPreparation($orderItem);
+      try {
+        // Kiểm tra kho trước khi trừ sử dụng dependencies
+        if ($this->stockDeductionService->checkStockUsingDependencies($orderItem)) {
+          // Sử dụng method mới với pre-computed dependencies
+          $this->stockDeductionService->deductStockUsingDependencies($orderItem);
+        } else {
+          // Log cảnh báo thiếu kho nhưng không block đơn hàng
+          Log::warning("Insufficient stock for order item using dependencies", [
+            'order_id' => $order->id,
+            'order_item_id' => $orderItem->id,
+            'product_id' => $orderItem->product_id,
+            'product_name' => $orderItem->product->name,
+            'product_type' => $orderItem->product->product_type->value,
+            'quantity' => $orderItem->quantity
+          ]);
+        }
+      } catch (\Exception $e) {
+        // Log lỗi nhưng không block đơn hàng
+        Log::error("Error deducting stock for order item using dependencies", [
+          'order_id' => $order->id,
+          'order_item_id' => $orderItem->id,
+          'error' => $e->getMessage()
+        ]);
       }
     }
   }

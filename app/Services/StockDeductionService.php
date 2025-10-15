@@ -10,6 +10,7 @@ use App\Models\InventoryTransactionItem;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\ProductBranch;
+use App\Models\ProductStockDependency;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,12 @@ use Illuminate\Support\Facades\Log;
 
 class StockDeductionService
 {
+  protected ProductDependencyService $dependencyService;
+
+  public function __construct(ProductDependencyService $dependencyService)
+  {
+    $this->dependencyService = $dependencyService;
+  }
   /**
    * Kiểm tra kho trước khi chế biến (bao gồm nguyên liệu & topping)
    */
@@ -143,5 +150,196 @@ class StockDeductionService
       'quantity' => $quantity,
       'sale_price' => null,
     ]);
+  }
+
+  /**
+   * Trừ kho sử dụng pre-computed dependencies (Method mới)
+   */
+  public function deductStockUsingDependencies(OrderItem $orderItem): void
+  {
+    DB::transaction(function () use ($orderItem) {
+      $transaction = $this->createInventoryTransaction(
+        InventoryTransactionType::SALE,
+        $orderItem->order_id,
+        $orderItem->order->branch_id
+      );
+
+      // 🔹 Xử lý main product theo loại
+      $this->deductStockForMainProduct($transaction, $orderItem);
+
+      // 🔹 Trừ kho topping sử dụng dependencies
+      foreach ($orderItem->toppings as $topping) {
+        if ($topping->quantity > 0) {
+          $this->deductStockForTopping($transaction, $topping, $orderItem->order->branch_id);
+        }
+      }
+
+      // Update order item status
+      $orderItem->update(['status' => OrderItemStatus::PREPARED]);
+    });
+  }
+
+  /**
+   * Trừ kho cho main product - luôn sử dụng ProductStockDependency
+   */
+  private function deductStockForMainProduct(InventoryTransaction $transaction, OrderItem $orderItem): void
+  {
+    $branchId = $orderItem->order->branch_id;
+
+    // 🔹 Lấy tất cả dependencies từ pre-computed table (bao gồm cả self-reference)
+    $dependencies = $this->dependencyService->getDependencies($orderItem->product_id);
+
+    foreach ($dependencies as $dependency) {
+      $quantityToDeduct = $dependency->quantity_ratio * $orderItem->quantity;
+
+      if ($quantityToDeduct > 0) {
+        // 🔸 Kiểm tra target product có manage_stock không
+        $targetProduct = \App\Models\Product::find($dependency->target_product_id);
+
+        if ($targetProduct && $targetProduct->manage_stock) {
+          $this->deductStock(
+            $transaction->id,
+            $dependency->target_product_id,
+            $quantityToDeduct,
+            // Nếu là self-reference thì dùng unit_price, ngược lại null
+            $dependency->target_product_id === $orderItem->product_id ? $orderItem->unit_price : null,
+            $branchId
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Kiểm tra kho sử dụng pre-computed dependencies (Method mới)
+   */
+  public function checkStockUsingDependencies(OrderItem $orderItem): bool
+  {
+    $branchId = $orderItem->order->branch_id;
+
+    // 🔹 Kiểm tra main product
+    if (!$this->checkStockForMainProduct($orderItem, $branchId)) {
+      return false;
+    }
+
+    // 🔹 Kiểm tra toppings sử dụng dependencies
+    foreach ($orderItem->toppings as $topping) {
+      if ($topping->quantity > 0) {
+        if (!$this->checkStockForTopping($topping, $branchId)) {
+          Log::warning("Insufficient stock for topping", [
+            'order_item_id' => $orderItem->id,
+            'topping_id' => $topping->product_id,
+            'required_quantity' => $topping->quantity
+          ]);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Kiểm tra kho cho main product - luôn sử dụng ProductStockDependency
+   */
+  private function checkStockForMainProduct(OrderItem $orderItem, int $branchId): bool
+  {
+    // 🔹 Lấy tất cả dependencies từ pre-computed table (bao gồm cả self-reference)
+    $dependencies = $this->dependencyService->getDependencies($orderItem->product_id);
+
+    foreach ($dependencies as $dependency) {
+      $requiredQuantity = $dependency->quantity_ratio * $orderItem->quantity;
+
+      // 🔸 Kiểm tra target product có manage_stock không
+      $targetProduct = \App\Models\Product::find($dependency->target_product_id);
+
+      if ($targetProduct && $targetProduct->manage_stock) {
+        $productBranch = ProductBranch::where('product_id', $dependency->target_product_id)
+          ->where('branch_id', $branchId)
+          ->first();
+
+        if (!$productBranch || $productBranch->stock_quantity < $requiredQuantity) {
+          Log::warning("Insufficient stock for dependency", [
+            'order_item_id' => $orderItem->id,
+            'source_product_id' => $orderItem->product_id,
+            'target_product_id' => $dependency->target_product_id,
+            'required_quantity' => $requiredQuantity,
+            'available_quantity' => $productBranch->stock_quantity ?? 0
+          ]);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  /**
+   * Trừ kho cho topping sử dụng dependencies
+   */
+  private function deductStockForTopping(InventoryTransaction $transaction, $topping, int $branchId): void
+  {
+    // Load topping product với relationships
+    $toppingProduct = \App\Models\Product::with(['formulas.ingredient'])->find($topping->product_id);
+
+    if (!$toppingProduct) {
+      Log::warning("Topping product not found", ['topping_id' => $topping->product_id]);
+      return;
+    }
+
+    // Lấy dependencies của topping
+    $dependencies = $this->dependencyService->getDependencies($topping->product_id);
+
+    if ($dependencies->isNotEmpty()) {
+      // Topping có dependencies - trừ kho theo dependencies
+      foreach ($dependencies as $dependency) {
+        $quantityToDeduct = $dependency->quantity_ratio * $topping->quantity;
+
+        if ($quantityToDeduct > 0) {
+          // 🔸 Kiểm tra target product có manage_stock không
+          $targetProduct = \App\Models\Product::find($dependency->target_product_id);
+
+          if ($targetProduct && $targetProduct->manage_stock) {
+            $this->deductStock(
+              $transaction->id,
+              $dependency->target_product_id,
+              $quantityToDeduct,
+              null, // No sale price for dependency components
+              $branchId
+            );
+          }
+        }
+      }
+    }
+  }
+  private function checkStockForTopping($topping, int $branchId): bool
+  {
+    // Load topping product
+    $toppingProduct = \App\Models\Product::find($topping->product_id);
+
+    if (!$toppingProduct) {
+      return false;
+    }
+
+    // 🔹 Lấy tất cả dependencies từ pre-computed table
+    $dependencies = $this->dependencyService->getDependencies($topping->product_id);
+
+    foreach ($dependencies as $dependency) {
+      $requiredQuantity = $dependency->quantity_ratio * $topping->quantity;
+
+      // 🔸 Kiểm tra target product có manage_stock không
+      $targetProduct = \App\Models\Product::find($dependency->target_product_id);
+
+      if ($targetProduct && $targetProduct->manage_stock) {
+        $productBranch = ProductBranch::where('product_id', $dependency->target_product_id)
+          ->where('branch_id', $branchId)
+          ->first();
+
+        if (!$productBranch || $productBranch->stock_quantity < $requiredQuantity) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }
