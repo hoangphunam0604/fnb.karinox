@@ -90,9 +90,31 @@ class ProductService extends BaseService
     if (!empty($params['category_id']))
       $query->where('category_id', $params['category_id']);
 
+    if (!empty($params['product_type'])):
+      $productType = $params['product_type'];
+      if (is_array($productType)) {
+        $query->whereIn('product_type', $productType);
+      } else {
+        $query->where('product_type', $productType);
+      }
+    endif;
+
     if (!empty($params['is_topping'])):
       $isTopping = filter_var($params['is_topping'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
       $query->where('is_topping', $isTopping);
+    endif;
+
+    if (!empty($params['branch_ids']) || !empty($params['branches'])):
+      $branchIds = $params['branch_ids'] ?? $params['branches'];
+      if (is_array($branchIds)) {
+        $query->whereHas('branches', function ($subQuery) use ($branchIds) {
+          $subQuery->whereIn('branches.id', $branchIds);
+        });
+      } else {
+        $query->whereHas('branches', function ($subQuery) use ($branchIds) {
+          $subQuery->where('branches.id', $branchIds);
+        });
+      }
     endif;
 
     $query = parent::applySearch($query, $params);
