@@ -84,4 +84,10 @@ class ProductController extends Controller
 
     return response()->json($result);
   }
+
+  public function manufacturingAutocomplete(Request $request)
+  {
+    $items = $this->service->manufacturingAutocomplete($request->all());
+    return ProductResource::collection($items);
+  }
 }
