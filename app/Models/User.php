@@ -74,8 +74,6 @@ class User extends Authenticatable implements JWTSubject
       case UserRole::ADMIN->value:
       case UserRole::MANAGER->value:
         return route('admin.dashboard');
-      case UserRole::KITCHEN_STAFF->value:
-        return route('kitchen.orders');
       case UserRole::CASHIER->value:
         return route('pos.tables');
       default:

@@ -23,8 +23,8 @@ return new class extends Migration {
       $table->boolean('printed_label')->default(false); // Đã từng in tem
       $table->timestamp('printed_label_at')->nullable(); // In lúc
       $table->boolean('print_kitchen'); // In phiếu bếp      
-      $table->boolean('printed_kitchen')->default(false); // Đã từng in tem
-      $table->timestamp('printed_kitchen_at')->nullable(); // In lúc
+      $table->boolean('printed_kitchen')->default(false); // Đã từng in phiếu bếp
+      $table->timestamp('printed_kitchen_at')->nullable(); // In phiếu bếp lúc
     });
   }
 

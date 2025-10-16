@@ -21,7 +21,6 @@ class OrderService
   protected PointService $pointService;
   protected VoucherService $voucherService;
   protected InvoiceService $invoiceService;
-  protected KitchenService $kitchenService;
   protected SystemSettingService $systemSettingService;
   protected StockDeductionService $stockDeductionService;
 
@@ -29,14 +28,12 @@ class OrderService
     PointService $pointService,
     VoucherService $voucherService,
     InvoiceService $invoiceService,
-    KitchenService $kitchenService,
     SystemSettingService $systemSettingService,
     StockDeductionService $stockDeductionService
   ) {
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
     $this->invoiceService = $invoiceService;
-    $this->kitchenService = $kitchenService;
     $this->systemSettingService = $systemSettingService;
     $this->stockDeductionService = $stockDeductionService;
   }
@@ -297,7 +294,7 @@ class OrderService
     return $order;
   }
 
-  public function notifyKitchen($orderId)
+  public function getPrintData($orderId)
   {
     return DB::transaction(function () use ($orderId) {
       $now = now()->toDateTimeString();
@@ -313,7 +310,7 @@ class OrderService
           'printed_label_at' => $now,
         ]);
 
-      // Cập nhật toàn bộ item chưa in bếp
+      // Cập nhật toàn bộ item chưa in phiếu bếp
       $order->items()
         ->where('print_kitchen', true)
         ->where('printed_kitchen', false)
@@ -328,15 +325,9 @@ class OrderService
       $labels = $allItems->filter(fn($item) => optional($item->printed_label_at)?->toDateTimeString() === $now);
       $kitchenItems = $allItems->filter(fn($item) => optional($item->printed_kitchen_at)?->toDateTimeString() === $now);
 
-      //Báo bếp
-      $this->kitchenService->addItemsToKitchen($order);
       // Set lại danh sách items để in hoá đơn
       return [$order, $kitchenItems, $labels];
     });
-  }
-  public function getPrintData($orderId)
-  {
-    return $this->notifyKitchen($orderId);
   }
   /* 
   public function payment($orderId)
