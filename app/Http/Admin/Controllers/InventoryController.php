@@ -26,7 +26,8 @@ class InventoryController extends Controller
    */
   public function index(Request $request)
   {
-    $branchId = $request->input('branch_id');
+    // Lấy branch_id từ query parameter hoặc từ header
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
     $transactionType = $request->input('transaction_type');
     $perPage = $request->input('per_page', 20);
 
@@ -62,7 +63,8 @@ class InventoryController extends Controller
    */
   public function getStockReport(Request $request)
   {
-    $branchId = $request->input('branch_id');
+    // Lấy branch_id từ query parameter hoặc từ header
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
 
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
@@ -83,6 +85,12 @@ class InventoryController extends Controller
    */
   public function stocktaking(Request $request)
   {
+    // Lấy branch_id từ request body hoặc từ header
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+
+    // Merge branch_id vào request để validate
+    $request->merge(['branch_id' => $branchId]);
+
     $validator = Validator::make($request->all(), [
       'branch_id' => 'required|exists:branches,id',
       'items' => 'required|array|min:1',
@@ -95,7 +103,6 @@ class InventoryController extends Controller
       return response()->json(['errors' => $validator->errors()], 422);
     }
 
-    $branchId = $request->input('branch_id');
     $items = $request->input('items');
     $note = $request->input('note');
 
@@ -155,6 +162,12 @@ class InventoryController extends Controller
    */
   public function import(Request $request)
   {
+    // Lấy branch_id từ request body hoặc từ header
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+
+    // Merge branch_id vào request để validate
+    $request->merge(['branch_id' => $branchId]);
+
     $validator = Validator::make($request->all(), [
       'branch_id' => 'required|exists:branches,id',
       'items' => 'required|array|min:1',
@@ -168,7 +181,7 @@ class InventoryController extends Controller
     }
 
     $transaction = $this->inventoryService->importStock(
-      $request->input('branch_id'),
+      $branchId,
       $request->input('items'),
       $request->input('note')
     );
@@ -184,6 +197,12 @@ class InventoryController extends Controller
    */
   public function export(Request $request)
   {
+    // Lấy branch_id từ request body hoặc từ header
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+
+    // Merge branch_id vào request để validate
+    $request->merge(['branch_id' => $branchId]);
+
     $validator = Validator::make($request->all(), [
       'branch_id' => 'required|exists:branches,id',
       'items' => 'required|array|min:1',
@@ -197,7 +216,7 @@ class InventoryController extends Controller
     }
 
     $transaction = $this->inventoryService->exportStock(
-      $request->input('branch_id'),
+      $branchId,
       $request->input('items'),
       $request->input('note')
     );
@@ -213,6 +232,12 @@ class InventoryController extends Controller
    */
   public function transfer(Request $request)
   {
+    // Lấy from_branch_id từ request body hoặc từ header
+    $fromBranchId = $request->input('from_branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+
+    // Merge from_branch_id vào request để validate
+    $request->merge(['from_branch_id' => $fromBranchId]);
+
     $validator = Validator::make($request->all(), [
       'from_branch_id' => 'required|exists:branches,id',
       'to_branch_id' => 'required|exists:branches,id|different:from_branch_id',
@@ -227,7 +252,7 @@ class InventoryController extends Controller
     }
 
     $transaction = $this->inventoryService->transferStock(
-      $request->input('from_branch_id'),
+      $fromBranchId,
       $request->input('to_branch_id'),
       $request->input('items'),
       $request->input('note')

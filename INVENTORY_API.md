@@ -16,8 +16,14 @@ Tất cả API yêu cầu:
 
 - Bearer Token (JWT)
 - Header: `X-Karinox-App: karinox-fnb`
-- Header: `X-Branch-Id: {branch_id}`
+- Header: `X-Branch-Id: {branch_id}` (hoặc gửi `branch_id` trong query/body)
 - Role: `admin` hoặc `manager`
+
+**💡 Lưu ý về Branch ID:**
+
+- Nếu gửi `branch_id` trong query parameter hoặc request body → Sử dụng giá trị đó
+- Nếu KHÔNG gửi → Tự động lấy từ header `X-Branch-Id` (karinox-branch-id)
+- Điều này giúp không cần gửi `branch_id` nhiều lần khi đã set header
 
 ---
 
@@ -31,7 +37,7 @@ GET /api/admin/inventory/transactions
 
 **Query Parameters:**
 
-- `branch_id` (optional): Lọc theo chi nhánh
+- `branch_id` (optional): Lọc theo chi nhánh. Nếu không có, lấy từ header `X-Branch-Id`
 - `transaction_type` (optional): import, export, sale, return, transfer_out, transfer_in, stocktaking
 - `per_page` (optional, default: 20): Số bản ghi mỗi trang
 
@@ -105,7 +111,7 @@ GET /api/admin/inventory/stock-report?branch_id={branch_id}
 
 **Query Parameters:**
 
-- `branch_id` (required): ID chi nhánh
+- `branch_id` (optional): ID chi nhánh. Nếu không có, lấy từ header `X-Branch-Id`
 
 **Response:**
 
@@ -156,7 +162,7 @@ POST /api/admin/inventory/stocktaking
 
 ```json
 {
-    "branch_id": 1,
+    "branch_id": 1, // Optional: Nếu không gửi, lấy từ header X-Branch-Id
     "items": [
         {
             "product_id": 5,
@@ -166,6 +172,18 @@ POST /api/admin/inventory/stocktaking
             "product_id": 6,
             "actual_quantity": 4800
         }
+    ],
+    "note": "Kiểm kho định kỳ tháng 10/2025"
+}
+```
+
+**💡 Tip:** Nếu đã set header `X-Branch-Id: 1`, có thể bỏ qua `branch_id` trong body:
+
+```json
+{
+    "items": [
+        { "product_id": 5, "actual_quantity": 9850 },
+        { "product_id": 6, "actual_quantity": 4800 }
     ],
     "note": "Kiểm kho định kỳ tháng 10/2025"
 }
