@@ -62,7 +62,7 @@ class InventoryTransaction extends Model
    */
   public function items()
   {
-    return $this->hasMany(InventoryTransactionItem::class, 'transaction_id');
+    return $this->hasMany(InventoryTransactionItem::class, 'inventory_transaction_id');
   }
 
   /**

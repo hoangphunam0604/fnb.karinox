@@ -282,7 +282,7 @@ POST /api/admin/inventory/export
 
 ```json
 {
-    "branch_id": 1,
+    "branch_id": 1, // Optional: Nếu không gửi, lấy từ header X-Branch-Id
     "items": [
         {
             "product_id": 5,
@@ -319,8 +319,8 @@ POST /api/admin/inventory/transfer
 
 ```json
 {
-    "from_branch_id": 1,
-    "to_branch_id": 2,
+    "from_branch_id": 1, // Optional: Nếu không gửi, lấy từ header X-Branch-Id
+    "to_branch_id": 2, // Required: Chi nhánh đích
     "items": [
         {
             "product_id": 5,
@@ -397,7 +397,7 @@ POST /api/admin/inventory/transfer
 
 ### Kiểm Kho (Stocktaking)
 
-- `branch_id`: required, exists:branches,id
+- `branch_id`: required, exists:branches,id (tự động lấy từ header nếu không có)
 - `items`: required, array, min:1
 - `items.*.product_id`: required, exists:products,id
 - `items.*.actual_quantity`: required, numeric, min:0
@@ -405,7 +405,7 @@ POST /api/admin/inventory/transfer
 
 ### Nhập/Xuất Kho
 
-- `branch_id`: required, exists:branches,id
+- `branch_id`: required, exists:branches,id (tự động lấy từ header nếu không có)
 - `items`: required, array, min:1
 - `items.*.product_id`: required, exists:products,id
 - `items.*.quantity`: required, numeric, min:0
@@ -413,7 +413,7 @@ POST /api/admin/inventory/transfer
 
 ### Chuyển Kho
 
-- `from_branch_id`: required, exists:branches,id
+- `from_branch_id`: required, exists:branches,id (tự động lấy từ header nếu không có)
 - `to_branch_id`: required, exists:branches,id, different:from_branch_id
 - `items`: required, array, min:1
 - `items.*.product_id`: required, exists:products,id
@@ -461,3 +461,46 @@ POST /api/admin/inventory/transfer
 - Chỉ tạo giao dịch kiểm kho khi CÓ chênh lệch
 - Hệ thống tự động xử lý nguyên liệu cho sản phẩm có công thức
 - Tất cả giao dịch đều được ghi log với user_id và timestamp
+
+---
+
+## 🎯 Ví Dụ Sử Dụng với Header
+
+### Cách 1: Gửi branch_id trong body (truyền thống)
+
+```bash
+curl -X POST https://api.karinox.vn/api/admin/inventory/stocktaking \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-Karinox-App: karinox-fnb" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "branch_id": 1,
+    "items": [
+      {"product_id": 5, "actual_quantity": 9850}
+    ],
+    "note": "Kiểm kho tháng 10"
+  }'
+```
+
+### Cách 2: Sử dụng header X-Branch-Id (KHUYẾN KHÍCH)
+
+```bash
+curl -X POST https://api.karinox.vn/api/admin/inventory/stocktaking \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-Karinox-App: karinox-fnb" \
+  -H "X-Branch-Id: 1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"product_id": 5, "actual_quantity": 9850}
+    ],
+    "note": "Kiểm kho tháng 10"
+  }'
+```
+
+**💡 Lợi ích của cách 2:**
+
+- Không cần gửi `branch_id` trong mọi request
+- Code ngắn gọn hơn
+- Header được set một lần, dùng cho tất cả API
+- Phù hợp với kiến trúc multi-tenant theo chi nhánh
