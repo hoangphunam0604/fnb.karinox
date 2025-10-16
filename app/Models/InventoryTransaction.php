@@ -58,6 +58,14 @@ class InventoryTransaction extends Model
   }
 
   /**
+   * Định nghĩa quan hệ với các item trong giao dịch.
+   */
+  public function items()
+  {
+    return $this->hasMany(InventoryTransactionItem::class, 'transaction_id');
+  }
+
+  /**
    * Kiểm tra loại giao dịch bằng Enum.
    */
   public function isImport(): bool

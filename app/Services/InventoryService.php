@@ -87,7 +87,7 @@ class InventoryService
         $this->updateStock($branchId, $item['product_id'], $item['quantity'], $transactionType);
 
         InventoryTransactionItem::create([
-          'transaction_id' => $transaction->id,
+          'inventory_transaction_id' => $transaction->id,
           'product_id'     => $item['product_id'],
           'quantity'       => $item['quantity']
         ]);

@@ -10,7 +10,8 @@ class InventoryTransactionItem extends Model
   use HasFactory;
 
   protected $fillable = [
-    'inventory_transaction_id',
+    'transaction_id',
+    'inventory_transaction_id', // Keep for backward compatibility
     'product_id',
     'quantity',
     'cost_price',

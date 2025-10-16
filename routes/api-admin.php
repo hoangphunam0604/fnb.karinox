@@ -19,6 +19,7 @@ use App\Http\Admin\Controllers\VoucherCampaignController;
 use App\Http\Admin\Controllers\RoleController;
 use App\Http\Admin\Controllers\PermissionController;
 use App\Http\Admin\Controllers\ReportController;
+use App\Http\Admin\Controllers\InventoryController;
 
 // Admin routes: require API auth, app check, branch context and only allow users with role admin or manager
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:admin|manager'])->prefix('admin')->group(function () {
@@ -72,4 +73,28 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   // Reports
   Route::get('reports/daily-sales-by-employee', [ReportController::class, 'dailySalesByEmployee']);
   Route::get('reports/sales-by-employee-period', [ReportController::class, 'salesByEmployeePeriod']);
+
+  // Inventory Management
+  Route::prefix('inventory')->group(function () {
+    // Lấy danh sách giao dịch kho
+    Route::get('transactions', [InventoryController::class, 'index']);
+    
+    // Xem chi tiết giao dịch kho
+    Route::get('transactions/{id}', [InventoryController::class, 'show']);
+    
+    // Báo cáo tồn kho
+    Route::get('stock-report', [InventoryController::class, 'getStockReport']);
+    
+    // Kiểm kho
+    Route::post('stocktaking', [InventoryController::class, 'stocktaking']);
+    
+    // Nhập kho
+    Route::post('import', [InventoryController::class, 'import']);
+    
+    // Xuất kho
+    Route::post('export', [InventoryController::class, 'export']);
+    
+    // Chuyển kho
+    Route::post('transfer', [InventoryController::class, 'transfer']);
+  });
 });
