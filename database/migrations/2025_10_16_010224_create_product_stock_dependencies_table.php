@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
       $table->unsignedBigInteger('source_product_id')->comment('Sản phẩm gốc (combo/processed/service)');
       $table->unsignedBigInteger('target_product_id')->comment('Sản phẩm cần trừ kho (goods/ingredient)');
-      $table->decimal('quantity_ratio', 10, 3)->comment('Tỷ lệ: 1 source = ? target');
+      $table->unsignedInteger('quantity')->comment('Số lượng cần trừ cho 1 đơn vị source (đơn vị nhỏ nhất: gram, ml, cái...)');
       $table->timestamps();
 
       // Indexes

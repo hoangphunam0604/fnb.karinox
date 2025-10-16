@@ -13,11 +13,11 @@ class ProductStockDependency extends Model
   protected $fillable = [
     'source_product_id',
     'target_product_id',
-    'quantity_ratio',
+    'quantity',
   ];
 
   protected $casts = [
-    'quantity_ratio' => 'decimal:3',
+    'quantity' => 'integer',
   ];
 
   /**

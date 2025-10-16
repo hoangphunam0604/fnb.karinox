@@ -190,7 +190,7 @@ class StockDeductionService
     $dependencies = $this->dependencyService->getDependencies($orderItem->product_id);
 
     foreach ($dependencies as $dependency) {
-      $quantityToDeduct = $dependency->quantity_ratio * $orderItem->quantity;
+      $quantityToDeduct = $dependency->quantity * $orderItem->quantity;
 
       if ($quantityToDeduct > 0) {
         // 🔸 Kiểm tra target product có manage_stock không
@@ -248,7 +248,7 @@ class StockDeductionService
     $dependencies = $this->dependencyService->getDependencies($orderItem->product_id);
 
     foreach ($dependencies as $dependency) {
-      $requiredQuantity = $dependency->quantity_ratio * $orderItem->quantity;
+      $requiredQuantity = $dependency->quantity * $orderItem->quantity;
 
       // 🔸 Kiểm tra target product có manage_stock không
       $targetProduct = \App\Models\Product::find($dependency->target_product_id);
@@ -292,7 +292,7 @@ class StockDeductionService
     if ($dependencies->isNotEmpty()) {
       // Topping có dependencies - trừ kho theo dependencies
       foreach ($dependencies as $dependency) {
-        $quantityToDeduct = $dependency->quantity_ratio * $topping->quantity;
+        $quantityToDeduct = $dependency->quantity * $topping->quantity;
 
         if ($quantityToDeduct > 0) {
           // 🔸 Kiểm tra target product có manage_stock không
@@ -324,7 +324,7 @@ class StockDeductionService
     $dependencies = $this->dependencyService->getDependencies($topping->product_id);
 
     foreach ($dependencies as $dependency) {
-      $requiredQuantity = $dependency->quantity_ratio * $topping->quantity;
+      $requiredQuantity = $dependency->quantity * $topping->quantity;
 
       // 🔸 Kiểm tra target product có manage_stock không
       $targetProduct = \App\Models\Product::find($dependency->target_product_id);

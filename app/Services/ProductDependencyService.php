@@ -45,18 +45,18 @@ class ProductDependencyService
   {
     $result = [];
 
-    // 🔹 Kiểm tra nếu là goods/ingredient → thêm self-reference
+    // 🔹 Kiểm tra nếu là goods/ingredient → thêm self-reference với quantity = 1
     if (in_array($product->product_type->value, ['goods', 'ingredient'])) {
       $result[$product->id . '_' . $product->id] = [
         'source_product_id' => $product->id,
         'target_product_id' => $product->id,
-        'quantity_ratio' => 1.0,
+        'quantity' => 1, // 1 đơn vị = 1 đơn vị
         'created_at' => now(),
         'updated_at' => now(),
       ];
     } else {
       // 🔹 Sản phẩm phức tạp → expand theo formulas
-      $this->expandProduct($product, $product->id, 1.0, $result);
+      $this->expandProduct($product, $product->id, 1, $result);
     }
 
     return array_values($result);
@@ -64,8 +64,9 @@ class ProductDependencyService
 
   /**
    * Expand sản phẩm thành các dependencies
+   * @param int $multiplier - Số lượng nhân lên (đơn vị nguyên)
    */
-  private function expandProduct(Product $product, int $sourceId, float $ratio, array &$result, array $visited = []): void
+  private function expandProduct(Product $product, int $sourceId, int $multiplier, array &$result, array $visited = []): void
   {
     // Prevent infinite recursion
     if (in_array($product->id, $visited)) {
@@ -84,7 +85,7 @@ class ProductDependencyService
 
     foreach ($product->formulas as $formula) {
       $component = $formula->ingredient;
-      $newRatio = $ratio * $formula->quantity;
+      $newQuantity = $multiplier * $formula->quantity; // quantity trong formula đã là số nguyên (gram, ml, cái...)
 
       if ($this->isPhysicalStockProduct($component)) {
         // Sản phẩm vật lý - thêm vào result
@@ -92,19 +93,19 @@ class ProductDependencyService
 
         if (isset($result[$key])) {
           // Cộng dồn nếu đã có
-          $result[$key]['quantity_ratio'] += $newRatio;
+          $result[$key]['quantity'] += $newQuantity;
         } else {
           $result[$key] = [
             'source_product_id' => $sourceId,
             'target_product_id' => $component->id,
-            'quantity_ratio' => $newRatio,
+            'quantity' => (int)$newQuantity, // Cast to integer
             'created_at' => now(),
             'updated_at' => now(),
           ];
         }
       } else {
         // Sản phẩm phức hợp - expand tiếp
-        $this->expandProduct($component, $sourceId, $newRatio, $result, $visited);
+        $this->expandProduct($component, $sourceId, (int)$newQuantity, $result, $visited);
       }
     }
   }

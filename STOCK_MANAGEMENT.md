@@ -1,13 +1,14 @@
-# 📦 Hệ thống Quản lý Tồn kho Thông minh - Karinox FnB (v2.0)
+# 📦 Hệ thống Quản lý Tồn kho Thông minh - Karinox FnB (v2.1)
 
-## 🎯 Tổng quan - Logic Nhất Quán Mới
+## 🎯 Tổng quan - Logic Nhất Quán với Số Nguyên
 
 Hệ thống quản lý tồn kho với **logic nhất quán** - tất cả sản phẩm đều có entries trong `ProductStockDependency`:
 
-- **Nguyên liệu & Hàng hóa**: Self-reference (source_id = target_id, ratio = 1.0)
+- **Nguyên liệu & Hàng hóa**: Self-reference (source_id = target_id, quantity = 1)
 - **Hàng chế biến & Combo**: Component dependencies từ formulas
 - **Dịch vụ**: Có thể có hoặc không có dependencies
 - **Deduction Logic**: Luôn check `manage_stock` tại thời điểm trừ kho
+- **✨ Đơn vị nhỏ nhất**: Tất cả quantity là **số nguyên dương** (gram, ml, cái...)
 
 ### 🔄 Ưu điểm Logic Mới
 
@@ -15,6 +16,29 @@ Hệ thống quản lý tồn kho với **logic nhất quán** - tất cả sả
 ✅ **Flexibility**: `manage_stock` có thể thay đổi mà không cần rebuild dependencies  
 ✅ **Performance**: O(1) lookup cho mọi loại sản phẩm  
 ✅ **Maintainability**: Code đơn giản, dễ debug và maintain
+✅ **Integer Stock**: Tồn kho luôn là số nguyên, tránh sai số float
+
+### 📐 Quy tắc Đơn vị
+
+| Loại    | Đơn vị Cũ | Đơn vị Mới | Ví dụ              |
+| ------- | --------- | ---------- | ------------------ |
+| Cà phê  | kg        | **gram**   | 50kg → 50,000 gram |
+| Sữa     | lít       | **ml**     | 20 lít → 20,000 ml |
+| Đường   | kg        | **gram**   | 30kg → 30,000 gram |
+| Ly, Hộp | cái       | **cái**    | Không đổi          |
+
+**Công thức lưu số nguyên:**
+
+```php
+// ❌ Cũ: 0.02 kg (decimal)
+// ✅ Mới: 20 gram (integer)
+
+ProductFormula::create([
+    'product_id' => $cappuccino->id,
+    'ingredient_id' => $coffee->id,
+    'quantity' => 20  // 20 gram
+]);
+```
 
 ## 🏗️ Kiến trúc
 
