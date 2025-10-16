@@ -57,16 +57,26 @@ class Product extends Model
     parent::boot();
 
     static::creating(function ($product) {
-      if ($product->product_type === 'goods') {
-        $product->manage_stock = true; // 🔥 Chỉ hàng hóa mới bật quản lý tồn kho
+      // ✅ Cho phép cả goods và ingredient quản lý tồn kho
+      $productType = $product->product_type instanceof \App\Enums\ProductType
+        ? $product->product_type->value
+        : $product->product_type;
+
+      if (in_array($productType, ['goods', 'ingredient'])) {
+        $product->manage_stock = true;
       } else {
-        $product->manage_stock = false; // 🔥 Các loại khác mặc định không quản lý tồn kho
+        $product->manage_stock = false; // Các loại khác (processed, combo, service) mặc định không quản lý
       }
     });
 
     static::updating(function ($product) {
-      if ($product->product_type !== 'goods') {
-        $product->manage_stock = false; // 🔥 Đổi loại khác sẽ tự động tắt quản lý tồn kho
+      // ✅ Chỉ force false cho các loại không phải goods/ingredient
+      $productType = $product->product_type instanceof \App\Enums\ProductType
+        ? $product->product_type->value
+        : $product->product_type;
+
+      if (!in_array($productType, ['goods', 'ingredient'])) {
+        $product->manage_stock = false;
       }
     });
     static::saving(function ($product) {

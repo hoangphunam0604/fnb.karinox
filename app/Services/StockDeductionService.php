@@ -189,12 +189,25 @@ class StockDeductionService
     // 🔹 Lấy tất cả dependencies từ pre-computed table (bao gồm cả self-reference)
     $dependencies = $this->dependencyService->getDependencies($orderItem->product_id);
 
+    Log::info("🔍 Deducting stock for main product", [
+      'product_id' => $orderItem->product_id,
+      'branch_id' => $branchId,
+      'dependencies_count' => $dependencies->count()
+    ]);
+
     foreach ($dependencies as $dependency) {
       $quantityToDeduct = $dependency->quantity * $orderItem->quantity;
 
       if ($quantityToDeduct > 0) {
         // 🔸 Kiểm tra target product có manage_stock không
         $targetProduct = \App\Models\Product::find($dependency->target_product_id);
+
+        Log::info("📦 Processing dependency", [
+          'target_product_id' => $dependency->target_product_id,
+          'target_product_name' => $targetProduct?->name,
+          'manage_stock' => $targetProduct?->manage_stock ?? false,
+          'quantity_to_deduct' => $quantityToDeduct
+        ]);
 
         if ($targetProduct && $targetProduct->manage_stock) {
           $this->deductStock(
@@ -205,6 +218,11 @@ class StockDeductionService
             $dependency->target_product_id === $orderItem->product_id ? $orderItem->unit_price : null,
             $branchId
           );
+
+          Log::info("✅ Deducted stock", [
+            'product_id' => $dependency->target_product_id,
+            'quantity' => $quantityToDeduct
+          ]);
         }
       }
     }
@@ -279,15 +297,15 @@ class StockDeductionService
   private function deductStockForTopping(InventoryTransaction $transaction, $topping, int $branchId): void
   {
     // Load topping product với relationships
-    $toppingProduct = \App\Models\Product::with(['formulas.ingredient'])->find($topping->product_id);
+    $toppingProduct = \App\Models\Product::with(['formulas.ingredient'])->find($topping->topping_id);
 
     if (!$toppingProduct) {
-      Log::warning("Topping product not found", ['topping_id' => $topping->product_id]);
+      Log::warning("Topping product not found", ['topping_id' => $topping->topping_id]);
       return;
     }
 
     // Lấy dependencies của topping
-    $dependencies = $this->dependencyService->getDependencies($topping->product_id);
+    $dependencies = $this->dependencyService->getDependencies($topping->topping_id);
 
     if ($dependencies->isNotEmpty()) {
       // Topping có dependencies - trừ kho theo dependencies
