@@ -240,7 +240,7 @@ POST /api/admin/inventory/import
 
 ```json
 {
-    "branch_id": 1,
+    "branch_id": 1, // Optional: Nếu không gửi, lấy từ header X-Branch-Id
     "items": [
         {
             "product_id": 5,
