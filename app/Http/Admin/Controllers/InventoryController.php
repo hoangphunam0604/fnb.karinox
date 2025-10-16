@@ -63,7 +63,7 @@ class InventoryController extends Controller
   public function getStockReport(Request $request)
   {
     $branchId = $request->input('branch_id');
-    
+
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
     }

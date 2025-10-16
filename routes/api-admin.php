@@ -78,22 +78,22 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   Route::prefix('inventory')->group(function () {
     // Lấy danh sách giao dịch kho
     Route::get('transactions', [InventoryController::class, 'index']);
-    
+
     // Xem chi tiết giao dịch kho
     Route::get('transactions/{id}', [InventoryController::class, 'show']);
-    
+
     // Báo cáo tồn kho
     Route::get('stock-report', [InventoryController::class, 'getStockReport']);
-    
+
     // Kiểm kho
     Route::post('stocktaking', [InventoryController::class, 'stocktaking']);
-    
+
     // Nhập kho
     Route::post('import', [InventoryController::class, 'import']);
-    
+
     // Xuất kho
     Route::post('export', [InventoryController::class, 'export']);
-    
+
     // Chuyển kho
     Route::post('transfer', [InventoryController::class, 'transfer']);
   });

@@ -1,7 +1,9 @@
 # API Kiểm Kho - Hướng Dẫn Sử Dụng
 
 ## 🎯 Tổng Quan
+
 API quản lý kiểm kho cho hệ thống Karinox F&B, hỗ trợ:
+
 - Kiểm kho (stocktaking)
 - Nhập kho (import)
 - Xuất kho (export)
@@ -9,7 +11,9 @@ API quản lý kiểm kho cho hệ thống Karinox F&B, hỗ trợ:
 - Báo cáo tồn kho
 
 ## 🔐 Authentication
+
 Tất cả API yêu cầu:
+
 - Bearer Token (JWT)
 - Header: `X-Karinox-App: karinox-fnb`
 - Header: `X-Branch-Id: {branch_id}`
@@ -20,16 +24,19 @@ Tất cả API yêu cầu:
 ## 📋 API Endpoints
 
 ### 1. Lấy Danh Sách Giao Dịch Kho
+
 ```http
 GET /api/admin/inventory/transactions
 ```
 
 **Query Parameters:**
+
 - `branch_id` (optional): Lọc theo chi nhánh
 - `transaction_type` (optional): import, export, sale, return, transfer_out, transfer_in, stocktaking
 - `per_page` (optional, default: 20): Số bản ghi mỗi trang
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -67,11 +74,13 @@ GET /api/admin/inventory/transactions
 ---
 
 ### 2. Xem Chi Tiết Giao Dịch
+
 ```http
 GET /api/admin/inventory/transactions/{id}
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -89,75 +98,81 @@ GET /api/admin/inventory/transactions/{id}
 ---
 
 ### 3. Báo Cáo Tồn Kho
+
 ```http
 GET /api/admin/inventory/stock-report?branch_id={branch_id}
 ```
 
 **Query Parameters:**
+
 - `branch_id` (required): ID chi nhánh
 
 **Response:**
+
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "product_id": 5,
-      "product_name": "Cà phê rang xay",
-      "product_code": "CF001",
-      "product_unit": "gram",
-      "product_type": "ingredient",
-      "branch_id": 1,
-      "stock_quantity": 10000,
-      "min_stock": 5000,
-      "max_stock": 20000,
-      "is_low_stock": false,
-      "is_out_of_stock": false
-    },
-    {
-      "id": 2,
-      "product_id": 6,
-      "product_name": "Sữa tươi",
-      "product_code": "MILK001",
-      "product_unit": "ml",
-      "product_type": "ingredient",
-      "branch_id": 1,
-      "stock_quantity": 3000,
-      "min_stock": 5000,
-      "max_stock": 15000,
-      "is_low_stock": true,
-      "is_out_of_stock": false
-    }
-  ]
+    "data": [
+        {
+            "id": 1,
+            "product_id": 5,
+            "product_name": "Cà phê rang xay",
+            "product_code": "CF001",
+            "product_unit": "gram",
+            "product_type": "ingredient",
+            "branch_id": 1,
+            "stock_quantity": 10000,
+            "min_stock": 5000,
+            "max_stock": 20000,
+            "is_low_stock": false,
+            "is_out_of_stock": false
+        },
+        {
+            "id": 2,
+            "product_id": 6,
+            "product_name": "Sữa tươi",
+            "product_code": "MILK001",
+            "product_unit": "ml",
+            "product_type": "ingredient",
+            "branch_id": 1,
+            "stock_quantity": 3000,
+            "min_stock": 5000,
+            "max_stock": 15000,
+            "is_low_stock": true,
+            "is_out_of_stock": false
+        }
+    ]
 }
 ```
 
 ---
 
 ### 4. Kiểm Kho
+
 ```http
 POST /api/admin/inventory/stocktaking
 ```
 
 **Request Body:**
+
 ```json
 {
-  "branch_id": 1,
-  "items": [
-    {
-      "product_id": 5,
-      "actual_quantity": 9850
-    },
-    {
-      "product_id": 6,
-      "actual_quantity": 4800
-    }
-  ],
-  "note": "Kiểm kho định kỳ tháng 10/2025"
+    "branch_id": 1,
+    "items": [
+        {
+            "product_id": 5,
+            "actual_quantity": 9850
+        },
+        {
+            "product_id": 6,
+            "actual_quantity": 4800
+        }
+    ],
+    "note": "Kiểm kho định kỳ tháng 10/2025"
 }
 ```
 
 **Response (Có chênh lệch):**
+
 ```json
 {
   "message": "Kiểm kho thành công",
@@ -187,39 +202,43 @@ POST /api/admin/inventory/stocktaking
 ```
 
 **Response (Không có chênh lệch):**
+
 ```json
 {
-  "message": "Không có chênh lệch nào, không cần điều chỉnh tồn kho",
-  "differences": []
+    "message": "Không có chênh lệch nào, không cần điều chỉnh tồn kho",
+    "differences": []
 }
 ```
 
 ---
 
 ### 5. Nhập Kho
+
 ```http
 POST /api/admin/inventory/import
 ```
 
 **Request Body:**
+
 ```json
 {
-  "branch_id": 1,
-  "items": [
-    {
-      "product_id": 5,
-      "quantity": 5000
-    },
-    {
-      "product_id": 6,
-      "quantity": 10000
-    }
-  ],
-  "note": "Nhập hàng từ nhà cung cấp ABC"
+    "branch_id": 1,
+    "items": [
+        {
+            "product_id": 5,
+            "quantity": 5000
+        },
+        {
+            "product_id": 6,
+            "quantity": 10000
+        }
+    ],
+    "note": "Nhập hàng từ nhà cung cấp ABC"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Nhập kho thành công",
@@ -236,25 +255,28 @@ POST /api/admin/inventory/import
 ---
 
 ### 6. Xuất Kho
+
 ```http
 POST /api/admin/inventory/export
 ```
 
 **Request Body:**
+
 ```json
 {
-  "branch_id": 1,
-  "items": [
-    {
-      "product_id": 5,
-      "quantity": 1000
-    }
-  ],
-  "note": "Xuất hủy hàng hỏng"
+    "branch_id": 1,
+    "items": [
+        {
+            "product_id": 5,
+            "quantity": 1000
+        }
+    ],
+    "note": "Xuất hủy hàng hỏng"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Xuất kho thành công",
@@ -270,30 +292,33 @@ POST /api/admin/inventory/export
 ---
 
 ### 7. Chuyển Kho
+
 ```http
 POST /api/admin/inventory/transfer
 ```
 
 **Request Body:**
+
 ```json
 {
-  "from_branch_id": 1,
-  "to_branch_id": 2,
-  "items": [
-    {
-      "product_id": 5,
-      "quantity": 2000
-    },
-    {
-      "product_id": 6,
-      "quantity": 3000
-    }
-  ],
-  "note": "Chuyển hàng sang chi nhánh quận 7"
+    "from_branch_id": 1,
+    "to_branch_id": 2,
+    "items": [
+        {
+            "product_id": 5,
+            "quantity": 2000
+        },
+        {
+            "product_id": 6,
+            "quantity": 3000
+        }
+    ],
+    "note": "Chuyển hàng sang chi nhánh quận 7"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Chuyển kho thành công",
@@ -313,34 +338,38 @@ POST /api/admin/inventory/transfer
 ## ⚠️ Error Responses
 
 ### 400 Bad Request
+
 ```json
 {
-  "error": "Vui lòng chọn chi nhánh"
+    "error": "Vui lòng chọn chi nhánh"
 }
 ```
 
 ### 422 Validation Error
+
 ```json
 {
-  "errors": {
-    "branch_id": ["The branch id field is required."],
-    "items": ["The items field must be an array."],
-    "items.0.product_id": ["The items.0.product_id field is required."]
-  }
+    "errors": {
+        "branch_id": ["The branch id field is required."],
+        "items": ["The items field must be an array."],
+        "items.0.product_id": ["The items.0.product_id field is required."]
+    }
 }
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
-  "message": "Unauthenticated."
+    "message": "Unauthenticated."
 }
 ```
 
 ### 403 Forbidden
+
 ```json
 {
-  "message": "This action is unauthorized."
+    "message": "This action is unauthorized."
 }
 ```
 
@@ -349,6 +378,7 @@ POST /api/admin/inventory/transfer
 ## 📝 Validation Rules
 
 ### Kiểm Kho (Stocktaking)
+
 - `branch_id`: required, exists:branches,id
 - `items`: required, array, min:1
 - `items.*.product_id`: required, exists:products,id
@@ -356,6 +386,7 @@ POST /api/admin/inventory/transfer
 - `note`: nullable, string, max:500
 
 ### Nhập/Xuất Kho
+
 - `branch_id`: required, exists:branches,id
 - `items`: required, array, min:1
 - `items.*.product_id`: required, exists:products,id
@@ -363,6 +394,7 @@ POST /api/admin/inventory/transfer
 - `note`: nullable, string, max:500
 
 ### Chuyển Kho
+
 - `from_branch_id`: required, exists:branches,id
 - `to_branch_id`: required, exists:branches,id, different:from_branch_id
 - `items`: required, array, min:1
@@ -375,30 +407,32 @@ POST /api/admin/inventory/transfer
 ## 🔄 Workflow Kiểm Kho
 
 1. **Lấy báo cáo tồn kho hiện tại:**
-   ```
-   GET /api/admin/inventory/stock-report?branch_id=1
-   ```
+
+    ```
+    GET /api/admin/inventory/stock-report?branch_id=1
+    ```
 
 2. **Kiểm đếm thực tế tại kho**
 
 3. **Gửi dữ liệu kiểm kho:**
-   ```
-   POST /api/admin/inventory/stocktaking
-   {
-     "branch_id": 1,
-     "items": [
-       {"product_id": 5, "actual_quantity": 9850},
-       {"product_id": 6, "actual_quantity": 4800}
-     ],
-     "note": "Kiểm kho tháng 10"
-   }
-   ```
+
+    ```
+    POST /api/admin/inventory/stocktaking
+    {
+      "branch_id": 1,
+      "items": [
+        {"product_id": 5, "actual_quantity": 9850},
+        {"product_id": 6, "actual_quantity": 4800}
+      ],
+      "note": "Kiểm kho tháng 10"
+    }
+    ```
 
 4. **Hệ thống tự động:**
-   - So sánh số lượng thực tế vs hệ thống
-   - Tạo giao dịch kiểm kho nếu có chênh lệch
-   - Cập nhật tồn kho = số lượng thực tế
-   - Trả về danh sách chênh lệch
+    - So sánh số lượng thực tế vs hệ thống
+    - Tạo giao dịch kiểm kho nếu có chênh lệch
+    - Cập nhật tồn kho = số lượng thực tế
+    - Trả về danh sách chênh lệch
 
 ---
 

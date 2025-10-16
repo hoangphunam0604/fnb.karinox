@@ -21,7 +21,7 @@ class InventoryTransactionResource extends JsonResource
       'destination_branch_name' => $this->destinationBranch?->name,
       'created_at' => $this->created_at?->toDateTimeString(),
       'updated_at' => $this->updated_at?->toDateTimeString(),
-      
+
       // Relations
       'items' => InventoryTransactionItemResource::collection($this->whenLoaded('items')),
     ];
