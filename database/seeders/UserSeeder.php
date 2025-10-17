@@ -38,6 +38,8 @@ class UserSeeder extends Seeder
     ], [
       'fullname' => 'Karinox Admin',
       'password' => Hash::make('karinox_admin'),
+      'is_active' => true,
+      'current_branch' => 1
     ]);
     $admin->assignRole(UserRole::ADMIN);
   }
