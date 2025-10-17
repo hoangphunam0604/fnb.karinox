@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CommonStatus;
 use App\Enums\ProductType;
+use App\Services\ProductCodeService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -57,6 +58,12 @@ class Product extends Model
     parent::boot();
 
     static::creating(function ($product) {
+      // Auto-generate product code nếu chưa có
+      if (empty($product->code)) {
+        $codeService = app(ProductCodeService::class);
+        $product->code = $codeService->generateProductCode($product->category_id);
+      }
+
       // ✅ Cho phép cả goods và ingredient quản lý tồn kho
       $productType = $product->product_type instanceof \App\Enums\ProductType
         ? $product->product_type->value

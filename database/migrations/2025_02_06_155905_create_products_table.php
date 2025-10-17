@@ -17,7 +17,7 @@ return new class extends Migration
       $table->unsignedTinyInteger('product_group')->default(1);
       $table->enum('product_type', ['ingredient', 'goods', 'processed', 'service', 'combo'])->default('goods');
       $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
-      $table->string('code');
+      $table->string('code')->unique();
       $table->string('barcode')->nullable();
       $table->string('name');
       $table->text('description')->nullable();
