@@ -248,10 +248,10 @@ class ProductService extends BaseService
   {
     // Lấy danh sách sản phẩm thuộc chi nhánh được chọn
     $products = Product::select(
-        'products.*', 
-        'categories.name as category_name',
-        DB::raw('COALESCE(products.sale_price, products.regular_price) as final_price')
-      )
+      'products.*',
+      'categories.name as category_name',
+      DB::raw('COALESCE(products.sale_price, products.regular_price) as final_price')
+    )
       ->with('toppings.topping')
       ->join('product_branches', 'products.id', '=', 'product_branches.product_id')
       ->join('categories', 'products.category_id', '=', 'categories.id')
