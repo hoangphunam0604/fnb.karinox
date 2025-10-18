@@ -200,7 +200,7 @@ class ProductSeeder extends Seeder
         $branchesData[] = [
           'branch_id' => $branch->id,
           'is_selling' => false, // Nguyên liệu không bán trực tiếp
-          'stock_quantity' => 0 // Sẽ được cập nhật khi nhập kho
+          'stock_quantity' => rand(500, 2000) // Nguyên liệu cần nhiều stock cho sản xuất
         ];
       }
 
@@ -258,7 +258,7 @@ class ProductSeeder extends Seeder
         $branchesData[] = [
           'branch_id' => $branch->id,
           'is_selling' => true,
-          'stock_quantity' => 0 // Sẽ được cập nhật khi nhập kho
+          'stock_quantity' => rand(50, 200) // Hàng hóa có sẵn để bán
         ];
       }
 
