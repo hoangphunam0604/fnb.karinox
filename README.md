@@ -18,12 +18,10 @@ php artisan reverb:start
 mv public_html _public_html
 
 ln -s fnb.karinox/public public_html
-
 ```
 
-Tạo cho tôi Admin Controller cho file service và model tôi đã gửi
-Lưu ý:
-Namespage App\Http\Controllers\Api\Admin
-inject Service
-Tạo và trả về Resource tương ứng `namespace App\Http\Resources\Api\Admin`
-tách FormRequest riêng cho store / update `namespace App\Http\Requests\Api\Admin;`
+## 📚 Tài liệu
+
+Tất cả tài liệu kỹ thuật và hướng dẫn được tổ chức trong thư mục [`docs/`](docs/).
+
+Xem [docs/README.md](docs/README.md) để biết danh sách đầy đủ các tài liệu có sẵn.
