@@ -110,24 +110,35 @@ class InventoryService
   {
     $productBranch = ProductBranch::where('branch_id', $branchId)
       ->where('product_id', $productId)
-      ->firstOrFail();
+      ->first();
+
+    if (!$productBranch) {
+      throw new Exception("Sản phẩm không tồn tại trong chi nhánh này");
+    }
+
+    $currentStock = $productBranch->stock_quantity;
+    $newStock = $currentStock;
 
     switch ($transactionType) {
       case 'import':
       case 'return':
       case 'transfer_in':
-        $productBranch->stock_quantity += $quantity;
+        $newStock = $currentStock + $quantity;
         break;
       case 'export':
       case 'sale':
       case 'transfer_out':
-        $productBranch->stock_quantity -= $quantity;
+        $newStock = $currentStock - $quantity;
         break;
       case 'stocktaking':
-        $productBranch->stock_quantity = $quantity;
+        $newStock = $quantity;
         break;
     }
-    $productBranch->save();
+
+    // Sử dụng update thay vì save để tránh vấn đề composite key
+    ProductBranch::where('branch_id', $branchId)
+      ->where('product_id', $productId)
+      ->update(['stock_quantity' => $newStock]);
 
     // Kiểm tra nếu sản phẩm là combo, xử lý các sản phẩm thành phần
     $product = Product::find($productId);
@@ -156,21 +167,28 @@ class InventoryService
         ->first();
 
       if ($ingredientBranch) {
+        $currentStock = $ingredientBranch->stock_quantity;
+        $newStock = $currentStock;
+
         switch ($transactionType) {
           case 'sale':
           case 'export':
           case 'transfer_out':
-            $ingredientBranch->stock_quantity -= $quantity * $ingredient->quantity;
+            $newStock = $currentStock - ($quantity * $ingredient->quantity);
             break;
           case 'return':
           case 'transfer_in':
-            $ingredientBranch->stock_quantity += $quantity * $ingredient->quantity;
+            $newStock = $currentStock + ($quantity * $ingredient->quantity);
             break;
           case 'stocktaking':
-            $ingredientBranch->stock_quantity = $quantity * $ingredient->quantity;
+            $newStock = $quantity * $ingredient->quantity;
             break;
         }
-        $ingredientBranch->save();
+
+        // Sử dụng update thay vì save để tránh vấn đề composite key
+        ProductBranch::where('branch_id', $branchId)
+          ->where('product_id', $ingredient->ingredient_id)
+          ->update(['stock_quantity' => $newStock]);
       }
     }
   }
