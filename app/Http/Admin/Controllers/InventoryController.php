@@ -30,7 +30,11 @@ class InventoryController extends Controller
    */
   public function index(Request $request)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+    
+    if (!$branchId) {
+      return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
+    }
     $transactionType = $request->input('transaction_type');
     $perPage = $request->input('per_page', 20);
 
@@ -55,7 +59,7 @@ class InventoryController extends Controller
    */
   public function getStockReport(Request $request)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
 
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
@@ -74,7 +78,7 @@ class InventoryController extends Controller
    */
   public function stocktaking(Request $request)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -118,7 +122,7 @@ class InventoryController extends Controller
    */
   public function import(Request $request)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -154,7 +158,7 @@ class InventoryController extends Controller
    */
   public function export(Request $request)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -190,7 +194,7 @@ class InventoryController extends Controller
    */
   public function transfer(Request $request)
   {
-    $fromBranchId = $this->inventoryService->resolveBranchId($request->input('from_branch_id'));
+    $fromBranchId = $request->input('from_branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
     $request->merge(['from_branch_id' => $fromBranchId]);
 
     $validator = Validator::make($request->all(), [
@@ -228,7 +232,7 @@ class InventoryController extends Controller
    */
   public function getProductStockCard(Request $request, $productId)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
 
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
@@ -271,7 +275,7 @@ class InventoryController extends Controller
    */
   public function getProductStockSummary(Request $request, $productId)
   {
-    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
 
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);

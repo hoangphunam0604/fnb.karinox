@@ -470,12 +470,4 @@ class InventoryService
     }
     return $product;
   }
-
-  /**
-   * Helper để lấy branch_id từ request hoặc app binding
-   */
-  public function resolveBranchId($requestBranchId = null)
-  {
-    return $requestBranchId ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-  }
 }
