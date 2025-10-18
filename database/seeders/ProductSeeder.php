@@ -9,10 +9,18 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductBranch;
 use App\Models\ProductFormula;
+use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
 
 class ProductSeeder extends Seeder
 {
+  protected ProductService $productService;
+
+  public function __construct(ProductService $productService)
+  {
+    $this->productService = $productService;
+  }
+
   /**
    * Run the database seeds.
    */
@@ -185,7 +193,18 @@ class ProductSeeder extends Seeder
 
     $createdIngredients = [];
     foreach ($ingredients as $ingredientData) {
-      $ingredient = Product::create([
+      // Tạo dữ liệu cho ProductService
+      $branches = Branch::all();
+      $branchesData = [];
+      foreach ($branches as $branch) {
+        $branchesData[] = [
+          'branch_id' => $branch->id,
+          'is_selling' => false, // Nguyên liệu không bán trực tiếp
+          'stock_quantity' => 0 // Sẽ được cập nhật khi nhập kho
+        ];
+      }
+
+      $productData = [
         'category_id' => $createdCategories[$ingredientData['category']]->id,
         'code' => $ingredientData['code'],
         'name' => $ingredientData['name'],
@@ -195,9 +214,11 @@ class ProductSeeder extends Seeder
         'product_type' => 'ingredient',
         'allows_sale' => false, // Nguyên liệu không bán trực tiếp
         'manage_stock' => true,
-        'status' => 'active'
-      ]);
+        'status' => 'active',
+        'branches' => $branchesData
+      ];
 
+      $ingredient = $this->productService->create($productData);
       $createdIngredients[$ingredient->code] = $ingredient;
     }
 
@@ -231,7 +252,17 @@ class ProductSeeder extends Seeder
 
     $createdGoods = [];
     foreach ($goods as $goodData) {
-      $good = Product::create([
+      $branches = Branch::all();
+      $branchesData = [];
+      foreach ($branches as $branch) {
+        $branchesData[] = [
+          'branch_id' => $branch->id,
+          'is_selling' => true,
+          'stock_quantity' => 0 // Sẽ được cập nhật khi nhập kho
+        ];
+      }
+
+      $productData = [
         'category_id' => $createdCategories[$goodData['category']]->id,
         'code' => $goodData['code'],
         'name' => $goodData['name'],
@@ -241,9 +272,11 @@ class ProductSeeder extends Seeder
         'product_type' => 'goods',
         'allows_sale' => true,
         'manage_stock' => true,
-        'status' => 'active'
-      ]);
+        'status' => 'active',
+        'branches' => $branchesData
+      ];
 
+      $good = $this->productService->create($productData);
       $createdGoods[$good->code] = $good;
     }
 
@@ -391,12 +424,29 @@ class ProductSeeder extends Seeder
     foreach ($processedProducts as $productData) {
       // Tính cost_price từ công thức
       $costPrice = 0;
+      $formulas = [];
       foreach ($productData['formula'] as $formulaItem) {
         $ingredient = $createdIngredients[$formulaItem['ingredient']];
         $costPrice += ($ingredient->cost_price * $formulaItem['quantity'] / 1000); // Quy đổi về gram/ml
+
+        // Chuẩn bị dữ liệu formulas cho ProductService
+        $formulas[] = [
+          'ingredient_id' => $ingredient->id,
+          'quantity' => $formulaItem['quantity']
+        ];
       }
 
-      $product = Product::create([
+      $branches = Branch::all();
+      $branchesData = [];
+      foreach ($branches as $branch) {
+        $branchesData[] = [
+          'branch_id' => $branch->id,
+          'is_selling' => true,
+          'stock_quantity' => 0 // Hàng chế biến không lưu kho
+        ];
+      }
+
+      $productServiceData = [
         'category_id' => $createdCategories[$productData['category']]->id,
         'code' => $productData['code'],
         'name' => $productData['name'],
@@ -407,19 +457,12 @@ class ProductSeeder extends Seeder
         'product_type' => 'processed',
         'allows_sale' => true,
         'print_label' => true,
-        'status' => 'active'
-      ]);
+        'status' => 'active',
+        'branches' => $branchesData,
+        'formulas' => $formulas
+      ];
 
-      // Tạo công thức
-      foreach ($productData['formula'] as $formulaItem) {
-        $ingredient = $createdIngredients[$formulaItem['ingredient']];
-        ProductFormula::create([
-          'product_id' => $product->id,
-          'ingredient_id' => $ingredient->id,
-          'quantity' => $formulaItem['quantity']
-        ]);
-      }
-
+      $product = $this->productService->create($productServiceData);
       $createdProcessed[$product->code] = $product;
     }
 
@@ -466,12 +509,29 @@ class ProductSeeder extends Seeder
     foreach ($combos as $comboData) {
       // Tính cost_price từ các sản phẩm con
       $costPrice = 0;
+      $formulas = [];
       foreach ($comboData['items'] as $item) {
         $childProduct = $createdProcessed[$item['product']];
         $costPrice += $childProduct->cost_price * $item['quantity'];
+
+        // Chuẩn bị dữ liệu formulas cho combo
+        $formulas[] = [
+          'ingredient_id' => $childProduct->id, // Ở đây ingredient_id thực chất là product con
+          'quantity' => $item['quantity']
+        ];
       }
 
-      $combo = Product::create([
+      $branches = Branch::all();
+      $branchesData = [];
+      foreach ($branches as $branch) {
+        $branchesData[] = [
+          'branch_id' => $branch->id,
+          'is_selling' => true,
+          'stock_quantity' => 0 // Combo không lưu kho
+        ];
+      }
+
+      $comboServiceData = [
         'category_id' => $createdCategories[$comboData['category']]->id,
         'code' => $comboData['code'],
         'name' => $comboData['name'],
@@ -482,19 +542,12 @@ class ProductSeeder extends Seeder
         'product_type' => 'combo',
         'allows_sale' => true,
         'print_label' => true,
-        'status' => 'active'
-      ]);
+        'status' => 'active',
+        'branches' => $branchesData,
+        'formulas' => $formulas
+      ];
 
-      // Tạo công thức combo (sử dụng bảng product_formulas)
-      foreach ($comboData['items'] as $item) {
-        $childProduct = $createdProcessed[$item['product']];
-        ProductFormula::create([
-          'product_id' => $combo->id,
-          'ingredient_id' => $childProduct->id, // Ở đây ingredient_id thực chất là product con
-          'quantity' => $item['quantity']
-        ]);
-      }
-
+      $combo = $this->productService->create($comboServiceData);
       $createdCombos[$combo->code] = $combo;
     }
 
@@ -525,7 +578,17 @@ class ProductSeeder extends Seeder
 
     $createdServices = [];
     foreach ($services as $serviceData) {
-      $service = Product::create([
+      $branches = Branch::all();
+      $branchesData = [];
+      foreach ($branches as $branch) {
+        $branchesData[] = [
+          'branch_id' => $branch->id,
+          'is_selling' => true,
+          'stock_quantity' => 0 // Dịch vụ không có tồn kho
+        ];
+      }
+
+      $serviceServiceData = [
         'category_id' => $createdCategories[$serviceData['category']]->id,
         'code' => $serviceData['code'],
         'name' => $serviceData['name'],
@@ -535,36 +598,12 @@ class ProductSeeder extends Seeder
         'product_type' => 'service',
         'allows_sale' => true,
         'manage_stock' => false, // Dịch vụ không quản lý tồn kho
-        'status' => 'active'
-      ]);
+        'status' => 'active',
+        'branches' => $branchesData
+      ];
 
+      $service = $this->productService->create($serviceServiceData);
       $createdServices[$service->code] = $service;
-    }
-
-    // Bước 7: Tạo ProductBranch cho các sản phẩm bán được
-    $branches = Branch::all();
-
-    if ($branches->isNotEmpty()) {
-      // Lấy tất cả sản phẩm có allows_sale = true
-      $sellableProducts = Product::where('allows_sale', true)->get();
-
-      foreach ($sellableProducts as $product) {
-        foreach ($branches as $branch) {
-          $stockQuantity = 0;
-
-          // Chỉ tạo stock cho goods và ingredients
-          if (in_array($product->product_type, ['goods', 'ingredient'])) {
-            $stockQuantity = rand(50, 500);
-          }
-
-          ProductBranch::create([
-            'product_id' => $product->id,
-            'branch_id' => $branch->id,
-            'is_selling' => true,
-            'stock_quantity' => $stockQuantity
-          ]);
-        }
-      }
     }
 
     echo "✅ Product seeder completed successfully!\n";
@@ -576,5 +615,6 @@ class ProductSeeder extends Seeder
     echo "   - Combos: " . count($createdCombos) . "\n";
     echo "   - Services: " . count($createdServices) . "\n";
     echo "   - Product Formulas: " . ProductFormula::count() . "\n";
+    echo "   - Product Branches: " . ProductBranch::count() . "\n";
   }
 }

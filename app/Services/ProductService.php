@@ -74,6 +74,7 @@ class ProductService extends BaseService
       $merged = array_merge($defaults, $productId ? $product->only($fields) : [], $input);
       $product->fill($merged);
       $product->save();
+
       // Đồng bộ dữ liệu liên quan
       $this->syncBranches($product, $data['branches'] ?? []);
       $this->syncAttributes($product->id, $data['attributes'] ?? []);
@@ -154,7 +155,10 @@ class ProductService extends BaseService
     foreach ($branches as $row) {
       $branch_id = (int)($row['branch_id'] ?? 0);
       if ($branch_id <= 0) continue;
-      $wantMap[$branch_id] = (bool)($row['is_selling'] ?? false);
+      $wantMap[$branch_id] = [
+        'is_selling' => (bool)($row['is_selling'] ?? false),
+        'stock_quantity' => (int)($row['stock_quantity'] ?? 0)
+      ];
     }
     $allBranchIds = $product->branches()->pluck('branches.id')->all(); // hiện có trên pivot
     $incomingIds  = array_keys($wantMap);
@@ -164,7 +168,10 @@ class ProductService extends BaseService
     if (!empty($toAttach)) {
       $attachData = [];
       foreach ($toAttach as $bid) {
-        $attachData[$bid] = ['is_selling' => $wantMap[$bid]];
+        $attachData[$bid] = [
+          'is_selling' => $wantMap[$bid]['is_selling'],
+          'stock_quantity' => $wantMap[$bid]['stock_quantity']
+        ];
       }
       $product->branches()->attach($attachData);
     }
@@ -172,7 +179,8 @@ class ProductService extends BaseService
     $toUpdate = array_intersect($incomingIds, $allBranchIds);
     foreach ($toUpdate as $bid) {
       $product->branches()->updateExistingPivot($bid, [
-        'is_selling' => $wantMap[$bid],
+        'is_selling' => $wantMap[$bid]['is_selling'],
+        'stock_quantity' => $wantMap[$bid]['stock_quantity']
       ]);
     }
   }
@@ -203,13 +211,13 @@ class ProductService extends BaseService
     ProductFormula::where('product_id', $productId)->delete();
 
     if (!empty($formulas)) {
-      $formulaData = array_map(fn($formula) => [
-        'product_id' => $productId,
-        'ingredient_id' => $formula['ingredient_id'],
-        'quantity' => $formula['quantity'],
-      ], $formulas);
-
-      ProductFormula::insert($formulaData);
+      foreach ($formulas as $formula) {
+        ProductFormula::create([
+          'product_id' => $productId,
+          'ingredient_id' => $formula['ingredient_id'],
+          'quantity' => $formula['quantity'],
+        ]);
+      }
     }
   }
 
