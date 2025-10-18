@@ -254,4 +254,228 @@ class InventoryService
       }
     });
   }
+
+  /**
+   * Lấy danh sách giao dịch với filtering và pagination
+   */
+  public function getInventoryTransactions($branchId = null, $transactionType = null, $perPage = 20)
+  {
+    $query = InventoryTransaction::with(['branch', 'items.product'])
+      ->orderBy('created_at', 'desc');
+
+    if ($branchId) {
+      $query->where('branch_id', $branchId);
+    }
+
+    if ($transactionType) {
+      $query->where('transaction_type', $transactionType);
+    }
+
+    return $query->paginate($perPage);
+  }
+
+  /**
+   * Lấy báo cáo tồn kho theo chi nhánh
+   */
+  public function getStockReport($branchId)
+  {
+    if (!$branchId) {
+      throw new Exception('Branch ID is required');
+    }
+
+    return ProductBranch::with('product')
+      ->where('branch_id', $branchId)
+      ->whereHas('product', function ($query) {
+        $query->where('manage_stock', true);
+      })
+      ->get();
+  }
+
+  /**
+   * Xử lý kiểm kho với logic tính toán chênh lệch
+   */
+  public function processStocktaking($branchId, $items, $note = null)
+  {
+    $stockItems = [];
+    $differences = [];
+
+    foreach ($items as $item) {
+      $productBranch = ProductBranch::where('branch_id', $branchId)
+        ->where('product_id', $item['product_id'])
+        ->first();
+
+      if (!$productBranch) {
+        continue;
+      }
+
+      $systemQuantity = $productBranch->stock_quantity;
+      $actualQuantity = $item['actual_quantity'];
+      $difference = $actualQuantity - $systemQuantity;
+
+      // Chỉ tạo giao dịch nếu có chênh lệch
+      if ($difference != 0) {
+        $stockItems[] = [
+          'product_id' => $item['product_id'],
+          'quantity' => $actualQuantity,
+        ];
+
+        $differences[] = [
+          'product_id' => $item['product_id'],
+          'product_name' => $productBranch->product->name,
+          'system_quantity' => $systemQuantity,
+          'actual_quantity' => $actualQuantity,
+          'difference' => $difference,
+        ];
+      }
+    }
+
+    if (empty($stockItems)) {
+      return [
+        'transaction' => null,
+        'differences' => [],
+        'message' => 'Không có chênh lệch nào, không cần điều chỉnh tồn kho'
+      ];
+    }
+
+    // Tạo giao dịch kiểm kho
+    $transaction = $this->stockTaking($branchId, $stockItems, $note);
+
+    return [
+      'transaction' => $transaction,
+      'differences' => $differences,
+      'message' => 'Kiểm kho thành công'
+    ];
+  }
+
+  /**
+   * Lấy thẻ kho cho sản phẩm cụ thể với filtering
+   */
+  public function getProductStockCard($productId, $branchId, $filters = [])
+  {
+    // Build query cho giao dịch
+    $query = InventoryTransaction::with(['branch', 'user'])
+      ->whereHas('items', function ($q) use ($productId) {
+        $q->where('product_id', $productId);
+      })
+      ->where('branch_id', $branchId);
+
+    // Filter theo ngày
+    if (!empty($filters['from_date'])) {
+      $query->whereDate('created_at', '>=', $filters['from_date']);
+    }
+
+    if (!empty($filters['to_date'])) {
+      $query->whereDate('created_at', '<=', $filters['to_date']);
+    }
+
+    // Filter theo type
+    if (!empty($filters['type'])) {
+      $query->where('transaction_type', $filters['type']);
+    }
+
+    // Sắp xếp theo thời gian mới nhất
+    $query->orderBy('created_at', 'desc');
+
+    // Phân trang
+    $perPage = $filters['per_page'] ?? 20;
+    $transactions = $query->paginate($perPage);
+
+    // Transform data với thông tin quantity
+    $transactions->getCollection()->transform(function ($transaction) use ($productId) {
+      // Lấy thông tin item của sản phẩm trong transaction này
+      $item = $transaction->items()->where('product_id', $productId)->first();
+
+      if ($item) {
+        $transaction->pivot = $item;
+      }
+
+      return $transaction;
+    });
+
+    return $transactions;
+  }
+
+  /**
+   * Lấy tóm tắt thẻ kho sản phẩm với thống kê
+   */
+  public function getProductStockSummary($productId, $branchId, $fromDate = null, $toDate = null)
+  {
+    // Lấy thông tin sản phẩm với category
+    $product = Product::with('category')->find($productId);
+    if (!$product) {
+      throw new Exception('Sản phẩm không tồn tại');
+    }
+
+    // Lấy tồn kho hiện tại
+    $currentStock = ProductBranch::where('product_id', $productId)
+      ->where('branch_id', $branchId)
+      ->first();
+
+    $product->current_stock_quantity = $currentStock->stock_quantity ?? 0;
+    $product->stock_last_updated = $currentStock->updated_at ?? null;
+
+    // Tính toán thống kê
+    $statisticsQuery = InventoryTransactionItem::whereHas('transaction', function ($q) use ($branchId, $fromDate, $toDate) {
+      $q->where('branch_id', $branchId);
+
+      if ($fromDate) {
+        $q->whereDate('created_at', '>=', $fromDate);
+      }
+
+      if ($toDate) {
+        $q->whereDate('created_at', '<=', $toDate);
+      }
+    })->where('product_id', $productId);
+
+    // Tổng hợp số liệu
+    $product->total_imported = (clone $statisticsQuery)
+      ->whereHas('transaction', fn($q) => $q->whereIn('transaction_type', ['import', 'transfer_in']))
+      ->sum('quantity');
+
+    $product->total_exported = (clone $statisticsQuery)
+      ->whereHas('transaction', fn($q) => $q->whereIn('transaction_type', ['export', 'transfer_out', 'sale']))
+      ->sum('quantity');
+
+    $product->total_sold = (clone $statisticsQuery)
+      ->whereHas('transaction', fn($q) => $q->where('transaction_type', 'sale'))
+      ->sum('quantity');
+
+    $product->total_adjusted = (clone $statisticsQuery)
+      ->whereHas('transaction', fn($q) => $q->whereIn('transaction_type', ['stocktaking', 'adjustment']))
+      ->sum('quantity');
+
+    $product->transactions_count = (clone $statisticsQuery)->count();
+
+    // Tính tồn đầu kỳ và cuối kỳ nếu có filter thời gian
+    if ($fromDate && $toDate) {
+      $product->period = "{$fromDate} đến {$toDate}";
+
+      // Tồn đầu kỳ = tồn hiện tại - tổng thay đổi trong kỳ
+      $netChangeInPeriod = $product->total_imported - $product->total_exported;
+      $product->opening_stock = $product->current_stock_quantity - $netChangeInPeriod;
+      $product->closing_stock = $product->current_stock_quantity;
+    }
+
+    return $product;
+  }
+
+  /**
+   * Validate sản phẩm tồn tại
+   */
+  public function validateProductExists($productId)
+  {
+    $product = Product::find($productId);
+    if (!$product) {
+      throw new Exception('Sản phẩm không tồn tại');
+    }
+    return $product;
+  }
+
+  /**
+   * Helper để lấy branch_id từ request hoặc app binding
+   */
+  public function resolveBranchId($requestBranchId = null)
+  {
+    return $requestBranchId ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+  }
 }

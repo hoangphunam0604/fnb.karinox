@@ -96,5 +96,11 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
 
     // Chuyển kho
     Route::post('transfer', [InventoryController::class, 'transfer']);
+
+    // Thẻ kho sản phẩm
+    Route::get('product-card/{product_id}', [InventoryController::class, 'getProductStockCard']);
+
+    // Tóm tắt thẻ kho sản phẩm
+    Route::get('product-summary/{product_id}', [InventoryController::class, 'getProductStockSummary']);
   });
 });

@@ -5,12 +5,16 @@ namespace App\Http\Admin\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Admin\Resources\InventoryTransactionResource;
 use App\Http\Admin\Resources\StockReportResource;
+use App\Http\Admin\Resources\ProductStockCardResource;
+use App\Http\Admin\Resources\ProductStockSummaryResource;
 use App\Services\InventoryService;
 use App\Models\InventoryTransaction;
+use App\Models\InventoryTransactionItem;
 use App\Models\ProductBranch;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Exception;
 
 class InventoryController extends Controller
 {
@@ -26,23 +30,11 @@ class InventoryController extends Controller
    */
   public function index(Request $request)
   {
-    // Lấy branch_id từ query parameter hoặc từ header
-    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
     $transactionType = $request->input('transaction_type');
     $perPage = $request->input('per_page', 20);
 
-    $query = InventoryTransaction::with(['branch', 'items.product'])
-      ->orderBy('created_at', 'desc');
-
-    if ($branchId) {
-      $query->where('branch_id', $branchId);
-    }
-
-    if ($transactionType) {
-      $query->where('transaction_type', $transactionType);
-    }
-
-    $transactions = $query->paginate($perPage);
+    $transactions = $this->inventoryService->getInventoryTransactions($branchId, $transactionType, $perPage);
 
     return InventoryTransactionResource::collection($transactions);
   }
@@ -63,21 +55,18 @@ class InventoryController extends Controller
    */
   public function getStockReport(Request $request)
   {
-    // Lấy branch_id từ query parameter hoặc từ header
-    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
 
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
     }
 
-    $stocks = ProductBranch::with('product')
-      ->where('branch_id', $branchId)
-      ->whereHas('product', function ($query) {
-        $query->where('manage_stock', true);
-      })
-      ->get();
-
-    return StockReportResource::collection($stocks);
+    try {
+      $stocks = $this->inventoryService->getStockReport($branchId);
+      return StockReportResource::collection($stocks);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 400);
+    }
   }
 
   /**
@@ -85,10 +74,7 @@ class InventoryController extends Controller
    */
   public function stocktaking(Request $request)
   {
-    // Lấy branch_id từ request body hoặc từ header
-    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-
-    // Merge branch_id vào request để validate
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -103,58 +89,28 @@ class InventoryController extends Controller
       return response()->json(['errors' => $validator->errors()], 422);
     }
 
-    $items = $request->input('items');
-    $note = $request->input('note');
+    try {
+      $result = $this->inventoryService->processStocktaking(
+        $branchId,
+        $request->input('items'),
+        $request->input('note')
+      );
 
-    // Chuẩn bị dữ liệu cho stockTaking
-    $stockItems = [];
-    $differences = [];
-
-    foreach ($items as $item) {
-      $productBranch = ProductBranch::where('branch_id', $branchId)
-        ->where('product_id', $item['product_id'])
-        ->first();
-
-      if (!$productBranch) {
-        continue;
+      if (!$result['transaction']) {
+        return response()->json([
+          'message' => $result['message'],
+          'differences' => $result['differences']
+        ], 200);
       }
 
-      $systemQuantity = $productBranch->stock_quantity;
-      $actualQuantity = $item['actual_quantity'];
-      $difference = $actualQuantity - $systemQuantity;
-
-      // Chỉ tạo giao dịch nếu có chênh lệch
-      if ($difference != 0) {
-        $stockItems[] = [
-          'product_id' => $item['product_id'],
-          'quantity' => $actualQuantity,
-        ];
-
-        $differences[] = [
-          'product_id' => $item['product_id'],
-          'product_name' => $productBranch->product->name,
-          'system_quantity' => $systemQuantity,
-          'actual_quantity' => $actualQuantity,
-          'difference' => $difference,
-        ];
-      }
-    }
-
-    if (empty($stockItems)) {
       return response()->json([
-        'message' => 'Không có chênh lệch nào, không cần điều chỉnh tồn kho',
-        'differences' => []
-      ], 200);
+        'message' => $result['message'],
+        'transaction' => new InventoryTransactionResource($result['transaction']->load(['branch', 'items.product'])),
+        'differences' => $result['differences']
+      ], 201);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 500);
     }
-
-    // Tạo giao dịch kiểm kho
-    $transaction = $this->inventoryService->stockTaking($branchId, $stockItems, $note);
-
-    return response()->json([
-      'message' => 'Kiểm kho thành công',
-      'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product'])),
-      'differences' => $differences
-    ], 201);
   }
 
   /**
@@ -162,10 +118,7 @@ class InventoryController extends Controller
    */
   public function import(Request $request)
   {
-    // Lấy branch_id từ request body hoặc từ header
-    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-
-    // Merge branch_id vào request để validate
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -180,16 +133,20 @@ class InventoryController extends Controller
       return response()->json(['errors' => $validator->errors()], 422);
     }
 
-    $transaction = $this->inventoryService->importStock(
-      $branchId,
-      $request->input('items'),
-      $request->input('note')
-    );
+    try {
+      $transaction = $this->inventoryService->importStock(
+        $branchId,
+        $request->input('items'),
+        $request->input('note')
+      );
 
-    return response()->json([
-      'message' => 'Nhập kho thành công',
-      'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
-    ], 201);
+      return response()->json([
+        'message' => 'Nhập kho thành công',
+        'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
+      ], 201);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 500);
+    }
   }
 
   /**
@@ -197,10 +154,7 @@ class InventoryController extends Controller
    */
   public function export(Request $request)
   {
-    // Lấy branch_id từ request body hoặc từ header
-    $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-
-    // Merge branch_id vào request để validate
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
     $request->merge(['branch_id' => $branchId]);
 
     $validator = Validator::make($request->all(), [
@@ -215,16 +169,20 @@ class InventoryController extends Controller
       return response()->json(['errors' => $validator->errors()], 422);
     }
 
-    $transaction = $this->inventoryService->exportStock(
-      $branchId,
-      $request->input('items'),
-      $request->input('note')
-    );
+    try {
+      $transaction = $this->inventoryService->exportStock(
+        $branchId,
+        $request->input('items'),
+        $request->input('note')
+      );
 
-    return response()->json([
-      'message' => 'Xuất kho thành công',
-      'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
-    ], 201);
+      return response()->json([
+        'message' => 'Xuất kho thành công',
+        'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
+      ], 201);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 500);
+    }
   }
 
   /**
@@ -232,10 +190,7 @@ class InventoryController extends Controller
    */
   public function transfer(Request $request)
   {
-    // Lấy from_branch_id từ request body hoặc từ header
-    $fromBranchId = $request->input('from_branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-
-    // Merge from_branch_id vào request để validate
+    $fromBranchId = $this->inventoryService->resolveBranchId($request->input('from_branch_id'));
     $request->merge(['from_branch_id' => $fromBranchId]);
 
     $validator = Validator::make($request->all(), [
@@ -251,16 +206,98 @@ class InventoryController extends Controller
       return response()->json(['errors' => $validator->errors()], 422);
     }
 
-    $transaction = $this->inventoryService->transferStock(
-      $fromBranchId,
-      $request->input('to_branch_id'),
-      $request->input('items'),
-      $request->input('note')
-    );
+    try {
+      $transaction = $this->inventoryService->transferStock(
+        $fromBranchId,
+        $request->input('to_branch_id'),
+        $request->input('items'),
+        $request->input('note')
+      );
 
-    return response()->json([
-      'message' => 'Chuyển kho thành công',
-      'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
-    ], 201);
+      return response()->json([
+        'message' => 'Chuyển kho thành công',
+        'transaction' => new InventoryTransactionResource($transaction->load(['branch', 'items.product']))
+      ], 201);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 500);
+    }
+  }
+
+  /**
+   * Lấy thẻ kho cho sản phẩm cụ thể
+   */
+  public function getProductStockCard(Request $request, $productId)
+  {
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+
+    if (!$branchId) {
+      return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
+    }
+
+    // Validate query parameters
+    $validator = Validator::make($request->all(), [
+      'from_date' => 'nullable|date',
+      'to_date' => 'nullable|date|after_or_equal:from_date',
+      'type' => 'nullable|in:import,export,transfer_in,transfer_out,stocktaking,adjustment,sale,return',
+      'per_page' => 'nullable|integer|min:1|max:100'
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    try {
+      // Validate product exists
+      $this->inventoryService->validateProductExists($productId);
+
+      // Get filters
+      $filters = [
+        'from_date' => $request->input('from_date'),
+        'to_date' => $request->input('to_date'),
+        'type' => $request->input('type'),
+        'per_page' => $request->input('per_page', 20)
+      ];
+
+      $transactions = $this->inventoryService->getProductStockCard($productId, $branchId, $filters);
+
+      return ProductStockCardResource::collection($transactions);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 404);
+    }
+  }
+
+  /**
+   * Lấy tóm tắt thẻ kho sản phẩm
+   */
+  public function getProductStockSummary(Request $request, $productId)
+  {
+    $branchId = $this->inventoryService->resolveBranchId($request->input('branch_id'));
+
+    if (!$branchId) {
+      return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
+    }
+
+    // Validate query parameters
+    $validator = Validator::make($request->all(), [
+      'from_date' => 'nullable|date',
+      'to_date' => 'nullable|date|after_or_equal:from_date',
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    try {
+      $product = $this->inventoryService->getProductStockSummary(
+        $productId,
+        $branchId,
+        $request->input('from_date'),
+        $request->input('to_date')
+      );
+
+      return new ProductStockSummaryResource($product);
+    } catch (Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 404);
+    }
   }
 }

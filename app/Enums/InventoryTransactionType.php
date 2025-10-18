@@ -13,6 +13,7 @@ enum InventoryTransactionType: string
   case TRANSFER_OUT = 'transfer_out';
   case TRANSFER_IN = 'transfer_in';
   case STOCKTAKING = 'stocktaking';
+  case ADJUSTMENT = 'adjustment';
 
   public function getLabel(): string
   {
@@ -24,6 +25,7 @@ enum InventoryTransactionType: string
       self::TRANSFER_OUT => "Xuất kho để chuyển đến chi nhánh khác.",
       self::TRANSFER_IN => "Nhập kho từ một chi nhánh khác.",
       self::STOCKTAKING => "Điều chỉnh tồn kho dựa trên kết quả kiểm kho.",
+      self::ADJUSTMENT => "Điều chỉnh tồn kho do lỗi nhập liệu hoặc các lý do khác.",
     };
   }
 
@@ -81,6 +83,14 @@ enum InventoryTransactionType: string
   public function isStocktaking(): bool
   {
     return $this === self::STOCKTAKING;
+  }
+
+  /**
+   * Kiểm tra xem có phải là giao dịch điều chỉnh không.
+   */
+  public function isAdjustment(): bool
+  {
+    return $this === self::ADJUSTMENT;
   }
 
   // Kiểm tra trạng thái hợp lệ
