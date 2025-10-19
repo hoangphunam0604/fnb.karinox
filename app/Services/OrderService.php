@@ -37,11 +37,9 @@ class OrderService
     $this->systemSettingService = $systemSettingService;
     $this->stockDeductionService = $stockDeductionService;
   }
-  public function getOrdersByTableId(int $tableId)
+  public function getOrdersByTableId(int $branchId, int $tableId)
   {
-    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
-
-    // Lấy tất cả các đơn hàng PENDING
+   // Lấy tất cả các đơn hàng PENDING
     $orders = Order::where('table_id', $tableId)
       ->where('branch_id', $branchId)
       ->where('order_status', OrderStatus::PENDING)

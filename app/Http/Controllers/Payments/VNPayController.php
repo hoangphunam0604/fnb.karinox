@@ -68,8 +68,13 @@ class VNPayController extends Controller
           ]
         ]);
       $payStatus = $this->service->pay($order);
-      if ($payStatus)
-        return response()->json(['code' => '00', 'message' => 'Success.', 'data' => ['txnId' => $order->code]]);
+      if ($payStatus) {
+        return response()->json([
+          'code' => '00',
+          'message' => 'Success.',
+          'data' => ['txnId' => $order->code]
+        ]);
+      }
       return response()->json(['code' => '99', 'message' => 'Internal error']);
     } catch (\Exception $e) {
       return response()->json(['code' => '99', 'message' => 'Internal error']);

@@ -18,14 +18,17 @@ class OrderController extends Controller
     $this->orderService = $orderService;
   }
 
-  public function getOrderByTableId(Request $request)
+  public function getOrderByTableId($tableId, Request $request)
   {
-    $tableId = $request->input('table_id');
+    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $request->query('branch_id');
 
-    if (!$tableId) {
+    if (!$branchId)
+      return response()->json(['error' => 'Hãy chọn chi nhánh'], 400);
+
+    if (!$tableId)
       return response()->json(['error' => 'Hãy chọn bàn'], 400);
-    }
-    $orders = $this->orderService->getOrdersByTableId($tableId);
+
+    $orders = $this->orderService->getOrdersByTableId($branchId, $tableId);
     return  OrderResource::collection($orders);
   }
 
@@ -51,46 +54,7 @@ class OrderController extends Controller
     $order = $this->orderService->removeVoucherUsed($order_id);
     return new OrderResource($order);
   }
-
-  public function notifyKitchen($orderId)
-  {
-    [$order, $kitchenItems, $labels] = $this->orderService->notifyKitchen($orderId);
-    return response()->json([
-      'success'  =>  true,
-      "data"  =>  [
-        'order' => new OrderResource($order),
-        'print_data' => [
-          'labels' => OrderItemPrintResource::collection($labels),
-          'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
-            tap(clone $order)->setRelation('items', $kitchenItems->values())
-          ) : null,
-        ]
-      ]
-    ]);
-  }
-  public function provisional($orderId)
-  {
-    $order = $this->orderService->findOrderById($orderId);
-    return new OrderPrintResource($order);
-  }
-  public function getPrintData($orderId)
-  {
-    [$order, $kitchenItems, $labels] = $this->orderService->getPrintData($orderId);
-    return response()->json([
-      'success'  =>  true,
-      'data'  =>  [
-        'order' => new OrderResource($order),
-        'print_data' => [
-          'invoice' => new OrderPrintResource($order),
-          'labels' => OrderItemPrintResource::collection($labels),
-          'kitchen' => $kitchenItems->count() > 0 ? new OrderPrintResource(
-            tap(clone $order)->setRelation('items', $kitchenItems->values())
-          ) : null,
-        ]
-      ]
-    ]);
-    return new OrderResource($order);
-  }
+  
   public function cancel($order_id)
   {
     $result = $this->orderService->cancelOrder($order_id);

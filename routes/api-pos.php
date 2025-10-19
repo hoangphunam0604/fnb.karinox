@@ -6,24 +6,29 @@ use App\Http\POS\Controllers\ProductController;
 use App\Http\POS\Controllers\CustomerController;
 use App\Http\POS\Controllers\TableAndRoomController;
 use App\Http\POS\Controllers\VoucherController;
-use App\Http\POS\Controllers\PrintTemplateController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;
+use App\Http\POS\Controllers\POSPrintController;
 use App\Http\Print\Controllers\PrintController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
   Route::get('/orders', [OrderController::class, 'index']);
-  Route::post('/orders', [OrderController::class, 'getOrderByTableId']);
+  Route::get('/orders/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
   Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
   Route::put('/orders/{id}/remove-customer', [OrderController::class, 'removeCustomer']);
   Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
-  Route::post('/orders/{id}/provisional', [OrderController::class, 'provisional']);
+  Route::post('/orders/{id}/provisional', [POSPrintController::class, 'provisional']);
+  Route::post('/orders/{id}/invoice', [POSPrintController::class, 'invoice']);
+  Route::post('/orders/{id}/kitchen', [POSPrintController::class, 'kitchen']);
+  Route::post('/orders/{id}/labels', [POSPrintController::class, 'labels']);
+  Route::post('/orders/{id}/auto-print', [POSPrintController::class, 'autoPrint']);
+  Route::get('/orders/{id}/print-status', [POSPrintController::class, 'getPrintStatus']);
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
   Route::post('/orders/{id}/split', [OrderController::class, 'split']);
 
@@ -35,19 +40,6 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::post('/customers/{customer}/receive-birthday-gifts', [CustomerController::class, 'receiveBirthdayGift']);
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
-
-  Route::get('print-templates', [PrintTemplateController::class, 'index']);
-
-  // Print routes (cần authentication)
-  Route::prefix('print')->group(function () {
-    Route::post('/provisional', [PrintController::class, 'provisional']);
-    Route::post('/invoice', [PrintController::class, 'invoice']);
-    Route::post('/labels', [PrintController::class, 'labels']);
-    Route::post('/kitchen', [PrintController::class, 'kitchen']);
-    Route::post('/auto', [PrintController::class, 'autoPrint']);
-    Route::get('/order/{order}/status', [PrintController::class, 'getOrderPrintStatus']);
-    Route::get('/preview', [PrintController::class, 'preview']);
-  });
 
   Route::prefix('payments')->group(function () {
     Route::post('/cash/{code}/confirm', [CashController::class, 'confirm']);

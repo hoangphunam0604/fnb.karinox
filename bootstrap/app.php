@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
       'is_karinox_app' => \App\Http\Middleware\IsKarinoxAppMiddleware::class,
       'set_karinox_branch_id' => \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
       'print_client_auth' => \App\Http\Middleware\PrintClientAuth::class,
+      'print_app_auth' => \App\Http\Middleware\PrintAppAuth::class,
       // Spatie permission middleware aliases
       'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
       'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

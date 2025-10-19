@@ -14,8 +14,7 @@ class PrintKitchenRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'order_id' => 'required|integer|exists:orders,id',
-      'device_id' => 'nullable|string|max:255'
+      'order_id' => 'required|integer|exists:orders,id'
     ];
   }
 
@@ -23,9 +22,7 @@ class PrintKitchenRequest extends FormRequest
   {
     return [
       'order_id.required' => 'ID đơn hàng là bắt buộc',
-      'order_id.exists' => 'Đơn hàng không tồn tại',
-      'device_id.string' => 'ID thiết bị phải là chuỗi',
-      'device_id.max' => 'ID thiết bị không được quá 255 ký tự'
+      'order_id.exists' => 'Đơn hàng không tồn tại'
     ];
   }
 }

@@ -1,8 +1,13 @@
-# Documentation
+# 📚 Karinox F&B Documentation
 
 Thư mục này chứa tất cả tài liệu kỹ thuật và hướng dẫn của dự án Karinox F&B.
 
 ## 📁 Cấu trúc tài liệu
+
+### 🖨️ Hệ thống quản lý in
+
+- [`frontend-print-app-guide.md`](frontend-print-app-guide.md) - **[MỚI]** Hướng dẫn phát triển ứng dụng quản lý in
+- [`postman/Karinox_Print_API.postman_collection.json`](postman/Karinox_Print_API.postman_collection.json) - **[MỚI]** Postman collection cho Print Management API
 
 ### 🏢 Quản lý khu vực
 

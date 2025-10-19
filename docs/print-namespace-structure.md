@@ -14,13 +14,17 @@ Tổ chức lại Print System với namespace riêng biệt tương tự Admin,
 ```
 app/Http/Print/
 ├── Controllers/
-│   └── PrintController.php          # Main print controller
+│   ├── PrintController.php          # Main print controller
+│   └── PrintTemplateController.php  # Template management (NEW)
 ├── Requests/
 │   ├── PrintProvisionalRequest.php  # Validation cho in tạm tính
 │   ├── PrintInvoiceRequest.php      # Validation cho in hóa đơn
 │   ├── PrintLabelsRequest.php       # Validation cho in tem phiếu
 │   ├── PrintKitchenRequest.php      # Validation cho in phiếu bếp
-│   └── PrintAutoRequest.php         # Validation cho in tự động
+│   ├── PrintAutoRequest.php         # Validation cho in tự động
+│   ├── TestPrintRequest.php         # Validation cho test print (NEW)
+│   ├── CreatePrintTemplateRequest.php # Validation tạo template (NEW)
+│   └── UpdatePrintTemplateRequest.php # Validation update template (NEW)
 └── Resources/
     ├── PrintJobResource.php         # Response format cho print job
     ├── PrintQueueResource.php       # Response format cho queue
@@ -28,6 +32,9 @@ app/Http/Print/
 
 routes/
 └── api-print.php                    # Print system routes
+
+services/
+└── MockDataService.php              # Generate mock data cho test print (NEW)
 ```
 
 ## 📊 So sánh Before/After
@@ -63,16 +70,36 @@ routes/api-print.php                           ✅
 
 Base: `/api/print/`
 
+**Print Actions:**
+
 ```http
 POST /api/print/provisional    # In tạm tính
 POST /api/print/invoice        # In hóa đơn
 POST /api/print/labels         # In tem phiếu
 POST /api/print/kitchen        # In phiếu bếp
 POST /api/print/auto           # In tự động
+POST /api/print/test           # In thử với mock data (NEW)
+```
 
+**Queue Management:**
+
+```http
 GET  /api/print/queue          # Lấy hàng đợi
 PUT  /api/print/queue/{id}/status  # Cập nhật trạng thái
 DELETE /api/print/queue/{id}   # Xóa job
+```
+
+**Template Management:** (NEW)
+
+```http
+GET  /api/print/templates              # Danh sách templates
+GET  /api/print/templates/{id}         # Chi tiết template
+POST /api/print/templates              # Tạo template
+PUT  /api/print/templates/{id}         # Cập nhật template
+DELETE /api/print/templates/{id}       # Xóa template
+POST /api/print/templates/{id}/duplicate    # Sao chép template
+POST /api/print/templates/{id}/set-default # Set default
+POST /api/print/templates/{id}/preview      # Xem trước
 ```
 
 ### 🖨️ Client Routes (API Key Auth)

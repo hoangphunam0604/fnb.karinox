@@ -19,9 +19,24 @@ class PrintTemplateService
     return PrintTemplate::where('is_active', true)->find($id);
   }
 
-  public static function getUsedTemplateInBranch($branchId)
+  public static function getUsedTemplateInBranch($branchId, $type = null, $isActive = true)
   {
-    return PrintTemplate::whereBranchId($branchId)->whereIsDefault(true)->get();
+    $query = PrintTemplate::where(function ($q) use ($branchId) {
+      $q->where('branch_id', $branchId)
+        ->orWhereNull('branch_id'); // Include global templates
+    });
+
+    if ($type) {
+      $query->where('type', $type);
+    }
+
+    if ($isActive !== null) {
+      $query->where('is_active', $isActive);
+    }
+
+    return $query->orderBy('is_default', 'desc')
+      ->orderBy('name')
+      ->get();
   }
 
   public static function getAll(array $filters = [], int $perPage = 20)

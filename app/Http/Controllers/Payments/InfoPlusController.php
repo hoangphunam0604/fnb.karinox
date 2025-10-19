@@ -63,8 +63,9 @@ class InfoPlusController extends Controller
 
       $payStatus = $this->service->pay($order);
 
-      if ($payStatus)
+      if ($payStatus) {
         return $this->responseData('000000', 'OK.');
+      }
 
       return $this->responseData("000001", "Server ERROR");
     } catch (\Exception $e) {
