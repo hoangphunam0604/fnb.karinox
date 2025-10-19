@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
   ->withRouting(
@@ -14,6 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
     channels: __DIR__ . '/../routes/channels.php',
     commands: __DIR__ . '/../routes/console.php',
     health: '/up',
+    then: function () {
+      // Additional route files
+      Route::middleware('api')
+        ->prefix('api')
+        ->group(base_path('routes/api-print.php'));
+
+      Route::middleware('api')
+        ->prefix('api')
+        ->group(base_path('routes/api-admin.php'));
+    },
   )
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->encryptCookies(except: ['appearance']);
@@ -29,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->alias([
       'is_karinox_app' => \App\Http\Middleware\IsKarinoxAppMiddleware::class,
       'set_karinox_branch_id' => \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
+      'print_client_auth' => \App\Http\Middleware\PrintClientAuth::class,
       // Spatie permission middleware aliases
       'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
       'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

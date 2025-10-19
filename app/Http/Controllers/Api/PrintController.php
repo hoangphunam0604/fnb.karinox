@@ -332,4 +332,58 @@ class PrintController extends Controller
       ], 500);
     }
   }
+
+  /**
+   * Lấy trạng thái thiết bị in
+   * GET /api/pos/print-client/device/status
+   */
+  public function getDeviceStatus(Request $request)
+  {
+    $deviceId = $request->get('authenticated_device_id') ?: $request->get('device_id');
+
+    try {
+      // Thống kê jobs cho device
+      $stats = [
+        'device_id' => $deviceId,
+        'server_time' => now()->toISOString(),
+        'queue_stats' => [
+          'pending' => PrintQueue::pending()->forDevice($deviceId)->count(),
+          'processing' => PrintQueue::where('status', 'processing')->forDevice($deviceId)->count(),
+          'total_today' => PrintQueue::whereDate('created_at', today())->forDevice($deviceId)->count(),
+          'success_today' => PrintQueue::whereDate('created_at', today())
+            ->where('status', 'processed')
+            ->forDevice($deviceId)->count(),
+          'failed_today' => PrintQueue::whereDate('created_at', today())
+            ->where('status', 'failed')
+            ->forDevice($deviceId)->count(),
+        ],
+        'config' => [
+          'poll_interval' => config('print.poll_interval', 5000),
+          'max_jobs_per_request' => config('print.max_jobs_per_request', 10),
+          'retry_max' => config('print.retry_max', 3),
+        ],
+        'last_activity' => PrintQueue::where('device_id', $deviceId)
+          ->latest('updated_at')
+          ->value('updated_at')
+      ];
+
+      Log::info("Device status requested", [
+        'device_id' => $deviceId,
+        'pending_jobs' => $stats['queue_stats']['pending']
+      ]);
+
+      return response()->json([
+        'success' => true,
+        'status' => 'online',
+        'data' => $stats
+      ]);
+    } catch (\Exception $e) {
+      Log::error("Failed to get device status: " . $e->getMessage());
+
+      return response()->json([
+        'success' => false,
+        'message' => 'Failed to get device status: ' . $e->getMessage()
+      ], 500);
+    }
+  }
 }

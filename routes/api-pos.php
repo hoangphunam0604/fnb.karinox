@@ -10,7 +10,7 @@ use App\Http\POS\Controllers\PrintTemplateController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;
-use App\Http\Controllers\Api\PrintController;
+use App\Http\Print\Controllers\PrintController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
@@ -38,17 +38,13 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
 
   Route::get('print-templates', [PrintTemplateController::class, 'index']);
 
-  // Print routes
+  // Print routes (cần authentication)
   Route::prefix('print')->group(function () {
     Route::post('/provisional', [PrintController::class, 'provisional']);
     Route::post('/invoice', [PrintController::class, 'invoice']);
     Route::post('/labels', [PrintController::class, 'labels']);
     Route::post('/kitchen', [PrintController::class, 'kitchen']);
     Route::post('/auto', [PrintController::class, 'autoPrint']);
-    Route::get('/queue', [PrintController::class, 'getQueue']);
-    Route::post('/queue/{job}/processed', [PrintController::class, 'markProcessed']);
-    Route::post('/queue/{job}/failed', [PrintController::class, 'markFailed']);
-    Route::post('/queue/{job}/retry', [PrintController::class, 'retryJob']);
     Route::get('/order/{order}/status', [PrintController::class, 'getOrderPrintStatus']);
     Route::get('/preview', [PrintController::class, 'preview']);
   });
@@ -58,4 +54,13 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
     Route::post('/vnpay/{code}/get-qr-code', [VNPayController::class, 'getQrCode']);
     Route::post('/infoplus/{code}/get-qr-code', [InfoPlusController::class, 'getQrCode']);
   });
+});
+
+// Print Client Routes (không cần user authentication, dùng device authentication)
+Route::middleware(['print_client_auth'])->prefix('pos/print-client')->group(function () {
+  Route::get('/queue', [PrintController::class, 'getQueue']);
+  Route::post('/queue/{job}/processed', [PrintController::class, 'markProcessed']);
+  Route::post('/queue/{job}/failed', [PrintController::class, 'markFailed']);
+  Route::post('/queue/{job}/retry', [PrintController::class, 'retryJob']);
+  Route::get('/device/status', [PrintController::class, 'getDeviceStatus']);
 });
