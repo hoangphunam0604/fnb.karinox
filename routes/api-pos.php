@@ -10,6 +10,7 @@ use App\Http\POS\Controllers\PrintTemplateController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;
+use App\Http\Controllers\Api\PrintController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
@@ -36,6 +37,21 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('/vouchers', [VoucherController::class, 'index']);
 
   Route::get('print-templates', [PrintTemplateController::class, 'index']);
+
+  // Print routes
+  Route::prefix('print')->group(function () {
+    Route::post('/provisional', [PrintController::class, 'provisional']);
+    Route::post('/invoice', [PrintController::class, 'invoice']);
+    Route::post('/labels', [PrintController::class, 'labels']);
+    Route::post('/kitchen', [PrintController::class, 'kitchen']);
+    Route::post('/auto', [PrintController::class, 'autoPrint']);
+    Route::get('/queue', [PrintController::class, 'getQueue']);
+    Route::post('/queue/{job}/processed', [PrintController::class, 'markProcessed']);
+    Route::post('/queue/{job}/failed', [PrintController::class, 'markFailed']);
+    Route::post('/queue/{job}/retry', [PrintController::class, 'retryJob']);
+    Route::get('/order/{order}/status', [PrintController::class, 'getOrderPrintStatus']);
+    Route::get('/preview', [PrintController::class, 'preview']);
+  });
 
   Route::prefix('payments')->group(function () {
     Route::post('/cash/{code}/confirm', [CashController::class, 'confirm']);
