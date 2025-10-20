@@ -56,23 +56,37 @@ class PrintService
   /**
    * In phiếu bếp qua Socket
    */
-  public static function printKitchenViaSocket($order, $kitchenItems, ?string $deviceId = null): string
+  public static function printKitchenViaSocket($order, ?string $deviceId = null): string
   {
+    // Lấy items từ order - kiểm tra có relationship hay không
+    $kitchenItems = collect();
+    try {
+      if ($order->relationLoaded('items')) {
+        $kitchenItems = $order->items;
+      } else {
+        // Lazy load items nếu chưa load
+        $kitchenItems = $order->items()->get();
+      }
+    } catch (\Exception $e) {
+      // Nếu không có items, sử dụng empty collection
+      $kitchenItems = collect();
+    }
+
     return self::printViaSocket([
       'type' => 'kitchen',
       'content' => "Phiếu bếp #{$order->code}",
       'metadata' => [
         'order_id' => $order->id,
         'order_code' => $order->code,
-        'table_name' => $order->table?->name,
+        'table_name' => $order->table?->name ?? 'N/A',
         'items' => $kitchenItems->map(function ($item) {
           return [
-            'name' => $item->product->name,
-            'quantity' => $item->quantity,
-            'note' => $item->note
+            'name' => $item->product->name ?? 'Unknown',
+            'quantity' => $item->quantity ?? 0,
+            'note' => $item->note ?? ''
           ];
         }),
-        'special_instructions' => $order->note
+        'special_instructions' => $order->note ?? ''
       ],
       'priority' => 'high' // Bếp ưu tiên cao
     ], $order->branch_id, $deviceId);
