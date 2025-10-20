@@ -25,6 +25,8 @@ class VNPayQRService  extends BaseGateway
 
   public function __construct()
   {
+    parent::__construct();
+
     $this->endpoint = config('vnpayqr.endpoint');
     $this->appId = config('vnpayqr.app_id');
     $this->merchantName = config('vnpayqr.merchant_name');

@@ -32,6 +32,8 @@ class InfoPlusGateway extends BaseGateway
   private $userAgent = "Karinox FNB";
   public function __construct()
   {
+    parent::__construct();
+
     $this->userId = config('infoplus.userId');
     $this->clientId = config('infoplus.clientId');
     $this->secretKey = config('infoplus.secretKey');

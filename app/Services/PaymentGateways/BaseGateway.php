@@ -3,36 +3,40 @@
 namespace App\Services\PaymentGateways;
 
 use App\Models\Order;
-use Illuminate\Support\Facades\DB;
-use App\Enums\PaymentStatus;
-use App\Enums\OrderStatus;
-use App\Events\OrderCompleted;
-use Carbon\Carbon;
+use App\Services\OrderService;
 
 abstract class BaseGateway
 {
   public function __construct() {}
 
-  abstract  protected function getPaymentMethod(): string;
+  abstract protected function getPaymentMethod(): string;
 
   /**
-   * Thanh toán
-   * 
+   * Xử lý thanh toán
+   * Gateway chỉ validate và delegate việc update order cho OrderService
    */
-  public function pay(Order $order)
+  public function pay(Order $order): bool
   {
-    if ($order->order_status == OrderStatus::COMPLETED)
-      return true;
+    // Validate payment requirements (có thể override trong subclass)
+    if (!$this->validatePayment($order)) {
+      return false;
+    }
 
-    return DB::transaction(function () use ($order) {
-      $order->update([
-        'paid_at' =>  Carbon::now(),
-        'payment_method'  =>  $this->getPaymentMethod(),
-        'payment_status'  =>  PaymentStatus::PAID,
-        'order_status' => OrderStatus::COMPLETED
-      ]);
-      event(new OrderCompleted($order));
-      return true;
-    });
+    // Delegate việc update order và fire events cho OrderService
+    $orderService = app(OrderService::class);
+    return $orderService->completePayment($order, $this->getPaymentMethod());
+  }
+
+  /**
+   * Validate payment requirements (có thể override trong subclass)
+   */
+  protected function validatePayment(Order $order): bool
+  {
+    // Kiểm tra cơ bản
+    if (!$order || $order->total_price <= 0) {
+      return false;
+    }
+
+    return true;
   }
 }

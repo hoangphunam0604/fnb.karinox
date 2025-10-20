@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderUpdated;
+use App\Events\OrderCompleted;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
@@ -39,7 +40,7 @@ class OrderService
   }
   public function getOrdersByTableId(int $branchId, int $tableId)
   {
-   // Lấy tất cả các đơn hàng PENDING
+    // Lấy tất cả các đơn hàng PENDING
     $orders = Order::where('table_id', $tableId)
       ->where('branch_id', $branchId)
       ->where('order_status', OrderStatus::PENDING)
@@ -185,11 +186,11 @@ class OrderService
     return $order;
   }
 
-  public function pay(Order $order, string $payment_method = 'cash')
+  public function completePayment(Order $order, string $payment_method = 'cash')
   {
     if ($order->payment_status === PaymentStatus::PAID) {
       // đã trả tiền rồi, không cần ghi đè
-      return;
+      return true;
     }
 
     return DB::transaction(function () use ($order, $payment_method) {
@@ -205,6 +206,11 @@ class OrderService
       if ($oldStatus !== OrderStatus::COMPLETED) {
         $this->deductStockForCompletedOrder($order);
       }
+
+      // Fire event sau khi order completed thành công
+      event(new OrderCompleted($order));
+
+      return true;
     });
   }
   /**
