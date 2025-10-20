@@ -4,19 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\PrintQueue;
+use App\Models\PrintHistory;
 use App\Services\PrintService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PrintController extends Controller
 {
-  protected $printService;
-
-  public function __construct(PrintService $printService)
-  {
-    $this->printService = $printService;
-  }
+  // Constructor không cần injection vì dùng static methods
 
   /**
    * In phiếu tạm tính
@@ -382,8 +377,173 @@ class PrintController extends Controller
 
       return response()->json([
         'success' => false,
-        'message' => 'Failed to get device status: ' . $e->getMessage()
+        'message' => 'Failed to get device status'
       ], 500);
     }
+  }
+
+  /**
+   * ===============================================
+   * PHƯƠNG PHÁP MỚI: EVENT-DRIVEN VIA SOCKET
+   * ===============================================
+   */
+
+  /**
+   * Frontend xác nhận đã in thành công
+   * POST /api/print/confirm
+   */
+  public function confirmPrinted(Request $request)
+  {
+    $request->validate([
+      'print_id' => 'required|string'
+    ]);
+
+    $success = PrintService::confirmPrinted($request->print_id);
+
+    if ($success) {
+      return response()->json([
+        'success' => true,
+        'message' => 'Print confirmed successfully'
+      ]);
+    }
+
+    return response()->json([
+      'success' => false,
+      'message' => 'Print ID not found'
+    ], 404);
+  }
+
+  /**
+   * Frontend báo lỗi in
+   * POST /api/print/error
+   */
+  public function reportError(Request $request)
+  {
+    $request->validate([
+      'print_id' => 'required|string',
+      'error' => 'required|string'
+    ]);
+
+    $success = PrintService::reportPrintError($request->print_id, $request->error);
+
+    if ($success) {
+      return response()->json([
+        'success' => true,
+        'message' => 'Error reported successfully'
+      ]);
+    }
+
+    return response()->json([
+      'success' => false,
+      'message' => 'Print ID not found'
+    ], 404);
+  }
+
+  /**
+   * Lấy lịch sử in
+   * GET /api/print/history
+   */
+  public function history(Request $request)
+  {
+    $query = \App\Models\PrintHistory::with(['branch'])
+      ->byBranch($request->user()->current_branch_id ?? 1)
+      ->latest('requested_at');
+
+    // Filters
+    if ($request->has('status')) {
+      $query->byStatus($request->status);
+    }
+
+    if ($request->has('device_id')) {
+      $query->byDevice($request->device_id);
+    }
+
+    if ($request->has('today') && $request->today) {
+      $query->today();
+    }
+
+    $histories = $query->paginate(20);
+
+    return response()->json([
+      'success' => true,
+      'data' => $histories
+    ]);
+  }
+
+  /**
+   * Thống kê in
+   * GET /api/print/stats
+   */
+  public function stats(Request $request)
+  {
+    $branchId = $request->user()->current_branch_id ?? 1;
+
+    $stats = [
+      'today' => [
+        'total' => \App\Models\PrintHistory::byBranch($branchId)->today()->count(),
+        'printed' => \App\Models\PrintHistory::byBranch($branchId)->today()->byStatus('printed')->count(),
+        'failed' => \App\Models\PrintHistory::byBranch($branchId)->today()->byStatus('failed')->count(),
+        'pending' => \App\Models\PrintHistory::byBranch($branchId)->today()->byStatus('requested')->count()
+      ],
+      'by_type' => \App\Models\PrintHistory::byBranch($branchId)
+        ->today()
+        ->selectRaw('type, count(*) as count')
+        ->groupBy('type')
+        ->pluck('count', 'type'),
+      'avg_duration' => \App\Models\PrintHistory::byBranch($branchId)
+        ->today()
+        ->byStatus('printed')
+        ->avg('print_duration')
+    ];
+
+    return response()->json([
+      'success' => true,
+      'data' => $stats
+    ]);
+  }
+
+  /**
+   * Manual print request (từ admin)
+   * POST /api/print/manual
+   */
+  public function manualPrint(Request $request)
+  {
+    $request->validate([
+      'type' => 'required|in:invoice,kitchen,label,receipt',
+      'order_id' => 'required|exists:orders,id',
+      'device_id' => 'nullable|string'
+    ]);
+
+    $order = Order::findOrFail($request->order_id);
+    $printId = null;
+
+    switch ($request->type) {
+      case 'invoice':
+        $printId = PrintService::printInvoiceViaSocket($order, $request->device_id);
+        break;
+      case 'kitchen':
+        $kitchenItems = $order->items()->whereHas('product', function ($query) {
+          $query->where('print_kitchen', true);
+        })->get();
+        $printId = PrintService::printKitchenViaSocket($order, $kitchenItems, $request->device_id);
+        break;
+      case 'label':
+        $printId = PrintService::printViaSocket([
+          'type' => 'label',
+          'content' => "Tem #{$order->code}",
+          'metadata' => [
+            'order_id' => $order->id,
+            'order_code' => $order->code,
+            'manual_print' => true
+          ]
+        ], $order->branch_id, $request->device_id);
+        break;
+    }
+
+    return response()->json([
+      'success' => true,
+      'print_id' => $printId,
+      'message' => 'Print job sent successfully'
+    ]);
   }
 }

@@ -5,7 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use App\Events\OrderCompleted;
+use App\Events\InvoiceCreated;
 use App\Listeners\CreatePostPaymentPrintJobs;
+use App\Listeners\CreateInvoiceListener;
+use App\Listeners\DeductStockAfterInvoice;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,10 +25,7 @@ class AppServiceProvider extends ServiceProvider
    */
   public function boot(): void
   {
-    // Đăng ký listener cho OrderCompleted event
-    Event::listen(
-      OrderCompleted::class,
-      CreatePostPaymentPrintJobs::class,
-    );
+    // Laravel auto-discovery sẽ tự động tìm và đăng ký listeners
+    // Không cần đăng ký thủ công nữa
   }
 }

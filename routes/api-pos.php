@@ -9,13 +9,11 @@ use App\Http\POS\Controllers\VoucherController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;
-use App\Http\POS\Controllers\POSPrintController;
-use App\Http\Print\Controllers\PrintController;
+use App\Http\POS\Controllers\PrintController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
-  Route::get('/orders', [OrderController::class, 'index']);
   Route::get('/orders/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
   Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
@@ -23,13 +21,22 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
-  Route::post('/orders/{id}/provisional', [POSPrintController::class, 'provisional']);
-  Route::post('/orders/{id}/invoice', [POSPrintController::class, 'invoice']);
-  Route::post('/orders/{id}/kitchen', [POSPrintController::class, 'kitchen']);
-  Route::post('/orders/{id}/labels', [POSPrintController::class, 'labels']);
-  Route::post('/orders/{id}/auto-print', [POSPrintController::class, 'autoPrint']);
-  Route::get('/orders/{id}/print-status', [POSPrintController::class, 'getPrintStatus']);
+  //In tạm tính
+  Route::post('/orders/{id}/provisional', [PrintController::class, 'provisional']);
+  //In hóa đơn
+  Route::post('/orders/{id}/invoice', [PrintController::class, 'invoice']);
+  //In phiếu bếp
+  Route::post('/orders/{id}/kitchen', [PrintController::class, 'kitchen']);
+  //In nhãn
+  Route::post('/orders/{id}/labels', [PrintController::class, 'labels']);
+  Route::post('/orders/{id}/auto-print', [PrintController::class, 'autoPrint']);
+  Route::get('/orders/{id}/print-status', [PrintController::class, 'getPrintStatus']);
+
+  // Print từ Invoice (đảm bảo data chính xác 100%)
+  Route::post('/invoices/{id}/print', [PrintController::class, 'printFromInvoice']);
+  // Nhập bàn
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
+  // Chia bàn
   Route::post('/orders/{id}/split', [OrderController::class, 'split']);
 
   Route::get('/customers', [CustomerController::class, 'index']);
@@ -48,11 +55,4 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   });
 });
 
-// Print Client Routes (không cần user authentication, dùng device authentication)
-Route::middleware(['print_client_auth'])->prefix('pos/print-client')->group(function () {
-  Route::get('/queue', [PrintController::class, 'getQueue']);
-  Route::post('/queue/{job}/processed', [PrintController::class, 'markProcessed']);
-  Route::post('/queue/{job}/failed', [PrintController::class, 'markFailed']);
-  Route::post('/queue/{job}/retry', [PrintController::class, 'retryJob']);
-  Route::get('/device/status', [PrintController::class, 'getDeviceStatus']);
-});
+// Print Client Routes đã được thay thế bằng WebSocket + PrintService

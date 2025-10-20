@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Models\InventoryTransaction;
-use App\Models\InventoryTransactionItem;
+use App\Models\InventoryTransactionDetail;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -86,7 +86,7 @@ class InventoryService
       foreach ($items as $item) {
         $this->updateStock($branchId, $item['product_id'], $item['quantity'], $transactionType);
 
-        InventoryTransactionItem::create([
+        InventoryTransactionDetail::create([
           'inventory_transaction_id' => $transaction->id,
           'product_id'     => $item['product_id'],
           'quantity'       => $item['quantity']
@@ -218,7 +218,7 @@ class InventoryService
       )->unique();
 
       // Kiểm tra sản phẩm nào đã được trừ kho trước đó khi bếp chế biến
-      $alreadyDeductedProducts = InventoryTransactionItem::whereHas('inventoryTransaction', function ($query) use ($invoice) {
+      $alreadyDeductedProducts = InventoryTransactionDetail::whereHas('inventoryTransaction', function ($query) use ($invoice) {
         $query->where('transaction_type', 'preparation')
           ->where('reference_id', $invoice->order->id);
       })->whereIn('product_id', $productIds)
@@ -240,7 +240,7 @@ class InventoryService
           $productBranch->decrement('stock_quantity', $orderItem->quantity);
         }
 
-        InventoryTransactionItem::create([
+        InventoryTransactionDetail::create([
           'inventory_transaction_id' => $transaction->id,
           'product_id' => $orderItem->product_id,
           'quantity' => -$orderItem->quantity,
@@ -262,7 +262,7 @@ class InventoryService
             $toppingBranch->decrement('stock_quantity', $topping->quantity);
           }
 
-          InventoryTransactionItem::create([
+          InventoryTransactionDetail::create([
             'inventory_transaction_id' => $transaction->id,
             'product_id' => $topping->product_id,
             'quantity' => -$topping->quantity,
@@ -433,7 +433,7 @@ class InventoryService
     $product->stock_last_updated = $currentStock->updated_at ?? null;
 
     // Tính toán thống kê
-    $statisticsQuery = InventoryTransactionItem::whereHas('transaction', function ($q) use ($branchId, $fromDate, $toDate) {
+    $statisticsQuery = InventoryTransactionDetail::whereHas('transaction', function ($q) use ($branchId, $fromDate, $toDate) {
       $q->where('branch_id', $branchId);
 
       if ($fromDate) {

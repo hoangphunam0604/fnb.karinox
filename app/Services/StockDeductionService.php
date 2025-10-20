@@ -6,7 +6,7 @@ use App\Enums\InventoryTransactionType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Models\InventoryTransaction;
-use App\Models\InventoryTransactionItem;
+use App\Models\InventoryTransactionDetail;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\ProductBranch;
@@ -126,7 +126,7 @@ class StockDeductionService
       ->where('branch_id', $branchId)
       ->decrement('stock_quantity', $quantity);
 
-    InventoryTransactionItem::create([
+    InventoryTransactionDetail::create([
       'inventory_transaction_id' => $transactionId,
       'product_id' => $productId,
       'quantity' => -$quantity,
@@ -144,7 +144,7 @@ class StockDeductionService
       $productBranch->increment('stock_quantity', $quantity);
     }
 
-    InventoryTransactionItem::create([
+    InventoryTransactionDetail::create([
       'inventory_transaction_id' => $transactionId,
       'product_id' => $productId,
       'quantity' => $quantity,
@@ -359,5 +359,135 @@ class StockDeductionService
     }
 
     return true;
+  }
+
+  /**
+   * Trừ kho cho Invoice đã được tạo
+   * Method này sẽ được gọi từ DeductStockAfterInvoice listener
+   */
+  public function deductStockForCompletedInvoice(Invoice $invoice): void
+  {
+    $order = $invoice->order;
+
+    if (!$order) {
+      throw new \Exception("Invoice #{$invoice->id} không có order liên kết");
+    }
+
+    // Kiểm tra đã trừ kho chưa
+    if ($order->stock_deducted_at) {
+      Log::info("Stock already deducted for invoice", [
+        'invoice_id' => $invoice->id,
+        'order_id' => $order->id,
+        'deducted_at' => $order->stock_deducted_at
+      ]);
+      return;
+    }
+
+    DB::transaction(function () use ($invoice, $order) {
+      // Tạo inventory transaction cho việc bán hàng
+      $inventoryTransaction = InventoryTransaction::create([
+        'transaction_type' => InventoryTransactionType::SALE,
+        'branch_id' => $order->branch_id,
+        'reference_id' => $invoice->id, // Link với Invoice ID
+        'user_id' => $order->user_id ?? Auth::id(),
+        'note' => "Stock deduction for Invoice #{$invoice->invoice_number} (Order #{$order->id})"
+      ]);
+
+      // Load order items với relationships
+      $order->loadMissing(['items.product', 'items.toppings']);
+
+      foreach ($order->items as $orderItem) {
+        // Trừ kho cho tất cả items (bỏ check status vì đã có invoice)
+        $this->deductStockUsingDependencies($orderItem);
+
+        // Nếu sản phẩm không có dependencies, trừ kho trực tiếp
+        if ($orderItem->product_id && (!$orderItem->product->formulas || $orderItem->product->formulas->isEmpty())) {
+          Log::info("Product has no formulas, deducting stock directly", [
+            'product_id' => $orderItem->product_id,
+            'quantity' => $orderItem->quantity
+          ]);
+
+          // Trừ kho trực tiếp từ product_branches
+          ProductBranch::where('product_id', $orderItem->product_id)
+            ->where('branch_id', $order->branch_id)
+            ->decrement('stock_quantity', $orderItem->quantity);
+        }
+
+        // Tạo inventory transaction detail cho mỗi item
+        $this->createTransactionDetailForOrderItem($inventoryTransaction, $orderItem);
+      }
+
+      // Đánh dấu đã trừ kho
+      $order->update(['stock_deducted_at' => now()]);
+
+      Log::info("Stock deducted successfully for invoice", [
+        'invoice_id' => $invoice->id,
+        'invoice_number' => $invoice->invoice_number,
+        'order_id' => $order->id,
+        'inventory_transaction_id' => $inventoryTransaction->id
+      ]);
+    });
+  }
+
+  /**
+   * Tạo inventory transaction detail cho order item
+   */
+  private function createTransactionDetailForOrderItem(InventoryTransaction $transaction, OrderItem $orderItem): void
+  {
+    Log::info("Creating transaction details for order item", [
+      'transaction_id' => $transaction->id,
+      'order_item_id' => $orderItem->id,
+      'product_id' => $orderItem->product_id,
+      'quantity' => $orderItem->quantity
+    ]);
+
+    // Tạo detail cho sản phẩm chính
+    if ($orderItem->product_id) {
+      try {
+        $detail = $transaction->details()->create([
+          'product_id' => $orderItem->product_id,
+          'quantity' => -$orderItem->quantity, // Số âm cho xuất kho
+          'cost_price' => $orderItem->product->cost_price ?? 0,
+          'sale_price' => $orderItem->unit_price
+        ]);
+
+        Log::info("Created transaction detail for main product", [
+          'detail_id' => $detail->id,
+          'product_id' => $orderItem->product_id,
+          'quantity' => -$orderItem->quantity
+        ]);
+      } catch (\Exception $e) {
+        Log::error("Failed to create transaction detail for main product", [
+          'error' => $e->getMessage(),
+          'product_id' => $orderItem->product_id
+        ]);
+      }
+    } else {
+      Log::warning("Order item has no product_id", ['order_item_id' => $orderItem->id]);
+    }
+
+    // Tạo detail cho toppings
+    foreach ($orderItem->toppings as $topping) {
+      $transaction->details()->create([
+        'product_id' => $topping->product_id,
+        'quantity' => -$topping->quantity,
+        'cost_price' => $topping->product->cost_price ?? 0,
+        'sale_price' => $topping->unit_price
+      ]);
+    }
+
+    // Tạo detail cho nguyên liệu (nếu có công thức)
+    if ($orderItem->product && $orderItem->product->formulas) {
+      foreach ($orderItem->product->formulas as $formula) {
+        $totalQuantityNeeded = $formula->quantity * $orderItem->quantity;
+
+        $transaction->details()->create([
+          'product_id' => $formula->ingredient_id,
+          'quantity' => -$totalQuantityNeeded,
+          'cost_price' => $formula->ingredient->cost_price ?? 0,
+          'sale_price' => null // Nguyên liệu không có giá bán
+        ]);
+      }
+    }
   }
 }

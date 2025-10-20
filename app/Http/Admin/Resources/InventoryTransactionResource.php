@@ -23,7 +23,7 @@ class InventoryTransactionResource extends JsonResource
       'updated_at' => $this->updated_at?->toDateTimeString(),
 
       // Relations
-      'items' => InventoryTransactionItemResource::collection($this->whenLoaded('items')),
+      'items' => InventoryTransactionDetailResource::collection($this->whenLoaded('details')),
     ];
   }
 }

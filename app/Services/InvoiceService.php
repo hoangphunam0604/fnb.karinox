@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Events\InvoiceCreated;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\InvoiceTopping;
 use App\Models\InvoiceItem;
@@ -91,6 +92,10 @@ class InvoiceService extends BaseService
 
       $order->loadMissing(['items', 'items.toppings']);
       $this->copyOrderItemsToInvoice($order, $invoice);
+
+      // Fire InvoiceCreated event after all data is saved
+      event(new InvoiceCreated($invoice));
+
       return $invoice;
     });
   }

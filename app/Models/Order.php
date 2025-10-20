@@ -26,6 +26,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'customer_id',
     'branch_id',
     'table_id',
+    'invoice_id',
 
     'subtotal_price',
     'discount_amount',
@@ -137,6 +138,11 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault([]);
+  }
+
+  public function invoice()
+  {
+    return $this->belongsTo(Invoice::class);
   }
   /**
    * Kiểm tra đơn hàng đã hoàn tất chưa

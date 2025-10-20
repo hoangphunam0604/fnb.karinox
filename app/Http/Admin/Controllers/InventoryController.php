@@ -9,7 +9,7 @@ use App\Http\Admin\Resources\ProductStockCardResource;
 use App\Http\Admin\Resources\ProductStockSummaryResource;
 use App\Services\InventoryService;
 use App\Models\InventoryTransaction;
-use App\Models\InventoryTransactionItem;
+use App\Models\InventoryTransactionDetail;
 use App\Models\ProductBranch;
 use App\Models\Product;
 use Illuminate\Http\Request;

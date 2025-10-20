@@ -60,9 +60,17 @@ class InventoryTransaction extends Model
   /**
    * Định nghĩa quan hệ với các item trong giao dịch.
    */
+  public function details()
+  {
+    return $this->hasMany(InventoryTransactionDetail::class, 'inventory_transaction_id');
+  }
+
+  /**
+   * Alias for backward compatibility
+   */
   public function items()
   {
-    return $this->hasMany(InventoryTransactionItem::class, 'inventory_transaction_id');
+    return $this->details();
   }
 
   /**

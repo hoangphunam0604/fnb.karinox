@@ -30,6 +30,9 @@ return new class extends Migration
       $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Chi nhánh
       $table->foreignId('table_id')->nullable()->constrained('tables_and_rooms')->nullOnDelete(); // Bàn/phòng
 
+      // Invoice relationship (không tạo FK constraint vì invoices table tạo sau)
+      $table->unsignedBigInteger('invoice_id')->nullable(); // Hóa đơn được tạo từ order này
+
       $table->decimal('subtotal_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng trước khi giảm giá (chỉ tính sản phẩm và topping, chưa áp dụng voucher hay điểm thưởng).
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm từ voucher.
       $table->integer('reward_points_used')->default(0); // Số điểm thưởng khách muốn dùng      

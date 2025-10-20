@@ -11,7 +11,7 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('inventory_transaction_items', function (Blueprint $table) {
+    Schema::create('inventory_transaction_details', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
       $table->foreignId('inventory_transaction_id')->constrained()->cascadeOnDelete(); // Giao dịch tồn kho
@@ -27,6 +27,6 @@ return new class extends Migration
    */
   public function down(): void
   {
-    Schema::dropIfExists('inventory_transaction_items');
+    Schema::dropIfExists('inventory_transaction_details');
   }
 };

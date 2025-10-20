@@ -9,7 +9,7 @@ use App\Models\Category;
 use App\Models\Branch;
 use App\Models\ProductBranch;
 use App\Models\InventoryTransaction;
-use App\Models\InventoryTransactionItem;
+use App\Models\InventoryTransactionDetail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -101,13 +101,12 @@ class ProductStockCardTest extends TestCase
       'status' => 'completed'
     ]);
 
-    InventoryTransactionItem::create([
+    InventoryTransactionDetail::create([
       'inventory_transaction_id' => $transaction->id,
       'product_id' => $this->product->id,
       'quantity' => $quantity,
-      'unit_cost' => $this->product->cost_price,
-      'quantity_before' => 100,
-      'quantity_after' => 100 + ($type === 'import' ? $quantity : -$quantity)
+      'cost_price' => $this->product->cost_price,
+      'sale_price' => null
     ]);
 
     return $transaction;

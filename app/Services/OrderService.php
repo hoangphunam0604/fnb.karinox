@@ -189,10 +189,8 @@ class OrderService
       $order->order_status = OrderStatus::COMPLETED;
       $order->save();
 
-      // Trừ kho khi đơn hàng chuyển sang COMPLETED
-      if ($oldStatus !== OrderStatus::COMPLETED) {
-        $this->deductStockForCompletedOrder($order);
-      }
+      // Note: Stock deduction is now handled by DeductStockAfterInvoice listener
+      // when InvoiceCreated event is fired
 
       // Fire event sau khi order completed thành công
       event(new OrderCompleted($order));
@@ -211,10 +209,8 @@ class OrderService
 
       $order->update(['order_status' => $status]);
 
-      // Trừ kho khi đơn hàng chuyển sang COMPLETED
-      if ($status === OrderStatus::COMPLETED && $oldStatus !== OrderStatus::COMPLETED) {
-        $this->deductStockForCompletedOrder($order);
-      }
+      // Note: Stock deduction is now handled by DeductStockAfterInvoice listener
+      // when InvoiceCreated event is fired for better data consistency
 
       return $order;
     });
