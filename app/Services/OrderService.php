@@ -156,15 +156,6 @@ class OrderService
 
 
   /**
-   * Xác nhận đơn hàng
-   */
-  public function confirmOrder($orderId): Order
-  {
-    return $this->updateOrderStatus($orderId, OrderStatus::CONFIRMED);
-  }
-
-
-  /**
    * Hủy đơn hàng
    */
   public function cancelOrder($orderId): Order
@@ -173,17 +164,13 @@ class OrderService
     if ($order->order_status == OrderStatus::COMPLETED)
       throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
 
-    $this->pointService->restoreTransactionRewardPoints($order);
-    $this->voucherService->restoreVoucherUsage($order);
-    return $this->updateOrderStatus($orderId, OrderStatus::CANCELED);
-  }
-
-  public function prevPay(string $code, $payment_method)
-  {
-
-    $order = Order::where('code', $code)->firstOrFail();
-    $order->payment_method = $payment_method;
-    return $order;
+    return DB::transaction(function () use ($order) {
+      $this->pointService->restoreTransactionRewardPoints($order);
+      $this->voucherService->restoreVoucherUsage($order);
+      $order->order_status = OrderStatus::CANCELED;
+      $order->save();
+      return true;
+    });
   }
 
   public function completePayment(Order $order, string $payment_method = 'cash')
@@ -213,24 +200,6 @@ class OrderService
       return true;
     });
   }
-  /**
-   * Hoàn tất đơn hàng
-   */
-  /* public function markAsCompleted($orderId): Order
-  {
-    return DB::transaction(function () use ($orderId) {
-      $order = Order::findOrFail($orderId);
-
-      if ($order->order_status !== OrderStatus::COMPLETED) {
-        $order->markAsCompleted();
-      }
-      
-
-      $order->refresh();
-      return $order;
-    });
-  } */
-
   /**
    * Cập nhật trạng thái đơn hàng
    */
