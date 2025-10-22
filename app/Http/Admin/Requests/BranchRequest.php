@@ -14,10 +14,21 @@ class BranchRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'name'         => 'required|string|max:255',
-      'email'        => 'nullable|email|max:255',
-      'phone_number' => 'nullable|string|max:20',
-      'address'      => 'nullable|string|max:500',
+      'name'                  => 'required|string|max:255',
+      'email'                 => 'nullable|email|max:255',
+      'phone_number'          => 'nullable|string|max:20',
+      'address'               => 'nullable|string|max:500',
+      'print_connection_code' => 'nullable|string|min:3|max:50|alpha_num|unique:branches,print_connection_code,' . $this->route('branch'),
+    ];
+  }
+
+  public function messages(): array
+  {
+    return [
+      'print_connection_code.min'       => 'Mã kết nối phải có ít nhất 3 ký tự.',
+      'print_connection_code.max'       => 'Mã kết nối không được vượt quá 50 ký tự.',
+      'print_connection_code.alpha_num' => 'Mã kết nối chỉ được chứa chữ cái và số.',
+      'print_connection_code.unique'    => 'Mã kết nối này đã được sử dụng.',
     ];
   }
 }

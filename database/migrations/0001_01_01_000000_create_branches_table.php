@@ -20,7 +20,7 @@ return new class extends Migration
       $table->string('address')->nullable();
       $table->unsignedSmallInteger('sort_order')->default(0);
       $table->enum('status', ['active', 'inactive'])->default('active');
-      $table->string('print_connection_code', 12)->unique()->nullable()->comment('Mã kết nối cho ứng dụng quản lý máy in');
+      $table->string('print_connection_code', 50)->unique()->nullable()->comment('Mã kết nối cho ứng dụng quản lý máy in');
     });
   }
 
