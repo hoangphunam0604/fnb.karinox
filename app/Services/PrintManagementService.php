@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Branch;
 use App\Models\PrintHistory;
+use App\Models\PrintTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 

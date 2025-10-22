@@ -1,4 +1,4 @@
-# Hướng Dẫn Phát Triển Ứng Dụng Quản Lý Máy In
+w# Hướng Dẫn Phát Triển Ứng Dụng Quản Lý Máy In
 
 ## 🎯 **Mục Tiêu**
 
@@ -111,6 +111,105 @@ GET /history?branch_id=2&limit=50&status=printed&from_date=2024-10-01
 GET /stats?branch_id=2&period=today
 ```
 
+### 🧾 **Template Management API**
+
+Ứng dụng quản lý máy in cần lấy danh sách các mẫu in có sẵn để có thể chọn mẫu phù hợp cho từng trường hợp in.
+
+#### 1. Lấy danh sách templates:
+
+```http
+GET /api/print/templates?connection_code=KARINOX00001&type=invoice
+```
+
+**Response:**
+
+```json
+{
+    "success": true,
+    "data": {
+        "branch": {
+            "id": 2,
+            "name": "Karinox Coffee",
+            "connection_code": "KARINOX00001"
+        },
+        "templates": [
+            {
+                "id": 1,
+                "name": "Hóa đơn A4 tiêu chuẩn",
+                "type": "invoice",
+                "is_default": true,
+                "description": "Template hóa đơn in A4",
+                "created_at": "2024-10-22 10:30:00"
+            }
+        ]
+    }
+}
+```
+
+#### 2. Lấy chi tiết template:
+
+```http
+GET /api/print/templates/1?connection_code=KARINOX00001
+```
+
+**Response:**
+
+```json
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "Hóa đơn A4 tiêu chuẩn",
+        "type": "invoice",
+        "description": "Template hóa đơn in A4",
+        "content": "=== {{branch_name}} ===\nHóa đơn: {{order_code}}\n...",
+        "is_default": true,
+        "settings": {},
+        "created_at": "2024-10-22 10:30:00",
+        "updated_at": "2024-10-22 10:30:00"
+    }
+}
+```
+
+#### 3. Lấy template mặc định theo loại:
+
+```http
+GET /api/print/templates/default?connection_code=KARINOX00001&type=invoice
+```
+
+#### 4. Lấy các loại template có sẵn:
+
+```http
+GET /api/print/templates/types?connection_code=KARINOX00001
+```
+
+**Response:**
+
+```json
+{
+    "success": true,
+    "data": {
+        "branch": {
+            "id": 2,
+            "name": "Karinox Coffee",
+            "connection_code": "KARINOX00001"
+        },
+        "types": [
+            {
+                "type": "invoice",
+                "label": "Hóa đơn thanh toán"
+            },
+            {
+                "type": "kitchen",
+                "label": "Phiếu bếp"
+            }
+        ]
+    }
+}
+```
+
+````
+
 ---
 
 ## 🔌 **WebSocket Integration**
@@ -133,7 +232,7 @@ ws.onopen = function () {
     };
     ws.send(JSON.stringify(subscribeMessage));
 };
-```
+````
 
 ### **Nhận Print Events**
 

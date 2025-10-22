@@ -4,11 +4,8 @@ namespace App\Http\Print\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Print\Requests\ConnectRequest;
-use App\Http\Print\Requests\ConfirmPrintRequest;
 use App\Http\Print\Requests\ReportErrorRequest;
-use App\Http\Print\Requests\PrintHistoryRequest;
 use App\Http\Print\Requests\PrintStatsRequest;
-use App\Http\Print\Responses\PrintApiResponse;
 use App\Services\PrintManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -25,20 +22,17 @@ class PrintController extends Controller
    */
   public function connect(ConnectRequest $request): JsonResponse
   {
-    try {
-      $data = $this->printManagementService->connectToBranch(
-        $request->validated('connection_code')
-      );
+    $data = $this->printManagementService->connectToBranch(
+      $request->validated('connection_code')
+    );
 
-      return PrintApiResponse::success('Kết nối thành công', $data);
-    } catch (\Exception $e) {
-      Log::error('Print connection failed', [
-        'connection_code' => $request->validated('connection_code'),
-        'error' => $e->getMessage()
-      ]);
-
-      return PrintApiResponse::error('Lỗi kết nối: ' . $e->getMessage(), 404);
-    }
+    return response()->json(
+      [
+        'success' => true,
+        'message' => 'Kết nối thành công',
+        'data' => $data
+      ]
+    );
   }
 
   /**
@@ -47,22 +41,18 @@ class PrintController extends Controller
    */
   public function confirm(ConfirmPrintRequest $request): JsonResponse
   {
-    try {
-      $data = $this->printManagementService->confirmPrint(
-        $request->validated('print_id'),
-        $request->validated('device_id'),
-        $request->validated('status', 'printed')
-      );
-
-      return PrintApiResponse::success('Đã xác nhận print job', $data);
-    } catch (\Exception $e) {
-      Log::error('Confirm print failed', [
-        'print_id' => $request->validated('print_id'),
-        'error' => $e->getMessage()
-      ]);
-
-      return PrintApiResponse::error('Lỗi xác nhận print: ' . $e->getMessage(), 404);
-    }
+    $data = $this->printManagementService->confirmPrint(
+      $request->validated('print_id'),
+      $request->validated('device_id'),
+      $request->validated('status', 'printed')
+    );
+    return response()->json(
+      [
+        'success' => true,
+        'message' => 'Xác nhận in thành công',
+        'data' => $data
+      ]
+    );
   }
 
   /**
@@ -71,24 +61,20 @@ class PrintController extends Controller
    */
   public function reportError(ReportErrorRequest $request): JsonResponse
   {
-    try {
-      $this->printManagementService->reportPrintError(
-        $request->validated('print_id'),
-        $request->validated('device_id'),
-        $request->validated('error_type'),
-        $request->validated('error_message'),
-        $request->validated('error_details')
-      );
+    $this->printManagementService->reportPrintError(
+      $request->validated('print_id'),
+      $request->validated('device_id'),
+      $request->validated('error_type'),
+      $request->validated('error_message'),
+      $request->validated('error_details')
+    );
 
-      return PrintApiResponse::success('Đã báo lỗi print job');
-    } catch (\Exception $e) {
-      Log::error('Report print error failed', [
-        'print_id' => $request->validated('print_id'),
-        'error' => $e->getMessage()
-      ]);
-
-      return PrintApiResponse::error('Lỗi báo cáo lỗi: ' . $e->getMessage(), 404);
-    }
+    return response()->json(
+      [
+        'success' => true,
+        'message' => 'Đã báo lỗi print job'
+      ]
+    );
   }
 
   /**

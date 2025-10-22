@@ -1,6 +1,7 @@
 ﻿<?php
 
 use App\Http\Print\Controllers\PrintController;
+use App\Http\Controllers\Print\TemplateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,4 +30,7 @@ Route::prefix('print')->group(function () {
 
   // Thống kê in
   Route::get('stats', [PrintController::class, 'stats']);
+
+  // Template management for print app
+  Route::get('templates', [TemplateController::class, 'index']);
 });
