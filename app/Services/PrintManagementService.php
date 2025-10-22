@@ -172,9 +172,23 @@ class PrintManagementService
    */
   private function getWebSocketUrl(): ?string
   {
-    $appKey = config('broadcasting.connections.reverb.app_key');
-    $port = config('broadcasting.connections.reverb.port', 6001);
+    $appKey = config('broadcasting.connections.reverb.key');
+    $host = config('broadcasting.connections.reverb.options.host', config('app.url'));
+    $port = config('broadcasting.connections.reverb.options.port', 6001);
+    $scheme = config('broadcasting.connections.reverb.options.scheme', 'ws');
 
-    return $appKey ? "ws://localhost:{$port}/app/{$appKey}" : null;
+    if (!$appKey) {
+      return null;
+    }
+
+    // Xử lý host URL
+    if (str_starts_with($host, 'http://') || str_starts_with($host, 'https://')) {
+      $host = parse_url($host, PHP_URL_HOST);
+    }
+
+    // Determine WebSocket protocol
+    $protocol = $scheme === 'https' ? 'wss' : 'ws';
+
+    return "{$protocol}://{$host}:{$port}/app/{$appKey}";
   }
 }
