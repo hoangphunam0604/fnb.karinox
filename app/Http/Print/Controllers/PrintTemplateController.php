@@ -312,14 +312,14 @@ class PrintTemplateController extends Controller
    */
   private function isTemplateInUse(PrintTemplate $template): bool
   {
-    // Kiểm tra trong print_queues
-    $inQueue = \App\Models\PrintQueue::whereJsonContains('metadata->template_id', $template->id)
+    // Kiểm tra trong print_histories (thay thế print_queues đã bị xóa)
+    $inHistory = \App\Models\PrintHistory::whereJsonContains('metadata->template_id', $template->id)
       ->exists();
 
     // Kiểm tra nếu là default template
     $isDefault = $template->is_default;
 
-    return $inQueue || $isDefault;
+    return $inHistory || $isDefault;
   }
 
   /**

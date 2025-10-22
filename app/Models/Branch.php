@@ -17,6 +17,7 @@ class Branch extends Model
     'address',
     'status',
     'sort_order',
+    'print_connection_code',
   ];
 
   protected $casts = [
@@ -34,5 +35,15 @@ class Branch extends Model
   {
     return $this->belongsToMany(User::class, 'branch_user')
       ->using(BranchUser::class);
+  }
+
+  /**
+   * Tìm chi nhánh theo print connection code
+   */
+  public static function findByConnectionCode(string $code): ?self
+  {
+    return static::where('print_connection_code', $code)
+      ->where('status', CommonStatus::ACTIVE)
+      ->first();
   }
 }

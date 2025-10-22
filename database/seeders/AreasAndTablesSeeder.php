@@ -20,25 +20,28 @@ class AreasAndTablesSeeder extends Seeder
     // Kích hoạt lại kiểm tra khóa ngoại
     DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
-    // Tạo dữ liệu cho các chi nhánh
+    // Tạo dữ liệu cho các chi nhánh với mã kết nối
     $branches = [
       [
         'name' => 'Gà Rán Pippy Kids',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'pippykids@domain.com',
-        'phone_number' => '0123456789'
+        'phone_number' => '0123456789',
+        'print_connection_code' => 'PIPPYKIDS'
       ],
       [
         'name' => 'Karinox Coffee',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'karinox@domain.com',
-        'phone_number' => '0987654321'
+        'phone_number' => '0987654321',
+        'print_connection_code' => 'KARINOX'
       ],
       [
         'name' => 'Khu Vui Chơi Pippy Kids',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'playground@domain.com',
-        'phone_number' => '0123987654'
+        'phone_number' => '0123987654',
+        'print_connection_code' => 'PLAYGROUND'
       ],
     ];
 

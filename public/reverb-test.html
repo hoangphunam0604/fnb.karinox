@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Reverb WebSocket Test Client</title>
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+  </head>
+
+  <body>
+    <h1>🖨️ Print Service WebSocket Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="events"></div>
+
+    <script>
+      // Kết nối WebSocket với Reverb server
+      const pusher = new Pusher('ed5zsi5ebpdmawcqbwva', {
+        wsHost: 'karinox-fnb.nam',
+        wsPort: 6001,
+        forceTLS: false,
+        enabledTransports: ['ws', 'wss'],
+        cluster: '', // Để trống cho local server
+      });
+
+      // Status connection
+      pusher.connection.bind('connected', function () {
+        document.getElementById('status').innerHTML = '✅ Connected to Reverb server';
+        console.log('✅ WebSocket connected');
+      });
+
+      pusher.connection.bind('disconnected', function () {
+        document.getElementById('status').innerHTML = '❌ Disconnected from server';
+        console.log('❌ WebSocket disconnected');
+      });
+
+      pusher.connection.bind('error', function (err) {
+        document.getElementById('status').innerHTML = '❌ Connection error: ' + JSON.stringify(err);
+        console.error('WebSocket error:', err);
+      });
+
+      // Subscribe to print channel cho branch 1
+      const branchChannel = pusher.subscribe('print-branch-1');
+      const deviceChannel = pusher.subscribe('print-device-test-device');
+
+      branchChannel.bind('pusher:subscription_succeeded', function () {
+        console.log('✅ Subscribed to print-branch-1 channel');
+        document.getElementById('events').innerHTML += '<p>✅ Subscribed to <strong>print-branch-1</strong></p>';
+      });
+
+      deviceChannel.bind('pusher:subscription_succeeded', function () {
+        console.log('✅ Subscribed to print-device-test-device channel');
+        document.getElementById('events').innerHTML += '<p>✅ Subscribed to <strong>print-device-test-device</strong></p>';
+      });
+
+      branchChannel.bind('pusher:subscription_error', function (err) {
+        console.error('❌ Branch subscription error:', err);
+        document.getElementById('events').innerHTML += '<p>❌ Branch subscription error: ' + JSON.stringify(err) + '</p>';
+      });
+
+      deviceChannel.bind('pusher:subscription_error', function (err) {
+        console.error('❌ Device subscription error:', err);
+        document.getElementById('events').innerHTML += '<p>❌ Device subscription error: ' + JSON.stringify(err) + '</p>';
+      });
+
+      // Listen for PrintRequested events trên cả 2 channels
+      function handlePrintEvent(data, channelName) {
+        console.log(`🖨️ Print event received on ${channelName}:`, data);
+
+        const eventDiv = document.createElement('div');
+        eventDiv.style = 'border: 1px solid #ccc; margin: 10px 0; padding: 10px; background: #f0f8ff;';
+        eventDiv.innerHTML = `
+                <h3>🖨️ Print Job Received (${channelName})</h3>
+                <p><strong>Print ID:</strong> ${data.printId}</p>
+                <p><strong>Type:</strong> ${data.printData?.type}</p>
+                <p><strong>Branch:</strong> ${data.branchId}</p>
+                <p><strong>Device:</strong> ${data.deviceId || 'N/A'}</p>
+                <p><strong>Priority:</strong> ${data.printData?.priority || 'normal'}</p>
+                <p><strong>Content:</strong></p>
+                <pre>${data.printData?.content || 'N/A'}</pre>
+                <p><strong>Metadata:</strong></p>
+                <pre>${JSON.stringify(data.printData?.metadata, null, 2)}</pre>
+            `;
+
+        document.getElementById('events').appendChild(eventDiv);
+      }
+
+      branchChannel.bind('PrintRequested', function (data) {
+        handlePrintEvent(data, 'print-branch-1');
+      });
+
+      deviceChannel.bind('PrintRequested', function (data) {
+        handlePrintEvent(data, 'print-device-test-device');
+      });
+
+      // Listen for simple TestEvent
+      branchChannel.bind('TestEvent', function (data) {
+        console.log('🔥 TestEvent received:', data);
+        const eventDiv = document.createElement('div');
+        eventDiv.style = 'border: 2px solid #ff6b6b; margin: 10px 0; padding: 10px; background: #fff5f5;';
+        eventDiv.innerHTML = `
+          <h3>🔥 TEST EVENT RECEIVED!</h3>
+          <p><strong>Message:</strong> ${data.message}</p>
+          <p><strong>Timestamp:</strong> ${data.timestamp}</p>
+          <p><strong>Data:</strong></p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+        document.getElementById('events').appendChild(eventDiv);
+      });
+
+      // Test connection info
+      console.log('Connecting to:', {
+        key: 'ed5zsi5ebpdmawcqbwva',
+        host: 'karinox-fnb.nam',
+        port: 6001,
+        channel: 'print-branch-1'
+      });
+    </script>
+  </body>
+
+</html>

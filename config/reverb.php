@@ -26,8 +26,8 @@ return [
     |
     */
   'logging' => [
-    'enabled' => false,
-    'level' => 'info', // hoặc 'debug'
+    'enabled' => true,
+    'level' => 'info', // Bật debug để xem chi tiết events
   ],
 
   'servers' => [

@@ -12,6 +12,6 @@ Route::get('/', function () {
 Route::post('/payments/vnpayqr/callback', [VNPayController::class, 'callback']);
 Route::post('/payments/infoplus/callback', [InfoPlusController::class, 'callback']);
 
-require __DIR__ . '/web-auth.php';
+// require __DIR__ . '/web-auth.php'; // Tạm thời comment để tránh lỗi AuthenticatedSessionController
 require __DIR__ . '/web-settings.php';
 require __DIR__ . '/web-admin.php';

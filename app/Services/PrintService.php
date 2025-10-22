@@ -164,4 +164,44 @@ class PrintService
       ]
     ], $invoice->order->branch_id, $deviceId);
   }
+
+  /**
+   * In phiếu tạm tính qua Socket
+   */
+  public static function printProvisionalViaSocket($order, ?string $deviceId = null): string
+  {
+    return self::printViaSocket([
+      'type' => 'other',
+      'content' => "Tạm tính #{$order->code}",
+      'metadata' => [
+        'order_id' => $order->id,
+        'order_code' => $order->code,
+        'table_name' => $order->table?->name ?? 'N/A',
+        'total_amount' => $order->total_amount ?? 0,
+        'print_type' => 'provisional'
+      ]
+    ], $order->branch_id, $deviceId);
+  }
+
+  /**
+   * In tem phiếu qua Socket
+   */
+  public static function printLabelsViaSocket($order, ?string $deviceId = null): string
+  {
+    return self::printViaSocket([
+      'type' => 'label',
+      'content' => "Tem #{$order->code}",
+      'metadata' => [
+        'order_id' => $order->id,
+        'order_code' => $order->code,
+        'table_name' => $order->table?->name ?? 'N/A',
+        'items' => $order->items->map(function ($item) {
+          return [
+            'name' => $item->product->name ?? 'Unknown',
+            'quantity' => $item->quantity ?? 0
+          ];
+        })
+      ]
+    ], $order->branch_id, $deviceId);
+  }
 }

@@ -31,7 +31,8 @@ class CashController extends Controller
       return response()->json([
         'status' => true,
         'message' => 'Thanh toán thành công',
-        'data' => [
+        'order' => [
+          'order_id' => $order->id,
           'order_code' => $order->code,
           'payment_method' => 'cash'
         ]

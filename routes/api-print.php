@@ -1,91 +1,32 @@
-<?php
+﻿<?php
 
 use App\Http\Print\Controllers\PrintController;
-use App\Http\Print\Controllers\PrintTemplateController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Print API Routes
+| Print Service API Routes
 |--------------------------------------------------------------------------
 |
-| Các routes cho hệ thống in ấn với namespace riêng biệt
-| Base URL: /api/print/
+| Routes cho ứng dụng quản lý máy in tại chi nhánh
+| Không cần authentication vì đã có bảo mật qua connection_code
 |
 */
 
-/*
-|--------------------------------------------------------------------------
-| Print Management App Routes (No Login Required)
-|--------------------------------------------------------------------------
-|
-| Routes cho ứng dụng quản lý in độc lập
-| Chỉ cần X-Branch-ID header để xác định chi nhánh
-|
-*/
+// API cho ứng dụng quản lý máy in (không cần auth)
+Route::prefix('print')->group(function () {
+  // Kết nối ban đầu
+  Route::post('connect', [PrintController::class, 'connect']);
 
-Route::middleware(['print_app_auth'])->prefix('print')->group(function () {
+  // Xác nhận đã in thành công  
+  Route::post('confirm', [PrintController::class, 'confirm']);
 
-  // Print Actions (if needed from management app)
-  Route::post('/provisional', [PrintController::class, 'provisional']);
-  Route::post('/invoice', [PrintController::class, 'invoice']);
-  Route::post('/labels', [PrintController::class, 'labels']);
-  Route::post('/kitchen', [PrintController::class, 'kitchen']);
-  Route::post('/auto', [PrintController::class, 'autoPrint']);
+  // Báo lỗi in
+  Route::post('error', [PrintController::class, 'reportError']);
 
-  // Test Print
-  Route::post('/test', [PrintController::class, 'testPrint']);
+  // Lịch sử in
+  Route::get('history', [PrintController::class, 'history']);
 
-  // Queue Management
-  Route::get('/queue', [PrintController::class, 'getQueue']);
-  Route::put('/queue/{id}/status', [PrintController::class, 'updateStatus']);
-  Route::delete('/queue/{id}', [PrintController::class, 'deleteJob']);
-
-  // Template Management
-  Route::get('/templates', [PrintTemplateController::class, 'index']);
-  Route::get('/templates/{id}', [PrintTemplateController::class, 'show']);
-  Route::post('/templates', [PrintTemplateController::class, 'store']);
-  Route::put('/templates/{id}', [PrintTemplateController::class, 'update']);
-  Route::delete('/templates/{id}', [PrintTemplateController::class, 'destroy']);
-  Route::post('/templates/{id}/duplicate', [PrintTemplateController::class, 'duplicate']);
-  Route::post('/templates/{id}/set-default', [PrintTemplateController::class, 'setDefault']);
-  Route::post('/templates/{id}/preview', [PrintTemplateController::class, 'preview']);
-
-  // Branch Selection & Settings
-  Route::get('/branches', [PrintController::class, 'getBranches']);
-  Route::post('/branch/select', [PrintController::class, 'selectBranch']);
-  Route::get('/settings', [PrintController::class, 'getSettings']);
-  Route::post('/settings', [PrintController::class, 'updateSettings']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Print Client API Routes (No Authentication Required)
-|--------------------------------------------------------------------------
-|
-| Các routes cho print clients với authentication riêng biệt
-| Sử dụng API keys thay vì JWT tokens
-|
-*/
-
-Route::middleware(['print_client_auth'])->prefix('print/client')->group(function () {
-
-  // Print Queue for Clients
-  Route::get('/queue', [PrintController::class, 'getClientQueue']);
-  Route::put('/queue/{id}/status', [PrintController::class, 'updateClientStatus']);
-
-  // Test Print for Clients (no auth required)
-  Route::post('/test', [PrintController::class, 'testPrint']);
-
-  // Templates for Clients (read-only)
-  Route::get('/templates', [PrintTemplateController::class, 'index']);
-  Route::get('/templates/{id}', [PrintTemplateController::class, 'show']);
-
-  // Device Registration
-  Route::post('/register', [PrintController::class, 'registerDevice']);
-  Route::put('/heartbeat', [PrintController::class, 'deviceHeartbeat']);
-
-  // Print History
-  Route::get('/history', [PrintController::class, 'getHistory']);
-  Route::get('/history/daily', [PrintController::class, 'getDailyHistory']);
+  // Thống kê in
+  Route::get('stats', [PrintController::class, 'stats']);
 });

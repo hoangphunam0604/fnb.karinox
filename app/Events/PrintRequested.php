@@ -41,12 +41,12 @@ class PrintRequested implements ShouldBroadcast
     // Broadcast đến tất cả devices của branch hoặc device cụ thể
     if ($this->deviceId) {
       return [
-        new PrivateChannel("print.device.{$this->deviceId}")
+        new Channel("print-device-{$this->deviceId}")
       ];
     }
 
     return [
-      new PrivateChannel("print.branch.{$this->branchId}")
+      new Channel("print-branch-{$this->branchId}")
     ];
   }
 
