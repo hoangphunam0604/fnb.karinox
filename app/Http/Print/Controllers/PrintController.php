@@ -8,6 +8,7 @@ use App\Http\Print\Requests\ReportErrorRequest;
 use App\Http\Print\Requests\PrintStatsRequest;
 use App\Services\PrintManagementService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PrintController extends Controller
@@ -39,11 +40,10 @@ class PrintController extends Controller
    * Xác nhận đã in thành công
    * POST /api/print/confirm
    */
-  public function confirm(ConfirmPrintRequest $request): JsonResponse
+  public function confirm(Request $request): JsonResponse
   {
     $data = $this->printManagementService->confirmPrint(
       $request->validated('print_id'),
-      $request->validated('device_id'),
       $request->validated('status', 'printed')
     );
     return response()->json(
@@ -62,11 +62,7 @@ class PrintController extends Controller
   public function reportError(ReportErrorRequest $request): JsonResponse
   {
     $this->printManagementService->reportPrintError(
-      $request->validated('print_id'),
-      $request->validated('device_id'),
-      $request->validated('error_type'),
-      $request->validated('error_message'),
-      $request->validated('error_details')
+      $request->validated('print_id')
     );
 
     return response()->json(
@@ -84,7 +80,7 @@ class PrintController extends Controller
   public function history(PrintHistoryRequest $request): JsonResponse
   {
     try {
-      $filters = $request->only(['device_id', 'branch_id', 'status', 'from_date', 'to_date']);
+      $filters = $request->only(['branch_id', 'status', 'type', 'from_date', 'to_date']);
       $perPage = $request->validated('per_page', 20);
 
       $history = $this->printManagementService->getPrintHistory($filters, $perPage);
@@ -106,7 +102,7 @@ class PrintController extends Controller
   public function stats(PrintStatsRequest $request): JsonResponse
   {
     try {
-      $filters = $request->only(['branch_id', 'device_id', 'date', 'period']);
+      $filters = $request->only(['branch_id', 'date', 'period', 'type']);
 
       $stats = $this->printManagementService->getPrintStats($filters);
 

@@ -14,17 +14,12 @@ class PrintHistory extends Model
   protected $fillable = [
     'print_id',
     'branch_id',
-    'device_id',
     'type',
-    'content',
     'metadata',
-    'priority',
     'status',
     'requested_at',
     'printed_at',
-    'confirmed_at',
-    'error_message',
-    'print_duration'
+    'confirmed_at'
   ];
 
   protected $casts = [
@@ -60,9 +55,7 @@ class PrintHistory extends Model
   {
     $this->update([
       'status' => 'printed',
-      'printed_at' => now(),
-      'print_duration' => $this->requested_at ?
-        now()->diffInSeconds($this->requested_at) : null
+      'printed_at' => now()
     ]);
   }
 
@@ -80,11 +73,10 @@ class PrintHistory extends Model
   /**
    * Mark as failed
    */
-  public function markAsFailed(string $error)
+  public function markAsFailed()
   {
     $this->update([
-      'status' => 'failed',
-      'error_message' => $error
+      'status' => 'failed'
     ]);
   }
 
@@ -96,14 +88,14 @@ class PrintHistory extends Model
     return $query->where('branch_id', $branchId);
   }
 
-  public function scopeByDevice($query, $deviceId)
-  {
-    return $query->where('device_id', $deviceId);
-  }
-
   public function scopeByStatus($query, $status)
   {
     return $query->where('status', $status);
+  }
+
+  public function scopeByType($query, $type)
+  {
+    return $query->where('type', $type);
   }
 
   public function scopeToday($query)

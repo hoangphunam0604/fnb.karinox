@@ -22,7 +22,7 @@ class CreatePostPaymentPrintJobs implements ShouldQueue
     try {
       $printJobs = [];
 
-      // 1. In hóa đơn qua Socket (phương pháp mới)
+      // 1. In hóa đơn qua Socket
       $invoicePrintId = \App\Services\PrintService::printInvoiceViaSocket($order);
       $printJobs[] = [
         'type' => 'invoice',
@@ -36,7 +36,7 @@ class CreatePostPaymentPrintJobs implements ShouldQueue
 
       if ($kitchenItems->isNotEmpty()) {
         // 2. In phiếu bếp qua Socket (phương pháp mới)
-        $kitchenPrintId = \App\Services\PrintService::printKitchenViaSocket($order, $kitchenItems);
+        $kitchenPrintId = \App\Services\PrintService::printKitchenViaSocket($order);
 
         $printJobs[] = [
           'type' => 'kitchen',
@@ -51,7 +51,6 @@ class CreatePostPaymentPrintJobs implements ShouldQueue
         // Thêm method printLabelsViaSocket vào PrintService
         $labelsPrintId = \App\Services\PrintService::printViaSocket([
           'type' => 'label',
-          'content' => "Tem #{$order->code}",
           'metadata' => [
             'order_id' => $order->id,
             'order_code' => $order->code,
@@ -63,8 +62,7 @@ class CreatePostPaymentPrintJobs implements ShouldQueue
               ];
             }),
             'labels_count' => $labelItems->sum('quantity')
-          ],
-          'priority' => 'normal'
+          ]
         ], $order->branch_id);
 
         $printJobs[] = [
@@ -102,51 +100,5 @@ class CreatePostPaymentPrintJobs implements ShouldQueue
       'order_code' => $event->order->code,
       'error' => $exception->getMessage()
     ]);
-  }
-
-  /**
-   * Generate HTML content for invoice printing
-   */
-  private function generateInvoiceContent($order): string
-  {
-    return "<div class='invoice'>
-      <h3>HÓA ĐƠN BÁN HÀNG</h3>
-      <p>Mã đơn: {$order->code}</p>
-      <p>Bàn: {$order->table?->name}</p>
-      <p>Tổng tiền: " . number_format($order->total_price) . "đ</p>
-      <p>Phương thức TT: {$order->payment_method}</p>
-      <p>Thời gian: " . now()->format('d/m/Y H:i') . "</p>
-    </div>";
-  }
-
-  /**
-   * Generate HTML content for kitchen printing
-   */
-  private function generateKitchenContent($order, $items): string
-  {
-    $itemsHtml = '';
-    foreach ($items as $item) {
-      $itemsHtml .= "<p>- {$item->product_name} x{$item->quantity}</p>";
-    }
-
-    return "<div class='kitchen-ticket'>
-      <h3>PHIẾU BẾP</h3>
-      <p>Mã đơn: {$order->code}</p>
-      <p>Bàn: {$order->table?->name}</p>
-      <div class='items'>{$itemsHtml}</div>
-      <p>Thời gian: " . now()->format('d/m/Y H:i') . "</p>
-    </div>";
-  }
-
-  /**
-   * Generate HTML content for label printing
-   */
-  private function generateLabelContent($order): string
-  {
-    return "<div class='label'>
-      <p>Đơn: {$order->code}</p>
-      <p>Bàn: {$order->table?->name}</p>
-      <p>" . now()->format('H:i d/m') . "</p>
-    </div>";
   }
 }

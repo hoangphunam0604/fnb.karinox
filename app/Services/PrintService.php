@@ -11,16 +11,15 @@ class PrintService
   /**
    * Gửi lệnh in đơn giản và hiệu quả qua WebSocket
    */
-  public static function printViaSocket(array $printData, int $branchId, ?string $deviceId = null): string
+  public static function printViaSocket(array $printData, int $branchId): string
   {
     Log::info('Print requested via socket', [
       'type' => $printData['type'],
-      'branch_id' => $branchId,
-      'device_id' => $deviceId
+      'branch_id' => $branchId
     ]);
 
     // Broadcast event đến frontend qua WebSocket
-    $event = new PrintRequested($printData, $branchId, $deviceId);
+    $event = new PrintRequested($printData, $branchId);
     broadcast($event);
 
     return $event->printId;
@@ -29,34 +28,34 @@ class PrintService
   /**
    * In hóa đơn qua Socket
    */
-  public static function printInvoiceViaSocket($order, ?string $deviceId = null): string
+  public static function printInvoiceViaSocket($order): string
   {
     return self::printViaSocket([
       'type' => 'invoice',
-      'content' => "Hóa đơn #{$order->code}",
       'metadata' => [
         'order_id' => $order->id,
         'order_code' => $order->code,
         'table_name' => $order->table?->name,
         'total_amount' => $order->total_price,
         'payment_method' => $order->payment_method,
+        'customer_name' => $order->customer?->name,
         'items' => $order->items->map(function ($item) {
           return [
             'name' => $item->product->name,
             'quantity' => $item->quantity,
             'price' => $item->unit_price,
-            'total' => $item->total_price
+            'total' => $item->total_price,
+            'toppings' => $item->toppings ?? []
           ];
         })
-      ],
-      'priority' => 'normal'
-    ], $order->branch_id, $deviceId);
+      ]
+    ], $order->branch_id);
   }
 
   /**
    * In phiếu bếp qua Socket
    */
-  public static function printKitchenViaSocket($order, ?string $deviceId = null): string
+  public static function printKitchenViaSocket($order): string
   {
     // Lấy items từ order - kiểm tra có relationship hay không
     $kitchenItems = collect();
@@ -74,7 +73,6 @@ class PrintService
 
     return self::printViaSocket([
       'type' => 'kitchen',
-      'content' => "Phiếu bếp #{$order->code}",
       'metadata' => [
         'order_id' => $order->id,
         'order_code' => $order->code,
@@ -83,13 +81,14 @@ class PrintService
           return [
             'name' => $item->product->name ?? 'Unknown',
             'quantity' => $item->quantity ?? 0,
-            'note' => $item->note ?? ''
+            'note' => $item->note ?? '',
+            'toppings' => $item->toppings ?? []
           ];
         }),
-        'special_instructions' => $order->note ?? ''
-      ],
-      'priority' => 'high' // Bếp ưu tiên cao
-    ], $order->branch_id, $deviceId);
+        'special_instructions' => $order->note ?? '',
+        'priority' => 'high'
+      ]
+    ], $order->branch_id);
   }
 
   /**
@@ -108,7 +107,7 @@ class PrintService
 
     Log::info("Print confirmed: {$printId}", [
       'type' => $printHistory->type,
-      'duration' => $printHistory->print_duration
+      'status' => $printHistory->status
     ]);
 
     return true;
@@ -117,7 +116,7 @@ class PrintService
   /**
    * Báo lỗi in từ frontend
    */
-  public static function reportPrintError(string $printId, string $error): bool
+  public static function reportPrintError(string $printId): bool
   {
     $printHistory = PrintHistory::where('print_id', $printId)->first();
 
@@ -126,11 +125,11 @@ class PrintService
       return false;
     }
 
-    $printHistory->markAsFailed($error);
+    $printHistory->markAsFailed();
 
     Log::error("Print failed: {$printId}", [
-      'error' => $error,
-      'type' => $printHistory->type
+      'type' => $printHistory->type,
+      'status' => $printHistory->status
     ]);
 
     return true;
@@ -139,11 +138,10 @@ class PrintService
   /**
    * In hóa đơn từ Invoice (data chính xác 100%)
    */
-  public static function printInvoiceFromInvoice($invoice, ?string $deviceId = null): string
+  public static function printInvoiceFromInvoice($invoice): string
   {
     return self::printViaSocket([
       'type' => 'invoice',
-      'content' => "HÓA ĐƠN CHÍNH THỨC #{$invoice->code}",
       'metadata' => [
         'invoice_id' => $invoice->id,
         'invoice_code' => $invoice->code,
@@ -158,21 +156,21 @@ class PrintService
             'name' => $item->product->name,
             'quantity' => $item->quantity,
             'price' => $item->unit_price,
-            'total' => $item->total_price
+            'total' => $item->total_price,
+            'toppings' => $item->toppings ?? []
           ];
         })
       ]
-    ], $invoice->order->branch_id, $deviceId);
+    ], $invoice->order->branch_id);
   }
 
   /**
    * In phiếu tạm tính qua Socket
    */
-  public static function printProvisionalViaSocket($order, ?string $deviceId = null): string
+  public static function printProvisionalViaSocket($order): string
   {
     return self::printViaSocket([
-      'type' => 'other',
-      'content' => "Tạm tính #{$order->code}",
+      'type' => 'receipt',
       'metadata' => [
         'order_id' => $order->id,
         'order_code' => $order->code,
@@ -180,17 +178,16 @@ class PrintService
         'total_amount' => $order->total_amount ?? 0,
         'print_type' => 'provisional'
       ]
-    ], $order->branch_id, $deviceId);
+    ], $order->branch_id);
   }
 
   /**
    * In tem phiếu qua Socket
    */
-  public static function printLabelsViaSocket($order, ?string $deviceId = null): string
+  public static function printLabelsViaSocket($order): string
   {
     return self::printViaSocket([
       'type' => 'label',
-      'content' => "Tem #{$order->code}",
       'metadata' => [
         'order_id' => $order->id,
         'order_code' => $order->code,
@@ -202,6 +199,6 @@ class PrintService
           ];
         })
       ]
-    ], $order->branch_id, $deviceId);
+    ], $order->branch_id);
   }
 }

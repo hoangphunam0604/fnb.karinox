@@ -16,17 +16,15 @@ class PrintRequested implements ShouldBroadcast
 
   public $printData;
   public $branchId;
-  public $deviceId;
   public $printId;
 
   /**
    * Create a new event instance.
    */
-  public function __construct(array $printData, int $branchId, ?string $deviceId = null)
+  public function __construct(array $printData, int $branchId)
   {
     $this->printData = $printData;
     $this->branchId = $branchId;
-    $this->deviceId = $deviceId;
     $this->printId = uniqid('print_' . time() . '_');
 
     // Lưu lịch sử in
@@ -38,13 +36,7 @@ class PrintRequested implements ShouldBroadcast
    */
   public function broadcastOn(): array
   {
-    // Broadcast đến tất cả devices của branch hoặc device cụ thể
-    if ($this->deviceId) {
-      return [
-        new Channel("print-device-{$this->deviceId}")
-      ];
-    }
-
+    // Broadcast đến tất cả devices của branch
     return [
       new Channel("print-branch-{$this->branchId}")
     ];
@@ -66,9 +58,7 @@ class PrintRequested implements ShouldBroadcast
     return [
       'print_id' => $this->printId,
       'type' => $this->printData['type'],
-      'content' => $this->printData['content'],
       'metadata' => $this->printData['metadata'] ?? [],
-      'priority' => $this->printData['priority'] ?? 'normal',
       'timestamp' => now()->toISOString()
     ];
   }
@@ -81,11 +71,8 @@ class PrintRequested implements ShouldBroadcast
     \App\Models\PrintHistory::create([
       'print_id' => $this->printId,
       'branch_id' => $this->branchId,
-      'device_id' => $this->deviceId,
       'type' => $this->printData['type'],
-      'content' => $this->printData['content'],
       'metadata' => $this->printData['metadata'] ?? [],
-      'priority' => $this->printData['priority'] ?? 'normal',
       'status' => 'requested',
       'requested_at' => now()
     ]);

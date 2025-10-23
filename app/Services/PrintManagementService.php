@@ -35,7 +35,7 @@ class PrintManagementService
   /**
    * Xác nhận print job thành công
    */
-  public function confirmPrint(string $printId, string $deviceId, string $status = 'printed'): array
+  public function confirmPrint(string $printId, string $status = 'printed'): array
   {
     $printHistory = PrintHistory::where('print_id', $printId)->first();
 
@@ -46,21 +46,20 @@ class PrintManagementService
     $printHistory->update([
       'status' => $status,
       'printed_at' => now(),
-      'confirmed_at' => $status === 'confirmed' ? now() : null,
-      'print_duration' => now()->diffInSeconds($printHistory->requested_at)
+      'confirmed_at' => $status === 'confirmed' ? now() : null
     ]);
 
     return [
       'print_id' => $printId,
       'status' => $printHistory->status,
-      'duration' => $printHistory->print_duration . 's'
+      'printed_at' => $printHistory->printed_at?->format('Y-m-d H:i:s')
     ];
   }
 
   /**
    * Báo lỗi print job
    */
-  public function reportPrintError(string $printId, string $deviceId, string $errorType, string $errorMessage, ?array $errorDetails = null): void
+  public function reportPrintError(string $printId): void
   {
     $printHistory = PrintHistory::where('print_id', $printId)->first();
 
@@ -69,10 +68,7 @@ class PrintManagementService
     }
 
     $printHistory->update([
-      'status' => 'failed',
-      'error_message' => $errorMessage,
-      'error_details' => $errorDetails ? json_encode($errorDetails) : null,
-      'print_duration' => now()->diffInSeconds($printHistory->requested_at)
+      'status' => 'failed'
     ]);
   }
 
@@ -83,16 +79,16 @@ class PrintManagementService
   {
     $query = PrintHistory::query();
 
-    if (!empty($filters['device_id'])) {
-      $query->where('device_id', $filters['device_id']);
-    }
-
     if (!empty($filters['branch_id'])) {
       $query->where('branch_id', $filters['branch_id']);
     }
 
     if (!empty($filters['status'])) {
       $query->where('status', $filters['status']);
+    }
+
+    if (!empty($filters['type'])) {
+      $query->where('type', $filters['type']);
     }
 
     if (!empty($filters['from_date'])) {
@@ -126,8 +122,8 @@ class PrintManagementService
       $query->where('branch_id', $filters['branch_id']);
     }
 
-    if (!empty($filters['device_id'])) {
-      $query->where('device_id', $filters['device_id']);
+    if (!empty($filters['type'])) {
+      $query->where('type', $filters['type']);
     }
 
     $baseQuery = clone $query;
@@ -137,7 +133,7 @@ class PrintManagementService
       'completed_jobs' => (clone $query)->where('status', 'confirmed')->count(),
       'failed_jobs' => (clone $query)->where('status', 'failed')->count(),
       'pending_jobs' => (clone $query)->where('status', 'requested')->count(),
-      'avg_duration' => (clone $query)->whereNotNull('print_duration')->avg('print_duration'),
+      'printed_jobs' => (clone $query)->where('status', 'printed')->count(),
       'period' => $filters['period'] ?? 'custom',
       'date' => $filters['date'] ?? today()->toDateString()
     ];

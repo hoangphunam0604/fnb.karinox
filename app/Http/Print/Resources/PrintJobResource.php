@@ -11,21 +11,18 @@ class PrintJobResource extends JsonResource
   {
     return [
       'id' => $this->id,
+      'print_id' => $this->print_id,
       'type' => $this->type,
-      'content' => $this->content,
-      'device_id' => $this->device_id,
-      'priority' => $this->priority,
+      'metadata' => $this->metadata,
       'status' => $this->status,
-      'error_message' => $this->error_message,
-      'retry_count' => $this->retry_count,
-      'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
-      'processed_at' => $this->processed_at?->format('Y-m-d H:i:s'),
-      'order' => $this->whenLoaded('order', function () {
+      'requested_at' => $this->requested_at?->format('Y-m-d H:i:s'),
+      'printed_at' => $this->printed_at?->format('Y-m-d H:i:s'),
+      'confirmed_at' => $this->confirmed_at?->format('Y-m-d H:i:s'),
+      'branch' => $this->whenLoaded('branch', function () {
         return [
-          'id' => $this->order->id,
-          'order_code' => $this->order->order_code,
-          'table_name' => $this->order->table?->name,
-          'total_amount' => $this->order->total_amount,
+          'id' => $this->branch->id,
+          'name' => $this->branch->name,
+          'address' => $this->branch->address,
         ];
       }),
     ];

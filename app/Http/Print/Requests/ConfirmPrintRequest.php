@@ -15,7 +15,6 @@ class ConfirmPrintRequest extends FormRequest
   {
     return [
       'print_id' => 'required|string',
-      'device_id' => 'required|string',
       'status' => 'in:printed,confirmed',
     ];
   }
@@ -24,7 +23,6 @@ class ConfirmPrintRequest extends FormRequest
   {
     return [
       'print_id.required' => 'ID print job là bắt buộc',
-      'device_id.required' => 'ID thiết bị là bắt buộc',
       'status.in' => 'Trạng thái phải là printed hoặc confirmed'
     ];
   }
