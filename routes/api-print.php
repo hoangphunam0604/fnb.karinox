@@ -1,7 +1,7 @@
 ﻿<?php
 
 use App\Http\Print\Controllers\PrintController;
-use App\Http\Controllers\Print\TemplateController;
+use App\Http\Print\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
 
 /*
