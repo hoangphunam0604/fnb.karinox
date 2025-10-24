@@ -37,4 +37,13 @@ class BranchService extends BaseService
     }
     return $query->orderBy('sort_order', 'desc')->get();
   }
+
+  public function findByConnectionCode(string $connection_code): Branch
+  {
+    $branch = $this->model()->findByConnectionCode($connection_code)->first();
+    if (!$branch) {
+      throw new ModelNotFoundException("Mã kết nối không hợp lệ");
+    }
+    return $branch;
+  }
 }

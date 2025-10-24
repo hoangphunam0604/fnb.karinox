@@ -12,21 +12,18 @@ class PrintHistory extends Model
   protected $table = 'print_histories';
 
   protected $fillable = [
-    'print_id',
     'branch_id',
     'type',
-    'metadata',
     'status',
     'requested_at',
     'printed_at',
-    'confirmed_at'
+    'metadata',
   ];
 
   protected $casts = [
-    'metadata' => 'array',
     'requested_at' => 'datetime',
     'printed_at' => 'datetime',
-    'confirmed_at' => 'datetime'
+    'metadata' => 'array',
   ];
 
   /**
@@ -56,17 +53,6 @@ class PrintHistory extends Model
     $this->update([
       'status' => 'printed',
       'printed_at' => now()
-    ]);
-  }
-
-  /**
-   * Mark as confirmed (đã xác nhận hoàn thành)
-   */
-  public function markAsConfirmed()
-  {
-    $this->update([
-      'status' => 'confirmed',
-      'confirmed_at' => now()
     ]);
   }
 

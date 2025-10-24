@@ -13,23 +13,16 @@ return new class extends Migration
   {
     Schema::create('print_histories', function (Blueprint $table) {
       $table->id();
-      $table->string('print_id')->unique()->comment('Unique identifier for print job');
+      $table->timestamps();
       $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
-      $table->enum('type', ['invoice', 'kitchen', 'label', 'receipt', 'report', 'other'])->comment('Type of print job');
-      $table->json('metadata')->nullable()->comment('Print data (order_id, template_id, data for rendering)');
-      $table->enum('status', ['requested', 'printed', 'confirmed', 'failed'])->default('requested');
-
-      // Timestamps
+      $table->enum('type', ['invoice', 'provisional', 'kitchen', 'label', 'receipt', 'report', 'other'])->comment('Type of print job');
+      $table->enum('status', ['requested', 'printed', 'failed'])->default('requested'); // Timestamps
       $table->datetime('requested_at')->comment('When print was requested');
       $table->datetime('printed_at')->nullable()->comment('When frontend finished printing');
-      $table->datetime('confirmed_at')->nullable()->comment('When print was confirmed complete');
-
-      $table->timestamps();
-
+      $table->json('metadata')->nullable()->comment('Print data (order_id, template_id, data for rendering)');
       // Indexes
       $table->index(['branch_id', 'status']);
       $table->index(['requested_at']);
-      $table->index(['print_id']);
     });
   }
 

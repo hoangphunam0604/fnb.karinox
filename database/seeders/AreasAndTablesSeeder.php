@@ -27,21 +27,21 @@ class AreasAndTablesSeeder extends Seeder
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'pippykids@domain.com',
         'phone_number' => '0123456789',
-        'print_connection_code' => 'PIPPYKIDS'
+        'connection_code' => 'PIPPYKIDS'
       ],
       [
         'name' => 'Karinox Coffee',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'karinox@domain.com',
         'phone_number' => '0987654321',
-        'print_connection_code' => 'KARINOX'
+        'connection_code' => 'KARINOX'
       ],
       [
         'name' => 'Khu Vui Chơi Pippy Kids',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'playground@domain.com',
         'phone_number' => '0123987654',
-        'print_connection_code' => 'PLAYGROUND'
+        'connection_code' => 'PLAYGROUND'
       ],
     ];
 

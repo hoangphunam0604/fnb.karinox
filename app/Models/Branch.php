@@ -17,7 +17,7 @@ class Branch extends Model
     'address',
     'status',
     'sort_order',
-    'print_connection_code',
+    'connection_code',
   ];
 
   protected $casts = [
@@ -42,7 +42,7 @@ class Branch extends Model
    */
   public static function findByConnectionCode(string $code): ?self
   {
-    return static::where('print_connection_code', $code)
+    return static::where('connection_code', $code)
       ->where('status', CommonStatus::ACTIVE)
       ->first();
   }
