@@ -4,7 +4,6 @@ namespace App\Http\POS\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\PrintService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Events\PrintRequested;
@@ -30,7 +29,7 @@ class PrintController extends Controller
   {
     try {
       $order = $this->orderService->findOrderById($orderId);  // Broadcast event đến frontend qua WebSocket
-      $event = new PrintRequested('order', $order->id, $order->branch_id);
+      $event = new PrintRequested('provisional', $order->id, $order->branch_id);
       broadcast($event);
 
       return response()->json([
@@ -60,7 +59,7 @@ class PrintController extends Controller
           'message' => 'Đơn hàng chưa được thanh toán'
         ], 400);
       }
-      $event = new PrintRequested('invoice', $invoice->id, $invoice->branch_id);
+      $event = new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id);
       broadcast($event);
 
       return response()->json([

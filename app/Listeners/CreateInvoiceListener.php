@@ -22,6 +22,5 @@ class CreateInvoiceListener /* implements ShouldQueue */
 
     // Gọi InvoiceService để tạo hóa đơn cho đơn hàng
     $this->invoiceService->createInvoiceFromOrder($order->id, $print);
-    //Cập nhật tồn 
   }
 }

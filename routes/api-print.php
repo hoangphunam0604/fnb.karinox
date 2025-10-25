@@ -1,8 +1,7 @@
 ﻿<?php
 
 use App\Http\Print\Controllers\BranchController;
-use App\Http\Print\Controllers\HistoryController;
-use App\Http\Print\Controllers\InvoiceController;
+use App\Http\Print\Controllers\PrintDataController;
 use App\Http\Print\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,16 +23,6 @@ Route::prefix('print')->group(function () {
   // Danh sách mẫu in
   Route::get('templates', [TemplateController::class, 'index']);
 
-  // Lấy thông tin in cho invoice (frontend gọi sau khi nhận WebSocket)
-  Route::get('invoices/{invoice}/print-data', [InvoiceController::class, 'getPrintData']);
-
-  Route::prefix('histories')->group(function () {
-    // Lịch sử in
-    Route::get('', [HistoryController::class, 'index']);
-    // Xác nhận đã in thành công  
-    Route::post('{printHistory}/confirm', [HistoryController::class, 'confirm']);
-
-    // Báo lỗi in
-    Route::post('{printHistory}/error', [HistoryController::class, 'reportError']);
-  });
+  // API chính: Lấy data in theo type và id
+  Route::get('data/{type}/{id}', [PrintDataController::class, 'getData']);
 });

@@ -95,10 +95,10 @@ class InvoiceService extends BaseService
 
       // Fire InvoiceCreated event after all data is saved
       event(new InvoiceCreated($invoice));
+
+      // Nếu có yêu cầu in (print = true), broadcast PrintRequested
       if ($print) {
-        // Broadcast event đến frontend qua WebSocket
-        $event = new PrintRequested('invoice', $invoice->id, $invoice->branch_id);
-        broadcast($event);
+        broadcast(new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id));
       }
 
       return $invoice;

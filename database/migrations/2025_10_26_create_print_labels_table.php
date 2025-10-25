@@ -6,32 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-  /**
-   * Run the migrations.
-   */
   public function up(): void
   {
-    Schema::create('kitchen_tickets', function (Blueprint $table) {
+    Schema::create('print_labels', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->foreignId('invoice_item_id')->constrained()->cascadeOnDelete();
       $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-      $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
-      $table->json('metadata')->comment('Kitchen items data');
+      $table->string('product_code')->comment('Mã sản phẩm');
+      $table->text('toppings_text')->nullable()->comment('Formatted toppings text');
       $table->integer('print_count')->default(0)->comment('Số lần in');
       $table->datetime('last_printed_at')->nullable()->comment('Lần in cuối');
       $table->text('note')->nullable();
 
       $table->index(['branch_id']);
-      $table->index(['invoice_id']);
+      $table->index(['invoice_item_id']);
+      $table->index(['product_code']);
       $table->index(['last_printed_at']);
     });
   }
 
-  /**
-   * Reverse the migrations.
-   */
   public function down(): void
   {
-    Schema::dropIfExists('kitchen_tickets');
+    Schema::dropIfExists('print_labels');
   }
 };

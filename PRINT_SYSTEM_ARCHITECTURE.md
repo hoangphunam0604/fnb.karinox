@@ -21,20 +21,56 @@ updated_at          TIMESTAMP
 - `(branch_id, status)` - Query by branch and status
 - `(requested_at)` - Query by time
 
-# Print System Architecture - Pull Model
+# Print System Architecture - Simplified Pull Model
 
 ## Tổng quan
 
-Hệ thống in sử dụng **Pull Model** - Frontend nhận notification nhẹ qua WebSocket, sau đó gọi API để lấy print data khi cần.
+Hệ thống in sử dụng **Simplified Pull Model**:
 
-### Ưu điểm Pull Model:
+1. **BaseGateway:pay()** gọi `completePayment` với `print = true`
+2. **OrderCompleted event** giữ tham số `print`
+3. **CreateInvoiceListener** gọi `createInvoiceFromOrder` với `print` từ OrderCompleted
+4. **InvoiceService** tạo invoice, nếu `print = true` → broadcast `PrintRequested`
+5. **Frontend** nhận notification → gọi API lấy data
 
-✅ WebSocket payload nhẹ (chỉ vài KB thay vì hàng trăm KB)  
-✅ Không tạo print history vô ích - chỉ tạo khi frontend thực sự cần  
-✅ Dễ retry - frontend có thể poll API nếu miss notification  
-✅ Frontend control thứ tự in và timing  
-✅ Giảm DB writes - không tạo print history nếu không có printer  
-✅ Cache-friendly - có thể cache print data trong API
+### PrintRequested Event Structure:
+
+```json
+{
+    "type": "invoice-all|provisional|label|kitchen",
+    "id": 123,
+    "branchId": 1
+}
+```
+
+### Print Types:
+
+- **provisional**: In tạm tính với `id` = order_id
+- **invoice-all**: In tất cả (hóa đơn + tem + phiếu bếp) với `id` = invoice_id
+- **label**: In tem phiếu với `id` = label_id
+- **kitchen**: In phiếu bếp với `id` = kitchen_id
+
+```
+BaseGateway:pay(print=true)
+    ↓
+OrderCompleted(order, print=true)
+    ↓
+CreateInvoiceListener::handle(OrderCompleted)
+    ↓
+InvoiceService::createInvoiceFromOrder(orderId, print=true)
+    ↓
+Invoice được tạo + broadcast PrintRequested("invoice-all", invoiceId, branchId)
+    ↓
+Frontend nhận: {type: "invoice-all", id: 123, branchId: 1}
+    ↓
+Frontend call: GET /api/print/data/invoice-all/123
+    ↓
+PrintDataController::getData() → tạo print histories & return data
+    ↓
+Frontend nhận data và in
+    ↓
+Frontend confirm: POST /api/print/histories/{id}/confirm
+```
 
 ```
 Event: InvoiceCreated

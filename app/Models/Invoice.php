@@ -53,12 +53,16 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     'customer_phone',
     'customer_email',
     'customer_address',
+    'print_count',
+    'last_printed_at',
   ];
 
 
   protected $casts = [
     'invoice_status' => InvoiceStatus::class,
     'payment_status' => PaymentStatus::class,
+    'last_printed_at' => 'datetime',
+    'print_count' => 'integer',
   ];
 
   protected static function boot()
@@ -154,6 +158,15 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
       $this->invoice_status = InvoiceStatus::COMPLETED;
       $this->save();
     }
+  }
+
+  /**
+   * Đánh dấu hóa đơn đã được in
+   */
+  public function markAsPrinted()
+  {
+    $this->increment('print_count');
+    $this->update(['last_printed_at' => now()]);
   }
 
   public function getTransactionType(): string

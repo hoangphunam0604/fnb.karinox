@@ -4,8 +4,6 @@ namespace App\Http\Print\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Print\Resources\BranchResource;
-use App\Http\Print\Resources\PrintHistoryResource;
-use App\Models\PrintHistory;
 use App\Services\BranchService;
 use App\Services\WebSocketService;
 use Illuminate\Http\JsonResponse;
