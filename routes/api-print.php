@@ -25,4 +25,7 @@ Route::prefix('print')->group(function () {
 
   // API chính: Lấy data in theo type và id
   Route::get('data/{type}/{id}', [PrintDataController::class, 'getData']);
+
+  // Lấy danh sách hóa đơn đã được yêu cầu in
+  Route::get('invoices/print-requested', [PrintDataController::class, 'getPrintRequestedInvoices']);
 });

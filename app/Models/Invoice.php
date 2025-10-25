@@ -53,6 +53,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     'customer_phone',
     'customer_email',
     'customer_address',
+    'print_requested_at',
     'print_count',
     'last_printed_at',
   ];
@@ -61,6 +62,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   protected $casts = [
     'invoice_status' => InvoiceStatus::class,
     'payment_status' => PaymentStatus::class,
+    'print_requested_at' => 'datetime',
     'last_printed_at' => 'datetime',
     'print_count' => 'integer',
   ];
@@ -161,12 +163,44 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   }
 
   /**
+   * Đánh dấu hóa đơn đã được yêu cầu in
+   */
+  public function markAsPrintRequested()
+  {
+    $this->update(['print_requested_at' => now()]);
+  }
+
+  /**
    * Đánh dấu hóa đơn đã được in
    */
   public function markAsPrinted()
   {
     $this->increment('print_count');
     $this->update(['last_printed_at' => now()]);
+  }
+
+  /**
+   * Scope: Hóa đơn đã được yêu cầu in
+   */
+  public function scopePrintRequested($query)
+  {
+    return $query->whereNotNull('print_requested_at');
+  }
+
+  /**
+   * Scope: Hóa đơn chưa được yêu cầu in
+   */
+  public function scopePrintNotRequested($query)
+  {
+    return $query->whereNull('print_requested_at');
+  }
+
+  /**
+   * Kiểm tra hóa đơn đã được yêu cầu in chưa
+   */
+  public function isPrintRequested(): bool
+  {
+    return !is_null($this->print_requested_at);
   }
 
   public function getTransactionType(): string

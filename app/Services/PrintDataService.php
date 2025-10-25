@@ -61,6 +61,11 @@ class PrintDataService
       'items.toppings'
     ])->findOrFail($invoiceId);
 
+    // Đánh dấu đã được yêu cầu in (nếu chưa)
+    if (!$invoice->isPrintRequested()) {
+      $invoice->markAsPrintRequested();
+    }
+
     // Cập nhật print count cho invoice
     $invoice->markAsPrinted();
 
@@ -189,5 +194,34 @@ class PrintDataService
   public function getInvoicePrintData(int $invoiceId): array
   {
     return $this->getInvoiceAllData($invoiceId);
+  }
+
+  /**
+   * Lấy danh sách hóa đơn đã được yêu cầu in cho chi nhánh
+   */
+  public function getPrintRequestedInvoices(int $branchId, int $limit = 50): array
+  {
+    $invoices = Invoice::with(['customer', 'staff'])
+      ->where('branch_id', $branchId)
+      ->printRequested()
+      ->orderBy('print_requested_at', 'desc')
+      ->limit($limit)
+      ->get();
+
+    return $invoices->map(function ($invoice) {
+      return [
+        'id' => $invoice->id,
+        'code' => $invoice->code,
+        'customer_name' => $invoice->customer_name ?? 'Khách lẻ',
+        'staff_name' => $invoice->staff?->name ?? 'N/A',
+        'total_price' => $invoice->total_price,
+        'print_requested_at' => $invoice->print_requested_at?->format('d/m/Y H:i:s'),
+        'print_count' => $invoice->print_count,
+        'last_printed_at' => $invoice->last_printed_at?->format('d/m/Y H:i:s'),
+        'table_name' => $invoice->table_name,
+        'payment_method' => $invoice->payment_method,
+        'invoice_status' => $invoice->invoice_status->value ?? $invoice->invoice_status,
+      ];
+    })->toArray();
   }
 }
