@@ -70,6 +70,8 @@ class InvoiceService extends BaseService
         'order_id' => $order->id,
         'customer_id' => $order->customer_id,
         'branch_id' => $order->branch_id,
+        'user_id' => $order->user_id, // Nhân viên bán hàng
+        'table_name' => $order->table?->name, // Lưu tên bàn
 
         'subtotal_price' => $order->subtotal_price,
         'discount_amount' => $order->discount_amount,

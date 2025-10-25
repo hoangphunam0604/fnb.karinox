@@ -21,7 +21,9 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   protected $fillable = [
     'branch_id',
     'order_id',
+    'user_id',
     'code',
+    'table_name',
 
     'subtotal_price',
     'discount_amount',
@@ -85,6 +87,23 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
 
     return sprintf("CN%02dN%sHD%04d", $branchId, now()->format('ymd'), $increment);
   }
+
+  /**
+   * Nhân viên bán hàng
+   */
+  public function staff()
+  {
+    return $this->belongsTo(User::class, 'user_id');
+  }
+
+  /**
+   * Khách hàng
+   */
+  public function customer()
+  {
+    return $this->belongsTo(Customer::class);
+  }
+
   public function items()
   {
     return $this->hasMany(InvoiceItem::class);
@@ -98,14 +117,6 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault();
-  }
-
-  /**
-   * Mối quan hệ với khách hàng
-   */
-  public function customer()
-  {
-    return $this->belongsTo(Customer::class);
   }
 
   /**

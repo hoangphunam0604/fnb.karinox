@@ -21,7 +21,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'code',
     'order_status',
     'ordered_at',
-    'creator_id',
+    'user_id',
     'receiver_id',
     'customer_id',
     'branch_id',
@@ -100,14 +100,9 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     return $this->belongsTo(User::class, 'receiver_id')->withDefault();
   }
 
-  public function creator()
-  {
-    return $this->belongsTo(User::class, 'creator_id')->withDefault();
-  }
-
   public function staff()
   {
-    return $this->belongsTo(User::class, 'creator_id')->withDefault();
+    return $this->belongsTo(User::class, 'user_id')->withDefault();
   }
 
   public function customer()

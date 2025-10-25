@@ -17,6 +17,8 @@ return new class extends Migration
       $table->string('code')->unique(); // Mã hóa đơn
       $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
+      $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // Nhân viên bán hàng
+      $table->string('table_name')->nullable(); // Tên bàn tại thời điểm tạo invoice
 
       $table->decimal('subtotal_price', 15, 2)->default(0.00); // Tổng tiền đơn hàng trước khi giảm giá (chỉ tính sản phẩm và topping, chưa áp dụng voucher hay điểm thưởng).
       $table->decimal('discount_amount', 15, 2)->default(0.00); // Số tiền giảm từ voucher.

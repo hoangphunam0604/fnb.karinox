@@ -24,7 +24,7 @@ return new class extends Migration
       $table->unsignedBigInteger('extend_id')->nullable(); // Người tạo đơn
       $table->string('code')->unique(); // Mã đơn hàng
       $table->timestamp('ordered_at')->useCurrent(); // Thời gian đặt hàng
-      $table->foreignId('creator_id')->nullable()->constrained('users')->nullOnDelete(); // Người tạo đơn
+      $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete(); // Nhân viên bán hàng
       $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete(); // Người nhận đơn
       $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete(); // Khách hàng
       $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Chi nhánh
