@@ -39,4 +39,24 @@ class InvoiceItem extends Model
   {
     return $this->hasMany(InvoiceTopping::class);
   }
+
+  /**
+   * Accessor: Format toppings thành text
+   * Format: "Topping 1 (5,000đ) x 2, Topping 2 (10,000đ) x 1"
+   */
+  public function getToppingsTextAttribute(): string
+  {
+    if (!$this->relationLoaded('toppings') || $this->toppings->isEmpty()) {
+      return '';
+    }
+
+    return $this->toppings->map(function ($topping) {
+      return sprintf(
+        '%s (%sđ) x %d',
+        $topping->topping_name,
+        number_format($topping->price, 0, ',', '.'),
+        $topping->quantity
+      );
+    })->join(', ');
+  }
 }

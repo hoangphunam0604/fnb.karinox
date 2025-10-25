@@ -2,6 +2,7 @@
 
 use App\Http\Print\Controllers\BranchController;
 use App\Http\Print\Controllers\HistoryController;
+use App\Http\Print\Controllers\InvoiceController;
 use App\Http\Print\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ Route::prefix('print')->group(function () {
 
   // Danh sách mẫu in
   Route::get('templates', [TemplateController::class, 'index']);
+
+  // Lấy thông tin in cho invoice (frontend gọi sau khi nhận WebSocket)
+  Route::get('invoices/{invoice}/print-data', [InvoiceController::class, 'getPrintData']);
 
   Route::prefix('histories')->group(function () {
     // Lịch sử in
