@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Invoice;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -14,21 +15,20 @@ class PrintRequested implements ShouldBroadcast
 {
   use Dispatchable, InteractsWithSockets, SerializesModels;
 
-  public $printData;
+  // Loại cần in: order hoặc invoice
+  public $type;
+  // Id của order hoặc invoice cần in
+  public $id;
+  // Chi nhánh cần in
   public $branchId;
-  public $printId;
-
   /**
    * Create a new event instance.
    */
-  public function __construct(array $printData, int $branchId)
+  public function __construct(string $type, int $id,  int $branchId)
   {
-    $this->printData = $printData;
+    $this->id = $id;
+    $this->type = $type;
     $this->branchId = $branchId;
-    $this->printId = uniqid('print_' . time() . '_');
-
-    // Lưu lịch sử in
-    $this->savePrintHistory();
   }
 
   /**
@@ -56,25 +56,8 @@ class PrintRequested implements ShouldBroadcast
   public function broadcastWith(): array
   {
     return [
-      'print_id' => $this->printId,
-      'type' => $this->printData['type'],
-      'metadata' => $this->printData['metadata'] ?? [],
-      'timestamp' => now()->toISOString()
+      'type' => $this->type,
+      'id' => $this->id
     ];
-  }
-
-  /**
-   * Lưu lịch sử in
-   */
-  private function savePrintHistory()
-  {
-    \App\Models\PrintHistory::create([
-      'print_id' => $this->printId,
-      'branch_id' => $this->branchId,
-      'type' => $this->printData['type'],
-      'metadata' => $this->printData['metadata'] ?? [],
-      'status' => 'requested',
-      'requested_at' => now()
-    ]);
   }
 }

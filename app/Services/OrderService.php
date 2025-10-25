@@ -74,7 +74,16 @@ class OrderService
    */
   public function findOrderById($id)
   {
-    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('id', $id)->first();
+    return Order::findOrFail($id);
+  }
+  /**
+   * Tìm kiếm đơn đặt hàng theo mã
+   */
+  public function findOrderInBranchById($id)
+  {
+    return Order::where('id', $id)
+      ->where('branch_id', app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null)
+      ->firstOrFail();
   }
   /**
    * Lấy danh sách đơn đặt hàng (phân trang)
@@ -173,15 +182,14 @@ class OrderService
     });
   }
 
-  public function completePayment(Order $order, string $payment_method = 'cash')
+  public function completePayment(Order $order, string $payment_method = 'cash', $print = false)
   {
     if ($order->payment_status === PaymentStatus::PAID) {
       // đã trả tiền rồi, không cần ghi đè
       return true;
     }
 
-    return DB::transaction(function () use ($order, $payment_method) {
-      $oldStatus = $order->order_status;
+    return DB::transaction(function () use ($order, $payment_method, $print) {
 
       $order->paid_at = now();
       $order->payment_method = $payment_method;
@@ -193,7 +201,7 @@ class OrderService
       // when InvoiceCreated event is fired
 
       // Fire event sau khi order completed thành công
-      event(new OrderCompleted($order));
+      event(new OrderCompleted($order, $print));
 
       return true;
     });

@@ -18,9 +18,10 @@ class CreateInvoiceListener /* implements ShouldQueue */
   public function handle(OrderCompleted $event)
   {
     $order = $event->order;
+    $print = $event->print;
 
     // Gọi InvoiceService để tạo hóa đơn cho đơn hàng
-    $this->invoiceService->createInvoiceFromOrder($order->id);
+    $this->invoiceService->createInvoiceFromOrder($order->id, $print);
     //Cập nhật tồn 
   }
 }

@@ -21,19 +21,6 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
   Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
-  //In tạm tính
-  Route::post('/orders/{id}/provisional', [PrintController::class, 'provisional']);
-  //In hóa đơn
-  Route::post('/orders/{id}/invoice', [PrintController::class, 'invoice']);
-  //In phiếu bếp
-  Route::post('/orders/{id}/kitchen', [PrintController::class, 'kitchen']);
-  //In nhãn
-  Route::post('/orders/{id}/labels', [PrintController::class, 'labels']);
-  Route::post('/orders/{id}/auto-print', [PrintController::class, 'autoPrint']);
-  Route::get('/orders/{id}/print-status', [PrintController::class, 'getPrintStatus']);
-
-  // Print từ Invoice (đảm bảo data chính xác 100%)
-  Route::post('/invoices/{id}/print', [PrintController::class, 'printFromInvoice']);
   // Nhập bàn
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
   // Chia bàn
@@ -47,6 +34,14 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::post('/customers/{customer}/receive-birthday-gifts', [CustomerController::class, 'receiveBirthdayGift']);
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
+  //Gửi lệnh in
+  Route::prefix('print')->group(function () {
+    // In tạm tính
+    Route::post('/orders/{id}', [PrintController::class, 'provisional']);
+    // Print từ Invoice (đảm bảo data chính xác 100%)
+    Route::post('/invoices/{id}', [PrintController::class, 'invoice']);
+  });
+
 
   Route::prefix('payments')->group(function () {
     Route::post('/cash/{code}/confirm', [CashController::class, 'confirm']);

@@ -24,7 +24,7 @@ abstract class BaseGateway
 
     // Delegate việc update order và fire events cho OrderService
     $orderService = app(OrderService::class);
-    return $orderService->completePayment($order, $this->getPaymentMethod());
+    return $orderService->completePayment($order, $this->getPaymentMethod(), true);
   }
 
   /**

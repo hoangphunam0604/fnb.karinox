@@ -6,13 +6,12 @@ use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\InvoiceCreated;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Events\PrintRequested;
 use App\Models\InvoiceTopping;
 use App\Models\InvoiceItem;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\Order;
-use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceService extends BaseService
@@ -43,18 +42,19 @@ class InvoiceService extends BaseService
   {
     return Invoice::where('code', strtoupper($code))->first();
   }
-
-  public function createInvoiceFromOrder(int $orderId, float $paidAmount = 0): Invoice
+  public function findById(int $id): ?Invoice
+  {
+    return Invoice::find($id);
+  }
+  public function createInvoiceFromOrder(int $orderId, bool $print = false): Invoice
   {
 
-    return DB::transaction(function () use ($orderId, $paidAmount) {
+    return DB::transaction(function () use ($orderId, $print) {
       $order = Order::findOrFail($orderId);
 
       if ($order->order_status !== OrderStatus::COMPLETED) {
         throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
       }
-      if (!$paidAmount)
-        $paidAmount = $order->total_price;
 
       $totalPrice = $order->total_price;
       // Tính toán thuế bằng TaxService
@@ -63,8 +63,6 @@ class InvoiceService extends BaseService
         'tax_amount' => 0,
         'total_price_without_vat' => $totalPrice
       ];
-
-
 
       $invoice = Invoice::create([
         'order_id' => $order->id,
@@ -83,9 +81,9 @@ class InvoiceService extends BaseService
         'tax_amount' => $taxData['tax_amount'],
         'total_price_without_vat' => $taxData['total_price_without_vat'],
 
-        'paid_amount' => $paidAmount,
+        'paid_amount' => $totalPrice,
         'invoice_status' => InvoiceStatus::COMPLETED,
-        'payment_status' => $paidAmount == $order->total_price ? PaymentStatus::PAID : PaymentStatus::UNPAID,
+        'payment_status' => PaymentStatus::PAID,
         'payment_method' => $order->payment_method,
         'note' => $order->note,
       ]);
@@ -97,7 +95,28 @@ class InvoiceService extends BaseService
 
       // Fire InvoiceCreated event after all data is saved
       event(new InvoiceCreated($invoice));
+      if ($print) {
+        // Broadcast event đến frontend qua WebSocket
+        $event = new PrintRequested('invoice', $invoice->id, $invoice->branch_id);
+        broadcast($event);
+      }
 
+      return $invoice;
+    });
+  }
+
+  public function refunded(int $invoiceId): Invoice
+  {
+    return DB::transaction(function () use ($invoiceId) {
+      $invoice = Invoice::findOrFail($invoiceId);
+      if (!$invoice->canBeRefunded())
+        throw new \Exception("Đơn hàng chưa thanh toán hoặc được giảm giá, không thể hoàn tiền.");
+
+      $invoice->payment_status = PaymentStatus::REFUNDED;
+      $invoice->invoice_status = InvoiceStatus::CANCELED;
+      $invoice->save();
+      // Hoàn trả tồn kho
+      $this->stockDeductionService->restoreStockForRefundedInvoice($invoice);
       return $invoice;
     });
   }
@@ -130,44 +149,5 @@ class InvoiceService extends BaseService
         'total_price' => $orderTopping->total_price,
       ]);
     }
-  }
-
-
-  public function updatePaymentMethod(int $invoiceId, string $method): Invoice
-  {
-    $invoice = Invoice::findOrFail($invoiceId);
-    $invoice->payment_method = $method;
-    $invoice->save();
-    return $invoice;
-  }
-
-  public function updatePaymentStatus(int $invoiceId, PaymentStatus $status): Invoice
-  {
-    return DB::transaction(function () use ($invoiceId, $status) {
-      $invoice = Invoice::findOrFail($invoiceId);
-      $invoice->payment_status = $status;
-      $invoice->save();
-
-      if ($invoice->isPaid() && $invoice->invoice_status !== InvoiceStatus::CANCELED) {
-        $invoice->markAsCompleted();
-      }
-      return $invoice;
-    });
-  }
-
-  public function refunded(int $invoiceId): Invoice
-  {
-    return DB::transaction(function () use ($invoiceId) {
-      $invoice = Invoice::findOrFail($invoiceId);
-      if (!$invoice->canBeRefunded())
-        throw new \Exception("Đơn hàng chưa thanh toán hoặc được giảm giá, không thể hoàn tiền.");
-
-      $invoice->payment_status = PaymentStatus::REFUNDED;
-      $invoice->invoice_status = InvoiceStatus::CANCELED;
-      $invoice->save();
-      // Hoàn trả tồn kho
-      $this->stockDeductionService->restoreStockForRefundedInvoice($invoice);
-      return $invoice;
-    });
   }
 }

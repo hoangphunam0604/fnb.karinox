@@ -57,7 +57,7 @@ class PrintHistoryService extends BaseService
       // 1. Target cho HÓA ĐƠN
       $invoiceMetadata = (new InvoicePrintResource($invoice))->resolve();
       $invoicePrint = $this->createPrintHistory($invoice, 'invoice', $invoiceMetadata);
-      
+
       $targets[] = [
         'id' => $invoicePrint->id,
         'type' => 'invoice',
@@ -68,11 +68,11 @@ class PrintHistoryService extends BaseService
 
       // 2. Target cho PHIẾU BẾP (nếu có món cần in)
       $kitchenItems = $invoice->items->filter(fn($item) => $item->product && $item->product->print_kitchen === true);
-      
+
       if ($kitchenItems->isNotEmpty()) {
         $kitchenMetadata = (new KitchenPrintResource($invoice))->resolve();
         $kitchenPrint = $this->createPrintHistory($invoice, 'kitchen', $kitchenMetadata);
-        
+
         $targets[] = [
           'id' => $kitchenPrint->id,
           'type' => 'kitchen',
@@ -84,11 +84,11 @@ class PrintHistoryService extends BaseService
 
       // 3. Targets cho TEM PHIẾU (từng sản phẩm)
       $labelItems = $invoice->items->filter(fn($item) => $item->product && $item->product->print_label === true);
-      
+
       foreach ($labelItems as $item) {
         $labelMetadata = (new LabelPrintResource($item, $invoice))->resolve();
         $labelPrint = $this->createPrintHistory($invoice, 'label', $labelMetadata);
-        
+
         $targets[] = [
           'id' => $labelPrint->id,
           'type' => 'label',
@@ -110,7 +110,6 @@ class PrintHistoryService extends BaseService
         'branch_id' => $invoice->branch_id,
         'targets' => $targets
       ];
-      
     } catch (\Exception $exception) {
       Log::error('Failed to create print targets for invoice', [
         'invoice_id' => $invoice->id,

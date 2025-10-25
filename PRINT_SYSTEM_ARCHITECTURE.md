@@ -28,12 +28,13 @@ updated_at          TIMESTAMP
 Hệ thống in sử dụng **Pull Model** - Frontend nhận notification nhẹ qua WebSocket, sau đó gọi API để lấy print data khi cần.
 
 ### Ưu điểm Pull Model:
+
 ✅ WebSocket payload nhẹ (chỉ vài KB thay vì hàng trăm KB)  
 ✅ Không tạo print history vô ích - chỉ tạo khi frontend thực sự cần  
 ✅ Dễ retry - frontend có thể poll API nếu miss notification  
 ✅ Frontend control thứ tự in và timing  
 ✅ Giảm DB writes - không tạo print history nếu không có printer  
-✅ Cache-friendly - có thể cache print data trong API  
+✅ Cache-friendly - có thể cache print data trong API
 
 ```
 Event: InvoiceCreated
@@ -87,12 +88,14 @@ public function handle(InvoiceCreated $event): void
 **Controller**: `App\Http\Print\Controllers\InvoiceController`  
 **Method**: `getPrintData(int $invoiceId)`
 
-**Trách nhiệm**: 
+**Trách nhiệm**:
+
 - Load invoice với relationships
 - Tạo print histories (lazy creation)
 - Return targets array với metadata
 
 **Response**:
+
 ```json
 {
   "success": true,

@@ -33,6 +33,14 @@ class InvoiceItem extends Model
   }
 
   /**
+   * Mối quan hệ với sản phẩm
+   */
+  public function product()
+  {
+    return $this->belongsTo(Product::class);
+  }
+
+  /**
    * Mối quan hệ với topping
    */
   public function toppings()
