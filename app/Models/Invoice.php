@@ -148,6 +148,34 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     return $this->payment_status === PaymentStatus::PAID && $this->discount_amount == 0;
   }
 
+  /**
+   * Đánh dấu hóa đơn là hoàn tất nếu đã thanh toán đầy đủ
+   */
+  public function markAsCompleted()
+  {
+    if ($this->isPaid()) {
+      $this->invoice_status = InvoiceStatus::COMPLETED;
+      $this->save();
+    }
+  }
+
+  /**
+   * Đánh dấu hóa đơn đã được yêu cầu in
+   */
+  public function markAsPrintRequested()
+  {
+    $this->increment('print_requested_count');
+    $this->update(['print_requested_at' => now()]);
+  }
+
+  /**
+   * Đánh dấu hóa đơn đã được in
+   */
+  public function markAsPrinted()
+  {
+    $this->increment('print_count');
+    $this->update(['last_printed_at' => now()]);
+  }
 
   /**
    * Scope: Hóa đơn đã được yêu cầu in

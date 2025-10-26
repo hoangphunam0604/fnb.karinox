@@ -98,7 +98,7 @@ class InvoiceService extends BaseService
 
       // Nếu có yêu cầu in (print = true), broadcast PrintRequested
       if ($requestPrint) {
-        $this->requestPrint($invoice->id);
+        $invoice->markAsPrintRequested();
       }
 
       return $invoice;
@@ -114,22 +114,11 @@ class InvoiceService extends BaseService
     if ($invoice->payment_status !== PaymentStatus::PAID)
       throw new \Exception("Đơn hàng chưa được thanh toán");
 
-    $invoice->increment('print_requested_count');
-    $invoice->update(['print_requested_at' => now()]);
+    $invoice->markAsPrintRequested();
     broadcast(new PrintRequested('invoice-all', ['id' => $invoice->id], $invoice->branch_id));
     return $invoice;
   }
 
-  /**
-   * Đánh dấu hóa đơn đã được in
-   */
-  public function markAsPrinted(int $invoiceId): Invoice
-  {
-    $invoice = Invoice::findOrFail($invoiceId);
-    $invoice->increment('print_count');
-    $invoice->update(['last_printed_at' => now()]);
-    return $invoice;
-  }
 
   /**
    * Hoàn tiền cho hóa đơn
