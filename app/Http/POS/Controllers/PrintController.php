@@ -28,10 +28,7 @@ class PrintController extends Controller
   public function provisional($orderId): JsonResponse
   {
     try {
-      $order = $this->orderService->findOrderById($orderId);  // Broadcast event đến frontend qua WebSocket
-      $event = new PrintRequested('provisional', $order->id, $order->branch_id);
-      broadcast($event);
-
+      $this->orderService->requestPrintProvisional($orderId);
       return response()->json([
         'success' => true,
         'message' => 'Đã gửi lệnh in tạm tính'
@@ -51,17 +48,7 @@ class PrintController extends Controller
   public function invoice($invoiceId): JsonResponse
   {
     try {
-      $invoice = $this->invoiceService->findById($invoiceId);
-      // Kiểm tra order đã thanh toán chưa
-      if ($invoice->payment_status !== PaymentStatus::PAID) {
-        return response()->json([
-          'success' => false,
-          'message' => 'Đơn hàng chưa được thanh toán'
-        ], 400);
-      }
-      $event = new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id);
-      broadcast($event);
-
+      $this->invoiceService->requestPrint($invoiceId);
       return response()->json([
         'success' => true,
         'message' => 'Đã gửi lệnh in hóa đơn'

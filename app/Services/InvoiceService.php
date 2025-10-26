@@ -111,9 +111,12 @@ class InvoiceService extends BaseService
   public function requestPrint(int $invoiceId): Invoice
   {
     $invoice = Invoice::findOrFail($invoiceId);
+    if ($invoice->payment_status !== PaymentStatus::PAID)
+      throw new \Exception("Đơn hàng chưa được thanh toán");
+
     $invoice->increment('print_requested_count');
     $invoice->update(['print_requested_at' => now()]);
-    broadcast(new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id));
+    broadcast(new PrintRequested('invoice-all', ['id' => $invoice->id], $invoice->branch_id));
     return $invoice;
   }
 
@@ -147,7 +150,7 @@ class InvoiceService extends BaseService
     });
   }
 
-  public function getPrintRequestedInvoices( $branchId): \Illuminate\Pagination\LengthAwarePaginator
+  public function getPrintRequestedInvoices($branchId): \Illuminate\Pagination\LengthAwarePaginator
   {
     return Invoice::printRequested()
       ->where('branch_id', $branchId)

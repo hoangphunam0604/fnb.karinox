@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Events\OrderUpdated;
 use App\Events\OrderCompleted;
+use App\Events\PrintRequested;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTopping;
@@ -205,6 +205,12 @@ class OrderService
 
       return true;
     });
+  }
+  public function requestPrintProvisional(int $orderId): Order
+  {
+    $order = Order::findOrFail($orderId);
+    broadcast(new PrintRequested('provisional', ['id' => $order->id], $order->branch_id));
+    return $order;
   }
   /**
    * Cập nhật trạng thái đơn hàng
