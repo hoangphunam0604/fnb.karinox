@@ -46,10 +46,10 @@ class InvoiceService extends BaseService
   {
     return Invoice::find($id);
   }
-  public function createInvoiceFromOrder(int $orderId, bool $print = false): Invoice
+  public function createInvoiceFromOrder(int $orderId, bool $requestPrint = false): Invoice
   {
 
-    return DB::transaction(function () use ($orderId, $print) {
+    return DB::transaction(function () use ($orderId, $requestPrint) {
       $order = Order::findOrFail($orderId);
 
       if ($order->order_status !== OrderStatus::COMPLETED) {
@@ -97,14 +97,40 @@ class InvoiceService extends BaseService
       event(new InvoiceCreated($invoice));
 
       // Nếu có yêu cầu in (print = true), broadcast PrintRequested
-      if ($print) {
-        broadcast(new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id));
+      if ($requestPrint) {
+        $this->requestPrint($invoice->id);
       }
 
       return $invoice;
     });
   }
 
+  /**
+   * Đánh dấu hóa đơn đã được yêu cầu in
+   */
+  public function requestPrint(int $invoiceId): Invoice
+  {
+    $invoice = Invoice::findOrFail($invoiceId);
+    $invoice->increment('print_requested_count');
+    $invoice->update(['print_requested_at' => now()]);
+    broadcast(new PrintRequested('invoice-all', $invoice->id, $invoice->branch_id));
+    return $invoice;
+  }
+
+  /**
+   * Đánh dấu hóa đơn đã được in
+   */
+  public function markAsPrinted(int $invoiceId): Invoice
+  {
+    $invoice = Invoice::findOrFail($invoiceId);
+    $invoice->increment('print_count');
+    $invoice->update(['last_printed_at' => now()]);
+    return $invoice;
+  }
+
+  /**
+   * Hoàn tiền cho hóa đơn
+   */
   public function refunded(int $invoiceId): Invoice
   {
     return DB::transaction(function () use ($invoiceId) {
@@ -121,6 +147,14 @@ class InvoiceService extends BaseService
     });
   }
 
+  public function getPrintRequestedInvoices( $branchId): \Illuminate\Pagination\LengthAwarePaginator
+  {
+    return Invoice::printRequested()
+      ->where('branch_id', $branchId)
+      ->orderBy('print_requested_at', 'desc')
+      ->select(['id', 'code', 'customer_name', 'total_price', 'print_requested_at', 'print_count', 'last_printed_at'])
+      ->paginate(50);
+  }
   private function copyOrderItemsToInvoice(Order $order, Invoice $invoice): void
   {
     foreach ($order->items as $orderItem) {

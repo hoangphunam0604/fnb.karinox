@@ -54,6 +54,7 @@ return new class extends Migration
       $table->string('customer_address')->nullable(); // Địa chỉ khách hàng
 
       // Thông tin in ấn
+      $table->integer('print_requested_count')->default(0)->comment('Số lần yêu cầu in hóa đơn');
       $table->datetime('print_requested_at')->nullable()->comment('Thời gian yêu cầu in');
       $table->integer('print_count')->default(0)->comment('Số lần in hóa đơn');
       $table->datetime('last_printed_at')->nullable()->comment('Lần in cuối');

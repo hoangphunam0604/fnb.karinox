@@ -53,6 +53,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     'customer_phone',
     'customer_email',
     'customer_address',
+    'print_requested_count',
     'print_requested_at',
     'print_count',
     'last_printed_at',
@@ -62,6 +63,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   protected $casts = [
     'invoice_status' => InvoiceStatus::class,
     'payment_status' => PaymentStatus::class,
+    'print_requested_count' => 'integer',
     'print_requested_at' => 'datetime',
     'last_printed_at' => 'datetime',
     'print_count' => 'integer',
@@ -74,11 +76,6 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     static::creating(function ($invoice) {
       if (!$invoice->code)
         $invoice->code = self::generateInvoiceCode($invoice->branch_id);
-    });
-    static::updated(function ($invoice) {
-      if ($invoice->status === 'completed' && $invoice->getOriginal('status') !== 'completed') {
-        event(new InvoiceCompleted($invoice));
-      }
     });
   }
 
@@ -151,33 +148,6 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     return $this->payment_status === PaymentStatus::PAID && $this->discount_amount == 0;
   }
 
-  /**
-   * Đánh dấu hóa đơn là hoàn tất nếu đã thanh toán đầy đủ
-   */
-  public function markAsCompleted()
-  {
-    if ($this->isPaid()) {
-      $this->invoice_status = InvoiceStatus::COMPLETED;
-      $this->save();
-    }
-  }
-
-  /**
-   * Đánh dấu hóa đơn đã được yêu cầu in
-   */
-  public function markAsPrintRequested()
-  {
-    $this->update(['print_requested_at' => now()]);
-  }
-
-  /**
-   * Đánh dấu hóa đơn đã được in
-   */
-  public function markAsPrinted()
-  {
-    $this->increment('print_count');
-    $this->update(['last_printed_at' => now()]);
-  }
 
   /**
    * Scope: Hóa đơn đã được yêu cầu in

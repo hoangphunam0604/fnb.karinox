@@ -3,15 +3,17 @@
 namespace App\Http\Print\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Print\Resources\PrintRequestResource;
 use App\Http\Print\Responses\PrintApiResponse;
 use App\Services\PrintDataService;
 use App\Models\Invoice;
+use App\Services\InvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PrintDataController extends Controller
 {
-  public function __construct(private PrintDataService $printDataService) {}
+  public function __construct(private PrintDataService $printDataService, private InvoiceService $invoiceService) {}
 
   /**
    * Lấy data in theo type và id
@@ -46,30 +48,12 @@ class PrintDataController extends Controller
    */
   public function getPrintRequestedInvoices(Request $request): JsonResponse
   {
-    try {
-      $branchId = $request->query('branch_id');
+    $branchId = $request->query('branch_id');
 
-      if (!$branchId) {
-        return PrintApiResponse::error('branch_id là bắt buộc', 400);
-      }
-
-      $invoices = Invoice::printRequested()
-        ->where('branch_id', $branchId)
-        ->orderBy('print_requested_at', 'desc')
-        ->select(['id', 'code', 'customer_name', 'total_price', 'print_requested_at', 'print_count', 'last_printed_at'])
-        ->paginate(50);
-
-      return PrintApiResponse::success('Lấy danh sách hóa đơn đã yêu cầu in thành công', [
-        'invoices' => $invoices->items(),
-        'pagination' => [
-          'current_page' => $invoices->currentPage(),
-          'last_page' => $invoices->lastPage(),
-          'per_page' => $invoices->perPage(),
-          'total' => $invoices->total()
-        ]
-      ]);
-    } catch (\Exception $e) {
-      return PrintApiResponse::error('Lỗi lấy danh sách hóa đơn: ' . $e->getMessage(), 500);
+    if (!$branchId) {
+      return PrintApiResponse::error('branch_id là bắt buộc', 400);
     }
+    $invoices = $this->invoiceService->getPrintRequestedInvoices($branchId);
+    return PrintApiResponse::success('Lấy dữ liệu in thành công', PrintRequestResource::collection($invoices));
   }
 }
