@@ -15,19 +15,20 @@ class PrintRequested implements ShouldBroadcast
 {
   use Dispatchable, InteractsWithSockets, SerializesModels;
 
-  // Loại cần in: order hoặc invoice
+  // Loại cần in: order, invoice, cash-inventory
   public $type;
-  // Id của order hoặc invoice cần in
-  public $id;
+  // Data chứa thông tin cần in (id cho order/invoice, payload cho cash-inventory)
+  public $data;
   // Chi nhánh cần in
   public $branchId;
+
   /**
    * Create a new event instance.
    */
-  public function __construct(string $type, int $id,  int $branchId)
+  public function __construct(string $type, $data, int $branchId)
   {
-    $this->id = $id;
     $this->type = $type;
+    $this->data = $data;
     $this->branchId = $branchId;
   }
 
@@ -57,7 +58,7 @@ class PrintRequested implements ShouldBroadcast
   {
     return [
       'type' => $this->type,
-      'id' => $this->id
+      'data' => $this->data
     ];
   }
 }
