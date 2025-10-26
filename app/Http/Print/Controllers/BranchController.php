@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class BranchController extends Controller
 {
-  public function __construct(private BranchService $service, private WebSocketService $webSocketService) {}
+  public function __construct(private BranchService $branchService, private WebSocketService $webSocketService) {}
 
   public function connect(string $connection_code): JsonResponse
   {
-    $branch = $this->service->findByConnectionCode($connection_code);
+    $branch = $this->branchService->findByConnectionCode($connection_code);
     $websocket_config = $this->webSocketService->getWebSocketConfig("print-branch-{$branch->id}", 'print.requested');
     return response()->json(
       [

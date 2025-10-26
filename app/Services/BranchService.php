@@ -40,10 +40,6 @@ class BranchService extends BaseService
 
   public function findByConnectionCode(string $connection_code): Branch
   {
-    $branch = $this->model()->findByConnectionCode($connection_code)->first();
-    if (!$branch) {
-      throw new ModelNotFoundException("Mã kết nối không hợp lệ");
-    }
-    return $branch;
+    return $this->model()->where('connection_code', $connection_code)->firstOrFail();
   }
 }
