@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -22,13 +22,23 @@ class OrderCompleted implements ShouldBroadcastNow
     $this->print = $print;
   }
 
-  public function broadcastOn(): PrivateChannel
+  public function broadcastOn(): Channel
   {
-    return new PrivateChannel('order.' . $this->order->id);
+    return new Channel('order.' . $this->order->id);
   }
 
   public function broadcastAs(): string
   {
     return 'order.completed';
+  }
+
+  /**
+   * Get the data to broadcast.
+   */
+  public function broadcastWith(): array
+  {
+    return [
+      'order' => $this->order
+    ];
   }
 }

@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\Invoice;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -23,9 +23,9 @@ class InvoiceCreated implements ShouldBroadcastNow
     $this->invoice = $invoice;
   }
 
-  public function broadcastOn(): PrivateChannel
+  public function broadcastOn(): Channel
   {
-    return new PrivateChannel('order.' . $this->invoice->order_id);
+    return new Channel('order.' . $this->invoice->order_id);
   }
 
   public function broadcastAs(): string
