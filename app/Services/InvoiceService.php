@@ -96,9 +96,9 @@ class InvoiceService extends BaseService
       // Fire InvoiceCreated event after all data is saved
       event(new InvoiceCreated($invoice));
 
-      // Nếu có yêu cầu in (print = true), broadcast PrintRequested
+      // Nếu có yêu cầu in (requestPrint = true)
       if ($requestPrint) {
-        $invoice->markAsPrintRequested();
+        $invoice = $this->requestPrint($invoice->id);
       }
 
       return $invoice;
