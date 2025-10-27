@@ -26,8 +26,7 @@ class TemplateController extends Controller
   {
     $templates = $this->service->getUsedTemplateInBranch(
       $request->get('branch_id'),
-      $request->get('type'),
-      $request->get('is_active', true)
+      $request->get('type')
     );
 
     return response()->json(
