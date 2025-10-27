@@ -2,7 +2,7 @@
 
 namespace App\Http\Print\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\Print\Resources\PrintRequestResource;
 use App\Http\Print\Responses\PrintApiResponse;
 use App\Services\PrintDataService;

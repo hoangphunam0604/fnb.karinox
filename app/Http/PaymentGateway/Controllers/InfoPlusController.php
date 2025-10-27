@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Payments;
+namespace App\Http\PaymentGateway\Controllers;
 
 use App\Enums\PaymentStatus;
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\PaymentGateways\InfoPlusGateway;
@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 
 class InfoPlusController extends Controller

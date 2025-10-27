@@ -2,7 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Services\CustomerImportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

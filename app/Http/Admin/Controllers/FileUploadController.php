@@ -2,7 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

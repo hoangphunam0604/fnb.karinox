@@ -9,6 +9,7 @@ use App\Http\POS\Controllers\VoucherController;
 use App\Http\Controllers\Payments\InfoPlusController;
 use App\Http\Controllers\Payments\VNPayController;
 use App\Http\Controllers\Payments\CashController;
+use App\Http\POS\Controllers\InvoiceController;
 use App\Http\POS\Controllers\PrintController;
 use App\Http\POS\Controllers\CashInventoryController;
 
@@ -38,6 +39,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
 
   // Cash inventory endpoint
   Route::post('/cash-inventory', [CashInventoryController::class, 'store']);
+  Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
 
   //Gửi lệnh in
   Route::prefix('print')->group(function () {

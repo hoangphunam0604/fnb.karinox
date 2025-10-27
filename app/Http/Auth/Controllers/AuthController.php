@@ -2,7 +2,7 @@
 
 namespace App\Http\Auth\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Auth\Resources\UserResource;
 use Tymon\JWTAuth\Facades\JWTAuth;

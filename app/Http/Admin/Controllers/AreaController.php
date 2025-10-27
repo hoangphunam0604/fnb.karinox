@@ -2,7 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\AreaRequest;
 use App\Http\Admin\Resources\AreaResource;
 use App\Services\AreaService;

@@ -3,15 +3,13 @@
 namespace App\Events;
 
 use App\Models\Invoice;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class InvoiceCreated
+class InvoiceCreated implements ShouldBroadcastNow
 {
   use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -25,15 +23,13 @@ class InvoiceCreated
     $this->invoice = $invoice;
   }
 
-  /**
-   * Get the channels the event should broadcast on.
-   *
-   * @return array<int, \Illuminate\Broadcasting\Channel>
-   */
-  public function broadcastOn(): array
+  public function broadcastOn(): PrivateChannel
   {
-    return [
-      new PrivateChannel('channel-name'),
-    ];
+    return new PrivateChannel('order.' . $this->invoice->order_id);
+  }
+
+  public function broadcastAs(): string
+  {
+    return 'invoice.completed';
   }
 }

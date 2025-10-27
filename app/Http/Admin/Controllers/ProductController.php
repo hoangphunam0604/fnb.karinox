@@ -2,7 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\ProductRequest;
 use App\Http\Admin\Resources\ProductResource;
 use App\Http\Admin\Resources\ProductDetailResource;

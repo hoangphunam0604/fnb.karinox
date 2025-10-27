@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Auth\Controllers\AuthController;
+use App\Http\Common\Controllers\BranchController;
+
+Route::get('branches', [BranchController::class, 'getUserBranches']);
+Route::post('branches/select', [BranchController::class, 'selectBranch']);
 
 Route::group(['prefix' => 'auth'], function () {
   Route::post('login', [AuthController::class, 'login']);

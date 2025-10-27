@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api\App;
+namespace App\Http\Common\Controllers;
 
 use App\Enums\CommonStatus;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\App\BranchResource;
+use App\Http\Common\Controllers\Controller;
+use App\Http\Common\Resources\BranchResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\BranchService;

@@ -3,7 +3,7 @@
 namespace App\Http\POS\Controllers;
 
 use App\Events\PrintRequested;
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;

@@ -3,7 +3,7 @@
 namespace App\Http\Admin\Controllers;
 
 use App\Enums\CommonStatus;
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\BranchRequest;
 use App\Http\Admin\Resources\BranchResource;
 use App\Services\BranchService;

@@ -2,7 +2,7 @@
 
 namespace App\Http\POS\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\POS\Resources\CategoryProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\Request;

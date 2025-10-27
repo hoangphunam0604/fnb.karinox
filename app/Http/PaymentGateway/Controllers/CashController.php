@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Payments;
+namespace App\Http\PaymentGateway\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Models\Order;
 use App\Services\PaymentGateways\CashGateway;
-use Illuminate\Http\Request;
 
 class CashController extends Controller
 {
@@ -31,7 +30,7 @@ class CashController extends Controller
       return response()->json([
         'status' => true,
         'message' => 'Thanh toán thành công',
-        'order' => [
+        'data' => [
           'order_id' => $order->id,
           'order_code' => $order->code,
           'payment_method' => 'cash'

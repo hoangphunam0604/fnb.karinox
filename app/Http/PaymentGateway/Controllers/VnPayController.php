@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Payments;
+namespace App\Http\PaymentGateway\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\PaymentGateways\VNPayQRService;

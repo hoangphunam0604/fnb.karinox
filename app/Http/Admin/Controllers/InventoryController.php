@@ -2,7 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Resources\InventoryTransactionResource;
 use App\Http\Admin\Resources\StockReportResource;
 use App\Http\Admin\Resources\ProductStockCardResource;
@@ -31,7 +31,7 @@ class InventoryController extends Controller
   public function index(Request $request)
   {
     $branchId = $request->input('branch_id') ?? (app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null);
-    
+
     if (!$branchId) {
       return response()->json(['error' => 'Vui lòng chọn chi nhánh'], 400);
     }

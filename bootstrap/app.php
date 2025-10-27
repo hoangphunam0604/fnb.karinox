@@ -1,7 +1,6 @@
 <?php
 
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Common\Middleware\HandleAppearance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,15 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
     $middleware->web(append: [
       HandleAppearance::class,
-      HandleInertiaRequests::class,
       AddLinkHeadersForPreloadedAssets::class,
     ]);
     $middleware->api(append: [
       \Illuminate\Http\Middleware\HandleCors::class,
     ]);
     $middleware->alias([
-      'is_karinox_app' => \App\Http\Middleware\IsKarinoxAppMiddleware::class,
-      'set_karinox_branch_id' => \App\Http\Middleware\SetKarinoxBranchIdMiddleware::class,
+      'is_karinox_app' => \App\Http\Common\Middleware\IsKarinoxAppMiddleware::class,
+      'set_karinox_branch_id' => \App\Http\Common\Middleware\SetKarinoxBranchIdMiddleware::class,
       // Spatie permission middleware aliases
       'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
       'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

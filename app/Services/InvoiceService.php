@@ -16,16 +16,13 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceService extends BaseService
 {
-  protected TaxService $taxService;
-  protected PointService $pointService;
-  protected VoucherService $voucherService;
-  protected StockDeductionService $stockDeductionService;
 
   public function __construct(
-    TaxService $taxService,
-    PointService $pointService,
-    VoucherService $voucherService,
-    StockDeductionService $stockDeductionService
+    protected TaxService $taxService,
+    protected PointService $pointService,
+    protected VoucherService $voucherService,
+    protected StockDeductionService $stockDeductionService,
+    protected CustomerService $customerService
   ) {
     $this->taxService = $taxService;
     $this->pointService = $pointService;
@@ -42,10 +39,15 @@ class InvoiceService extends BaseService
   {
     return Invoice::where('code', strtoupper($code))->first();
   }
+
   public function findById(int $id): ?Invoice
   {
-    return Invoice::find($id);
+    return Invoice::findOrFail($id);
   }
+
+  /**
+   * Tạo hóa đơn từ đơn hàng đã hoàn tất
+   */
   public function createInvoiceFromOrder(int $orderId, bool $requestPrint = false): Invoice
   {
 
@@ -92,6 +94,18 @@ class InvoiceService extends BaseService
 
       $order->loadMissing(['items', 'items.toppings']);
       $this->copyOrderItemsToInvoice($order, $invoice);
+      if ($invoice->customer) {
+        // Chuyển điểm đã sử dụng từ đơn đặt hàng sang hoá đơn
+        $this->pointService->transferUsedPointsToInvoice($invoice);
+
+        // Cập nhật tổng số tiền đã chi tiêu
+        $this->customerService->updateTotalSpent($invoice->customer, $invoice->total_amount);
+        //Cộng điểm từ hoá đơn
+        $this->pointService->earnPointsOnTransactionCompletion($invoice);
+        // Cập nhật cấp độ thành viên
+        $this->customerService->updateMembershipLevel($invoice->customer);
+      }
+      $invoice->refresh();
 
       // Fire InvoiceCreated event after all data is saved
       event(new InvoiceCreated($invoice));

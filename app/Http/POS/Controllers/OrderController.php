@@ -2,7 +2,7 @@
 
 namespace App\Http\POS\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Common\Controllers\Controller;
 use App\Http\POS\Resources\OrderResource;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
@@ -54,7 +54,7 @@ class OrderController extends Controller
     $order = $this->orderService->removeVoucherUsed($order_id);
     return new OrderResource($order);
   }
-  
+
   public function cancel($order_id)
   {
     $result = $this->orderService->cancelOrder($order_id);
