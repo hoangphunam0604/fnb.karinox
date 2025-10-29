@@ -56,5 +56,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
     Route::post('/infoplus/{code}/get-qr-code', [InfoPlusController::class, 'getQrCode']);
   });
 });
+Route::get('/invoices/{id}/print/{brandId}/{type}', [InvoiceController::class, 'requestPrint']);
+
 
 // Print Client Routes đã được thay thế bằng WebSocket + PrintService

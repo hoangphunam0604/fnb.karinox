@@ -82,12 +82,12 @@ class PrintDataService
         'type' => 'invoice',
         'metadata' => $invoice->toArray()
       ],
-      'kitchen_ticket' => [
+      'kitchen' => [
         'id' => $kitchenTicket->id,
         'type' => 'kitchen',
         'metadata' => $kitchenTicket->metadata
       ],
-      'print_labels' => collect($printLabels)->map(fn($label) => [
+      'labels' => collect($printLabels)->map(fn($label) => [
         'id' => $label->id,
         'type' => 'label',
         'metadata' => $label->toArray()
