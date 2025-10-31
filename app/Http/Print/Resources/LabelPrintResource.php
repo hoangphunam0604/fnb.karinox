@@ -25,8 +25,11 @@ class LabelPrintResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
-      'invoice_code' => $this->invoice->code,
-      'order_code' => $this->invoice->order?->code,
+      'Ma_Don_Hang' => $this->invoice->code,
+      'Nhan_Vien_Ban_Hang' => $this->staff->fullname,
+      'Ngay_Thang_Nam' => $this->invoice->created_at->format('d/m/Y H:i:s'),
+      'Ma_Dat_Hang' => $this->invoice->order?->code,
+      'Ten_Khach_Hang' => $this->invoice->customer_name ?? 'Khách lẻ',
       'table_name' => $this->invoice->table_name ?? 'N/A',
       'product' => [
         'id' => $this->item->product_id,

@@ -507,7 +507,7 @@ const basicVariables = {
     '{{staff_name}}': 'Tên nhân viên',
     '{{total_amount}}': 'Tổng tiền (đã format)',
     '{{subtotal}}': 'Tạm tính (đã format)',
-    '{{discount_amount}}': 'Giảm giá (đã format)',
+    '{{voucher_discount}}': 'Giảm giá (đã format)',
     '{{created_at}}': 'Thời gian (dd/mm/yyyy hh:mm)',
 };
 ```

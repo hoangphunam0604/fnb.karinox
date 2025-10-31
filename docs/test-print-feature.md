@@ -88,7 +88,7 @@ Content-Type: application/json
 {
     "items_count": 4,
     "total_amount": 173000,
-    "discount_amount": 10000,
+    "voucher_discount": 10000,
     "voucher_code": "TESTDISCOUNT",
     "customer": {
         "name": "Nguyễn Văn Test",

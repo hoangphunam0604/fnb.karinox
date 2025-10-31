@@ -21,7 +21,7 @@ Sau khi hoá đơn được tạo thành công (InvoiceCreated event), hệ th�
         "order_code": "CN01N251025ORD0001",
         "table_name": "Bàn 5",
         "subtotal_price": 150000,
-        "discount_amount": 15000,
+        "voucher_discount": 15000,
         "reward_discount": 10000,
         "total_price": 125000,
         "paid_amount": 130000,

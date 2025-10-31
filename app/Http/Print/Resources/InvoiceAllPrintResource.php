@@ -5,7 +5,7 @@ namespace App\Http\Print\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class InvoicePrintResource extends JsonResource
+class InvoiceAllPrintResource extends JsonResource
 {
   /**
    * Transform the resource into an array.
@@ -15,13 +15,6 @@ class InvoicePrintResource extends JsonResource
   public function toArray(Request $request): array
   {
     return [
-      // Thông tin nhân viên
-      'Nhan_Vien_Ban_Hang' => $this->staff->fullname,
-      'Ma_Don_Hang' => $this->invoice->code,
-      'Ngay_Thang_Nam' => $this->invoice->created_at->format('d/m/Y H:i:s'),
-      'Ten_Khach_Hang' => $this->invoice->customer_name ?? 'Khách lẻ',
-      'Ma_Khach_Hang' => $this->invoice->loyalty_card_number ?? 'Khách lẻ',
-      'table_name' => $this->invoice->table_name ?? 'N/A',
       // Thông tin nhân viên
       'staff' => [
         'name' => $this->staff?->name ?? 'N/A'
@@ -42,7 +35,7 @@ class InvoicePrintResource extends JsonResource
         'order_code' => $this->order?->code,
         'table_name' => $this->table_name ?? 'N/A',
         'subtotal_price' => $this->subtotal_price,
-        'voucher_discountt' => $this - voucher_discountt,
+        'voucher_discount' => $this->voucher_discount,
         'reward_discount' => $this->reward_discount,
         'total_price' => $this->total_price,
         'paid_amount' => $this->paid_amount,

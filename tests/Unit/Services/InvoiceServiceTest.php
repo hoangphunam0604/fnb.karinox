@@ -90,7 +90,7 @@ class InvoiceServiceTest extends TestCase
       'branch_id' => $branch->id,
       'order_status' => OrderStatus::COMPLETED,
       'subtotal_price' => 70000, //sản phẩm 50k, 2 topping 20k
-      'discount_amount' => 20000, // Dùng mã giảm giá 20k
+      'voucher_discount' => 20000, // Dùng mã giảm giá 20k
       'reward_discount' =>  10000, // Dùng điểm giảm 10k
       'total_price' =>  40000 // Dùng điểm giảm 10k
     ]);
@@ -137,7 +137,7 @@ class InvoiceServiceTest extends TestCase
 
     //Kiểm tra giá trị đơn hàng hợp lệ
     $this->assertEquals(70000, $invoice->subtotal_price);
-    $this->assertEquals(20000, $invoice->discount_amount);
+    $this->assertEquals(20000, $invoice->voucher_discount);
     $this->assertEquals(10000, $invoice->reward_discount);
     $this->assertEquals(40000, $invoice->total_price);
     $this->assertEquals(5, $invoice->tax_rate);

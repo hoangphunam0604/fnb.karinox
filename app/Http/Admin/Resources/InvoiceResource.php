@@ -15,7 +15,7 @@ class InvoiceResource extends JsonResource
       'order_id'  =>  $this->order_id,
       'code'  =>  $this->code,
       'subtotal_price'  =>  $this->subtotal_price,
-      'discount_amount' =>  $this->discount_amount,
+      'voucher_discount' =>  $this->voucher_discount,
       'reward_discount' =>  $this->reward_discount,
       'total_price' =>  $this->total_price,
       'paid_amount' =>  $this->paid_amount,

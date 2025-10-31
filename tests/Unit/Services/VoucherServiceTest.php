@@ -595,7 +595,7 @@ class VoucherServiceTest extends TestCase
     $this->assertSame(config('messages.voucher.applied_success'), $result->message);
 
     // Kiểm tra giá trị giảm giá có chính xác không
-    $this->assertEquals(10000, $order->refresh()->discount_amount);
+    $this->assertEquals(10000, $order->refresh()->voucher_discount);
     $this->assertEquals(40000, $order->refresh()->total_price);
 
     // Kiểm tra số lần sử dụng voucher có tăng không
@@ -606,7 +606,7 @@ class VoucherServiceTest extends TestCase
       'voucher_id' => $voucher->id,
       'order_id' => $order->id,
       'customer_id' => $order->customer_id,
-      'discount_amount' => 10000,
+      'voucher_discount' => 10000,
     ]);
   }
   #[Test]
@@ -636,7 +636,7 @@ class VoucherServiceTest extends TestCase
     $this->assertSame(config('messages.voucher.applied_success'), $result->message);
 
     // Kiểm tra giá trị giảm giá có chính xác không
-    $this->assertEquals(15000, $order->refresh()->discount_amount); // Chỉ giảm tối đa 15k
+    $this->assertEquals(15000, $order->refresh()->voucher_discount); // Chỉ giảm tối đa 15k
     $this->assertEquals(65000, $order->refresh()->total_price); // Tổng còn lại: 80k - 15k
 
     // Kiểm tra số lần sử dụng voucher có tăng không
@@ -647,7 +647,7 @@ class VoucherServiceTest extends TestCase
       'voucher_id' => $voucher->id,
       'order_id' => $order->id,
       'customer_id' => $order->customer_id,
-      'discount_amount' => 15000,
+      'voucher_discount' => 15000,
     ]);
   }
 
@@ -770,7 +770,7 @@ class VoucherServiceTest extends TestCase
     VoucherUsage::factory()->create([
       'voucher_id' => $voucher->id,
       'order_id' => $order->id,  // Giả định đơn hàng có ID 123
-      'discount_amount' => 10000
+      'voucher_discount' => 10000
     ]);
 
     // Gọi hàm restoreVoucherUsage()
@@ -826,7 +826,7 @@ class VoucherServiceTest extends TestCase
     VoucherUsage::factory()->create([
       'voucher_id' => $voucher->id,
       'order_id' => $order->id,  // Giả định đơn hàng có ID 123
-      'discount_amount' => 10000
+      'voucher_discount' => 10000
     ]);
 
     // Gọi hàm restoreVoucherUsage()

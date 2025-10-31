@@ -90,7 +90,7 @@ GET /api/print/data/provisional/{order_id}
             "table_name": "Bàn 01",
             "customer_name": "Nguyễn Văn A",
             "subtotal_price": 100000,
-            "discount_amount": 10000,
+            "voucher_discount": 10000,
             "total_price": 90000,
             "note": "Không đá",
             "created_at": "26/10/2025 14:30:00",

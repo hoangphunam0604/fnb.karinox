@@ -191,7 +191,7 @@ class OrderServiceTest extends TestCase
       ->andReturnUsing(function ($order) {
         $order->update([
           'voucher_code' => 'DISCOUNT10',
-          'discount_amount' => 10000,
+          'voucher_discount' => 10000,
           'total_price' => 90000
         ]);
         return ValidationResult::success(config('messages.voucher.used'));
@@ -228,7 +228,7 @@ class OrderServiceTest extends TestCase
 
     $this->assertNotNull($order);
     $this->assertNull($order->voucher_code);
-    $this->assertEquals(0, $order->discount_amount);
+    $this->assertEquals(0, $order->voucher_discount);
     $this->assertEquals(100000, $order->total_price); // Không áp dụng giảm giá
   }
   #[Test]
@@ -278,7 +278,7 @@ class OrderServiceTest extends TestCase
 
     // Giả lập dữ liệu giảm giá
     $order->update([
-      'discount_amount' => 5000,
+      'voucher_discount' => 5000,
       'reward_discount' => 2000
     ]);
 
@@ -286,7 +286,7 @@ class OrderServiceTest extends TestCase
     $order->refresh();
 
     $this->assertEquals(100000, $order->subtotal_price);
-    $this->assertEquals(5000, $order->discount_amount);
+    $this->assertEquals(5000, $order->voucher_discount);
     $this->assertEquals(2000, $order->reward_discount);
     $this->assertEquals(93000, $order->total_price); // 100000 - 5000 - 2000
   }

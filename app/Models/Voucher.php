@@ -63,7 +63,7 @@ class Voucher extends Model
   public function invoices()
   {
     return $this->belongsToMany(Invoice::class, 'invoice_vouchers')
-      ->withPivot('invoice_total_before_discount', 'discount_amount')
+      ->withPivot('invoice_total_before_discount', 'voucher_discount')
       ->withTimestamps();
   }
 

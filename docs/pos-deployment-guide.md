@@ -254,7 +254,7 @@ Response:
     "order_code": "CN01N251019ORD0123",
     "table_name": "Bàn 01",
     "subtotal": 54000,
-    "discount_amount": 5400,
+    "voucher_discount": 5400,
     "total_amount": 48600,
     "order_status": "pending",
     "payment_status": "unpaid",
@@ -561,7 +561,7 @@ class OrderManager {
             items: [],
             customer: null,
             subtotal: 0,
-            discount_amount: 0,
+            voucher_discount: 0,
             total_amount: 0,
             voucher_code: null,
             reward_points_used: 0,
@@ -639,7 +639,7 @@ class OrderManager {
         // Apply reward points
         const pointsValue = this.currentOrder.reward_points_used || 0;
 
-        this.currentOrder.total_amount = this.currentOrder.subtotal - this.currentOrder.discount_amount - pointsValue;
+        this.currentOrder.total_amount = this.currentOrder.subtotal - this.currentOrder.voucher_discount - pointsValue;
     }
 
     shouldAutoPrint() {

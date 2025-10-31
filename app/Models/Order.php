@@ -29,7 +29,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'invoice_id',
 
     'subtotal_price',
-    'discount_amount',
+    'voucher_discount',
     'reward_points_used',
     'reward_discount',
     'total_price',
@@ -50,7 +50,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   protected $casts = [
     'subtotal_price'  => 'integer',
-    'discount_amount' => 'integer',
+    'voucher_discount' => 'integer',
     'reward_points_used'  => 'integer',
     'reward_discount' => 'integer',
     'total_price' => 'integer',
@@ -222,8 +222,8 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
 
   public function removeVoucherUsed(): void
   {
-    $total_price = $this->total_price + $this->discount_amount;
-    $this->discount_amount = 0;
+    $total_price = $this->total_price + $this->voucher_discount;
+    $this->voucher_discount = 0;
     $this->total_price = $total_price;
     $this->voucher_code = null;
     $this->voucher_id = null;

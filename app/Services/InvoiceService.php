@@ -67,29 +67,43 @@ class InvoiceService extends BaseService
       ];
 
       $invoice = Invoice::create([
-        'order_id' => $order->id,
-        'customer_id' => $order->customer_id,
         'branch_id' => $order->branch_id,
         'user_id' => $order->user_id, // Nhân viên bán hàng
+        // Thông tin khách hàng
+        'customer_id' => $order->customer_id,
+        'loyalty_card_number' => $order->customer?->loyalty_card_number,
+        'customer_name' => $order->customer?->name ?? 'Khách lẻ',
+        'customer_phone' => $order->customer?->phone ?? '',
+        'customer_email' => $order->customer?->email ?? '',
+        'customer_address' => $order->customer?->address ?? '',
+
+        'order_id' => $order->id,
+        'order_code' => $order->code,
+        'table_id' => $order->table?->id, // Lưu id bàn
         'table_name' => $order->table?->name, // Lưu tên bàn
 
         'subtotal_price' => $order->subtotal_price,
-        'discount_amount' => $order->discount_amount,
+
+        'voucher_id' => $order->voucher_id,
+        'voucher_code' => $order->voucher_code,
+        'voucher_discount' => $order->voucher_discount,
+
         'reward_points_used' => $order->reward_points_used,
         'reward_discount' => $order->reward_discount,
+
         'total_price' => $order->total_price,
+        'paid_amount' => $totalPrice,
 
         'tax_rate' => $taxData['tax_rate'],
         'tax_amount' => $taxData['tax_amount'],
         'total_price_without_vat' => $taxData['total_price_without_vat'],
 
-        'paid_amount' => $totalPrice,
         'invoice_status' => InvoiceStatus::COMPLETED,
         'payment_status' => PaymentStatus::PAID,
         'payment_method' => $order->payment_method,
         'note' => $order->note,
       ]);
-      $this->voucherService->transferUsedPointsToInvoice($order->id, $invoice->id);
+      $this->voucherService->transferUsedVoucherToInvoice($order->id, $invoice->id);
       $this->pointService->earnPointsOnTransactionCompletion($invoice);
 
       $order->loadMissing(['items', 'items.toppings']);

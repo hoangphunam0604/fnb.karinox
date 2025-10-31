@@ -10,7 +10,7 @@ class InvoiceVoucher extends Model
   use HasFactory;
   public $incrementing = false; // Không sử dụng id tự tăng
   protected $primaryKey = ['invoice_id', 'voucher_id']; // Định nghĩa khóa chính là 2 cột
-  protected $fillable = ['invoice_id', 'voucher_id', 'invoice_total_before_discount', 'discount_amount'];
+  protected $fillable = ['invoice_id', 'voucher_id', 'invoice_total_before_discount', 'voucher_discount'];
 
 
   public function invoice()

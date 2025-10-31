@@ -28,7 +28,7 @@ class PrintDataService
       'table_name' => $order->table?->name,
       'customer_name' => $order->customer?->name ?? 'Khách lẻ',
       'subtotal_price' => $order->subtotal_price,
-      'discount_amount' => $order->discount_amount,
+      'voucher_discount' => $order->voucher_discount,
       'total_price' => $order->total_price,
       'note' => $order->note,
       'created_at' => $order->created_at->format('d/m/Y H:i:s'),

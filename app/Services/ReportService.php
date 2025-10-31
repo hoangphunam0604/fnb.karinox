@@ -36,10 +36,10 @@ class ReportService
       }
 
       $totalRevenue = $employeeInvoices->sum('total_price');
-      $totalVoucherDiscount = $employeeInvoices->sum('discount_amount');
+      $totalVoucherDiscount = $employeeInvoices->sum('voucher_discount');
       $totalRewardPointsUsed = $employeeInvoices->sum('reward_points_used');
       $totalRewardDiscount = $employeeInvoices->sum('reward_discount');
-      $voucherCount = $employeeInvoices->where('discount_amount', '>', 0)->count();
+      $voucherCount = $employeeInvoices->where('voucher_discount', '>', 0)->count();
 
       // Nhóm theo phương thức thanh toán
       $paymentMethods = $employeeInvoices->groupBy('payment_method')->map(function ($methodInvoices, $method) {
@@ -132,7 +132,7 @@ class ReportService
         return [
           'date' => $date,
           'revenue' => $dayInvoices->sum('total_price'),
-          'voucher_discount' => $dayInvoices->sum('discount_amount'),
+          'voucher_discount' => $dayInvoices->sum('voucher_discount'),
           'reward_discount' => $dayInvoices->sum('reward_discount'),
           'invoice_count' => $dayInvoices->count()
         ];
@@ -142,7 +142,7 @@ class ReportService
         'employee_id' => $user->id,
         'employee_name' => $user->name,
         'total_revenue' => $employeeInvoices->sum('total_price'),
-        'total_voucher_discount' => $employeeInvoices->sum('discount_amount'),
+        'total_voucher_discount' => $employeeInvoices->sum('voucher_discount'),
         'total_reward_discount' => $employeeInvoices->sum('reward_discount'),
         'total_invoice_count' => $employeeInvoices->count(),
         'daily_sales' => $dailySales

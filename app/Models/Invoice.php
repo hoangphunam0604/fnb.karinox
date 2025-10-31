@@ -19,13 +19,16 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   use HasFactory;
   protected $fillable = [
     'branch_id',
-    'order_id',
     'user_id',
+    'order_id',
+    'order_code',
+    'table_room_id',
+    'table_name',
     'code',
     'table_name',
 
     'subtotal_price',
-    'discount_amount',
+    'voucher_discount',
     'reward_discount',
     'total_price',
 
@@ -144,7 +147,7 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
    */
   public function canBeRefunded()
   {
-    return $this->payment_status === PaymentStatus::PAID && $this->discount_amount == 0;
+    return $this->payment_status === PaymentStatus::PAID && $this->voucher_discount == 0;
   }
 
   /**

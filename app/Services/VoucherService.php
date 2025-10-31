@@ -437,14 +437,14 @@ class VoucherService
         'order_id' => $order->id,
         'invoice_total_before_discount' => $totalBeforeDiscount,
         'invoice_total_after_discount' => $totalBeforeDiscount - $discount,
-        'discount_amount' => $discount,
+        'voucher_discount' => $discount,
         'used_at' => now(),
         'voucher_snapshot' => json_encode($voucherSnapshot),
       ]);
       $order->update([
         'voucher_id' => $voucher->id,
         'voucher_code' => $voucher->code,
-        'discount_amount' => $discount,
+        'voucher_discount' => $discount,
         'total_price' => $totalBeforeDiscount - $discount
       ]);
 
@@ -462,7 +462,7 @@ class VoucherService
   /**
    * Hoá đơn thành công: Chuyển voucher đã sử dụng từ đơn hàng sang hóa đơn tương ứng.
    */
-  public function transferUsedPointsToInvoice(int $orderId, int $invoiceId): void
+  public function transferUsedVoucherToInvoice(int $orderId, int $invoiceId): void
   {
     VoucherUsage::where('order_id', $orderId)->update(['invoice_id' => $invoiceId]);
   }

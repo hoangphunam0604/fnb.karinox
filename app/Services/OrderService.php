@@ -146,7 +146,7 @@ class OrderService
     $subtotal = $order->items->sum(fn($item) => $item->total_price);
 
     // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
-    $discountAmount = $order->discount_amount ?? 0;
+    $discountAmount = $order->voucher_discount ?? 0;
 
     // 3️⃣ Lấy số tiền giảm từ điểm thưởng (nếu có)
     $rewardDiscount = $order->reward_discount ?? 0;
@@ -157,7 +157,7 @@ class OrderService
     // 5️⃣ Cập nhật vào đơn hàng
     $order->update([
       'subtotal_price' => $subtotal,
-      'discount_amount' => $discountAmount,
+      'voucher_discount' => $discountAmount,
       'reward_discount' => $rewardDiscount,
       'total_price' => $totalPrice
     ]);
@@ -540,7 +540,7 @@ class OrderService
   private function applyDiscounts(Order $order, array $data): void
   {
     // 2️⃣ Áp dụng voucher nếu có
-    if (!empty($data['voucher_code']) && !$order->discount_amount) {
+    if (!empty($data['voucher_code']) && !$order->voucher_discount) {
       $order->refresh();
       $this->voucherService->applyVoucher($order, $data['voucher_code']);
     }

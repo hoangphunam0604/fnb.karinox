@@ -23,7 +23,7 @@ class OrderResource extends JsonResource
       'receiver_id' => $this->receiver_id,
       'customer_id' => $this->customer_id,
       'subtotal_price' => $this->subtotal_price,
-      'discount_amount' => $this->discount_amount,
+      'voucher_discount' => $this->voucher_discount,
       'reward_points_used' => $this->reward_points_used,
       'reward_discount' => $this->reward_discount,
       'total_price' => $this->total_price,

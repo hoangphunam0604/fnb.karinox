@@ -16,7 +16,7 @@ return new class extends Migration {
       $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade'); // Giả sử khách hàng lưu trong bảng `users`
       $table->foreignId('invoice_id')->nullable()->constrained('invoices')->onDelete('cascade'); // Lưu voucher vào hóa đơn khi hoàn tất đơn hàng
       $table->timestamp('used_at')->useCurrent(); // Thời điểm sử dụng
-      $table->decimal('discount_amount', 10, 2); // Số tiền giảm giá thực tế
+      $table->decimal('voucher_discount', 10, 2); // Số tiền giảm giá thực tế
       $table->decimal('invoice_total_before_discount', 10, 2);
       $table->decimal('invoice_total_after_discount', 10, 2);
       $table->json('voucher_snapshot')->nullable(); // Snapshot of voucher details at time of use

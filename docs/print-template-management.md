@@ -198,18 +198,18 @@ Authorization: Bearer {jwt_token}
 
 ### **Biến cơ bản hỗ trợ:**
 
-| Variable              | Description       | Example                  |
-| --------------------- | ----------------- | ------------------------ |
-| `{{order_code}}`      | Mã đơn hàng       | "ORD-001"                |
-| `{{table_name}}`      | Tên bàn           | "Bàn 05"                 |
-| `{{branch_name}}`     | Tên chi nhánh     | "Karinox Coffee"         |
-| `{{branch_address}}`  | Địa chỉ chi nhánh | "123 Nguyễn Văn Linh..." |
-| `{{branch_phone}}`    | SĐT chi nhánh     | "0901234567"             |
-| `{{staff_name}}`      | Tên nhân viên     | "Nguyễn Văn A"           |
-| `{{total_amount}}`    | Tổng tiền         | "150,000"                |
-| `{{subtotal}}`        | Tạm tính          | "140,000"                |
-| `{{discount_amount}}` | Giảm giá          | "10,000"                 |
-| `{{created_at}}`      | Thời gian         | "19/10/2025 15:30"       |
+| Variable               | Description       | Example                  |
+| ---------------------- | ----------------- | ------------------------ |
+| `{{order_code}}`       | Mã đơn hàng       | "ORD-001"                |
+| `{{table_name}}`       | Tên bàn           | "Bàn 05"                 |
+| `{{branch_name}}`      | Tên chi nhánh     | "Karinox Coffee"         |
+| `{{branch_address}}`   | Địa chỉ chi nhánh | "123 Nguyễn Văn Linh..." |
+| `{{branch_phone}}`     | SĐT chi nhánh     | "0901234567"             |
+| `{{staff_name}}`       | Tên nhân viên     | "Nguyễn Văn A"           |
+| `{{total_amount}}`     | Tổng tiền         | "150,000"                |
+| `{{subtotal}}`         | Tạm tính          | "140,000"                |
+| `{{voucher_discount}}` | Giảm giá          | "10,000"                 |
+| `{{created_at}}`       | Thời gian         | "19/10/2025 15:30"       |
 
 ### **Loop cho Items:**
 
@@ -244,7 +244,7 @@ NV: {{staff_name}}
 {{/items}}
 ----------------------------------------
 Tạm tính: {{subtotal}}đ
-Giảm giá: {{discount_amount}}đ
+Giảm giá: {{voucher_discount}}đ
 TỔNG CỘNG: {{total_amount}}đ
 ========================================
 ```

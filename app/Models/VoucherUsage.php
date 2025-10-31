@@ -15,7 +15,7 @@ class VoucherUsage extends Model
     'customer_id',
     'invoice_id',
     'used_at',
-    'discount_amount',
+    'voucher_discount',
     'invoice_total_before_discount',
     'invoice_total_after_discount',
     'voucher_snapshot',
