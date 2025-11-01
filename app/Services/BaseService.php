@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 abstract class BaseService
 {
@@ -17,6 +18,14 @@ abstract class BaseService
 
   protected function applySearch($query, array $params)
   {
+    if (Schema::hasColumn($this->model()->getTable(), 'branch_id')) {
+      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $request->query('branch_id');
+
+      if ($branchId) {
+        $query->where('branch_id', intval($branchId));
+      }
+    }
+
     // ids có thể là array hoặc chuỗi "1,2,3"
     $ids = $params['ids'] ?? [];
     if (is_string($ids)) {
@@ -24,7 +33,6 @@ abstract class BaseService
     } elseif (is_array($ids)) {
       $ids = array_filter(array_map('intval', $ids));
     }
-
     if (!empty($ids)) {
       $query->whereIn('id', $ids);
     }
@@ -47,7 +55,7 @@ abstract class BaseService
     return $this->model()->newQuery()->with($this->with)->withCount($this->withCount);
   }
 
-  public function getList(array $params = [])
+  public function getList($branchId = null, array $params = [])
   {
     $query = $this->getQueryBuilder();
 
