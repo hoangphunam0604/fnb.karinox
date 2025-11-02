@@ -105,6 +105,7 @@ class ProductService extends BaseService
 
   protected function applySearch($query, array $params)
   {
+    $query = parent::applySearch($query, $params);
     if (!empty($params['keyword'])):
       $keyword = $params['keyword'];
       $query->where(function ($subQuery) use ($keyword) {
@@ -142,7 +143,6 @@ class ProductService extends BaseService
       }
     endif;
 
-    $query = parent::applySearch($query, $params);
     return $query;
   }
 

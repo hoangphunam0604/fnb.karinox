@@ -19,8 +19,7 @@ abstract class BaseService
   protected function applySearch($query, array $params)
   {
     if (Schema::hasColumn($this->model()->getTable(), 'branch_id')) {
-      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $request->query('branch_id');
-
+      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $params['branch_id'];
       if ($branchId) {
         $query->where('branch_id', intval($branchId));
       }
@@ -55,7 +54,7 @@ abstract class BaseService
     return $this->model()->newQuery()->with($this->with)->withCount($this->withCount);
   }
 
-  public function getList($branchId = null, array $params = [])
+  public function getList(array $params = [])
   {
     $query = $this->getQueryBuilder();
 

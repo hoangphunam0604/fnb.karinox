@@ -49,4 +49,10 @@ class PrintTemplateController extends Controller
     $this->service->delete($template);
     return response()->noContent();
   }
+
+  public function setDefault($id)
+  {
+    $updated = $this->service->setDefault($id);
+    return new PrintTemplateResource($updated);
+  }
 }

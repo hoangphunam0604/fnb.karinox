@@ -51,6 +51,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   Route::post('products/import', [ProductController::class, 'import']);
 
   Route::apiResource('products', ProductController::class);
+
+  Route::post('print-templates/{id}/set-default', [PrintTemplateController::class, 'setDefault']);
   Route::apiResource('print-templates', PrintTemplateController::class);
   Route::apiResource('holidays', HolidayController::class);
   Route::apiResource('users', UserController::class);

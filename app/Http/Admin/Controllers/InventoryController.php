@@ -39,7 +39,7 @@ class InventoryController extends Controller
     $perPage = $request->input('per_page', 20);
 
     $transactions = $this->inventoryService->getInventoryTransactions($branchId, $transactionType, $perPage);
-
+    $transactions->load(['details']);
     return InventoryTransactionResource::collection($transactions);
   }
 

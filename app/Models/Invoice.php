@@ -315,4 +315,24 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
   {
     $this->update(['voucher_id' => null]);
   }
+
+  public function getPaymentMethodNameAttribute(): string
+  {
+    return match ($this->payment_method) {
+      'cash' => 'Tiền mặt',
+      'card' => 'Thẻ tín dụng/Ghi nợ',
+      'infoplus' => 'Quét mã QR',
+      'bank_transfer' => 'Chuyển khoản ngân hàng',
+      default => $this->payment_method,
+    };
+  }
+  public function getSubtotalPriceFormatAttribute(): string
+  {
+    return number_format($this->subtotal_price, 0, ',', '.') . ' ₫';
+  }
+
+  public function getTotalPriceFormatAttribute(): string
+  {
+    return number_format($this->total_price, 0, ',', '.') . ' ₫';
+  }
 }

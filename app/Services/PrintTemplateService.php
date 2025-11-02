@@ -6,6 +6,17 @@ use App\Models\PrintTemplate;
 
 class PrintTemplateService
 {
+  public function setDefault($id)
+  {
+    $template = PrintTemplate::findOrFail($id);
+
+    // Hủy cờ default cũ
+    PrintTemplate::where('type', $template->type)->update(['is_default' => false]);
+    $template->is_default = true;
+    $template->save();
+    return $template;
+  }
+
   public static function getDefaultTemplate(string $type): ?PrintTemplate
   {
     return PrintTemplate::where('type', $type)
@@ -28,7 +39,6 @@ class PrintTemplateService
       $query->where('type', $type);
     }
 
-
     return $query->orderBy('is_default', 'desc')
       ->orderBy('name')
       ->get();
@@ -37,7 +47,10 @@ class PrintTemplateService
   public static function getAll(array $filters = [], int $perPage = 20)
   {
     $query = PrintTemplate::query();
-
+    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $filters['branch_id'];
+    if ($branchId) {
+      $query->where('branch_id', intval($branchId));
+    }
     if (isset($filters['type'])) {
       $query->where('type', $filters['type']);
     }
@@ -55,10 +68,8 @@ class PrintTemplateService
 
   public static function create(array $data): PrintTemplate
   {
-    if (!empty($data['is_default']) && $data['type']) {
-      // Hủy cờ default cũ
-      PrintTemplate::where('type', $data['type'])->update(['is_default' => false]);
-    }
+    $data['is_default'] = false;
+    $data['branch_id'] = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $data['branch_id'] ?? null;
 
     return PrintTemplate::create($data);
   }
