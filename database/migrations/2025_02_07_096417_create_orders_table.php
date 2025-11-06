@@ -22,7 +22,7 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->unsignedBigInteger('extend_id')->nullable(); // Người tạo đơn
-      $table->string('code')->unique(); // Mã đơn hàng
+      $table->string('order_code')->unique(); // Mã đơn hàng
       $table->timestamp('ordered_at')->useCurrent(); // Thời gian đặt hàng
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete(); // Nhân viên bán hàng
       $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete(); // Người nhận đơn

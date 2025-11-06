@@ -25,25 +25,33 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     'table_room_id',
     'table_name',
     'code',
-    'table_name',
 
+    //Tổng tiền hàng
     'subtotal_price',
+    //Giảm giá từ voucher
+    'voucher_id',
+    'voucher_code',
     'voucher_discount',
+    //Giảm giá từ điểm thưởng
+    'reward_points_used',
     'reward_discount',
+
+    //Tổng thanh toán
     'total_price',
 
     'paid_amount',
     'change_amount',
-
+    // Thuế
     'tax_rate',
+    // Tiền thuế
     'tax_amount',
+
+    // Tổng tiền trước thuế
     'total_price_without_vat',
 
-    'reward_points_used',
     'earned_loyalty_points',
     'earned_reward_points',
 
-    'voucher_id',
     'sales_channel',
     'invoice_status',
     'payment_status',

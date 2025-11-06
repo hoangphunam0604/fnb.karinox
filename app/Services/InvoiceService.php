@@ -78,7 +78,7 @@ class InvoiceService extends BaseService
         'customer_address' => $order->customer?->address ?? '',
 
         'order_id' => $order->id,
-        'order_code' => $order->code,
+        'order_code' => $order->order_code,
         'table_id' => $order->table?->id, // Lưu id bàn
         'table_name' => $order->table?->name, // Lưu tên bàn
 

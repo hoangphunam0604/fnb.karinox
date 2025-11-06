@@ -67,7 +67,7 @@ class OrderService
    */
   public function findOrderByCode($code)
   {
-    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('code', strtoupper($code))->first();
+    return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
@@ -330,7 +330,7 @@ class OrderService
   {
     abort(403, "Tính năng tạm thời không được sử dụng nữa");
     $order = Order::findOrFail($orderId);
-    $oldOrder = Order::where('code', $oldOrderCode)
+    $oldOrder = Order::where('order_code', $oldOrderCode)
       ->where('customer_id', $order->customer_id)
       ->firstOrFail();
     if (!$oldOrder->voucher_code) {
