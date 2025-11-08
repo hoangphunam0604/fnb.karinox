@@ -57,8 +57,8 @@ class OrderController extends Controller
 
   public function cancel($order_id)
   {
-    $result = $this->orderService->cancelOrder($order_id);
-    return response()->json($result);
+    $this->orderService->cancelOrder($order_id);
+    return ApiResponse::success('Đã huỷ đặt hàng');
   }
 
   public function extend($order_id, Request $request)

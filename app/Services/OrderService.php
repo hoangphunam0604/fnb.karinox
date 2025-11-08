@@ -174,18 +174,23 @@ class OrderService
   /**
    * Hủy đơn hàng
    */
-  public function cancelOrder($orderId): Order
+  public function cancelOrder($orderId): void
   {
     $order = Order::findOrFail($orderId);
     if ($order->order_status == OrderStatus::COMPLETED)
-      throw new Exception('Hoá đơn đã được hoàn thành, không thể huỷ');
+      throw new Exception('Đơn hàng đã được thanh toán, không thể huỷ');
 
-    return DB::transaction(function () use ($order) {
+    DB::transaction(function () use ($order) {
+      $order->delete();
+      return;
+      if ($order->items->isEmpty()) {
+        $order->delete();
+        return;
+      }
       $this->pointService->restoreTransactionRewardPoints($order);
       $this->voucherService->restoreVoucherUsage($order);
       $order->order_status = OrderStatus::CANCELED;
       $order->save();
-      return true;
     });
   }
 
