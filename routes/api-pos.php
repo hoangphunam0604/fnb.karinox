@@ -45,6 +45,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::prefix('print')->group(function () {
     // In tạm tính
     Route::post('/orders/{id}', [PrintController::class, 'provisional']);
+    //Báo bếp
+    Route::post('/kitchen/{id}', [PrintController::class, 'kitchen']);
     // Print từ Invoice (đảm bảo data chính xác 100%)
     Route::post('/invoices/{id}', [PrintController::class, 'invoice']);
   });

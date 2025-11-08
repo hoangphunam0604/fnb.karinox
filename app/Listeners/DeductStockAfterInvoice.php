@@ -28,6 +28,7 @@ class DeductStockAfterInvoice implements ShouldQueue
    */
   public function handle(InvoiceCreated $event): void
   {
+    return;
     $invoice = $event->invoice;
     $order = $invoice->order;
 

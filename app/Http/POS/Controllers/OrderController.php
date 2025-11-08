@@ -5,9 +5,9 @@ namespace App\Http\POS\Controllers;
 use App\Http\Common\Controllers\Controller;
 use App\Http\POS\Resources\OrderResource;
 use App\Services\OrderService;
+use App\Events\PrintRequested;
+use App\Http\POS\Responses\ApiResponse;
 use Illuminate\Http\Request;
-use App\Http\POS\Resources\OrderItemPrintResource;
-use App\Http\POS\Resources\OrderPrintResource;
 
 class OrderController extends Controller
 {
@@ -83,4 +83,16 @@ class OrderController extends Controller
     ]);
   }
 
+  /**
+   * Gửi yêu cầu in phiếu bếp
+   */
+  public function notifyKitchen($orderId)
+  {
+    $order = $this->orderService->findOrderById($orderId);
+    if ($order->kitchenItems->isEmpty()) {
+      return ApiResponse::error('Đã báo rồi hoặc không có món nào cần báo bếp');
+    }
+
+    broadcast(new PrintRequested('order-kitchen', ['id' => $order->id], $order->branch_id));
+  }
 }

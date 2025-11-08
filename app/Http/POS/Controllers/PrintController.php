@@ -3,13 +3,10 @@
 namespace App\Http\POS\Controllers;
 
 use App\Http\Common\Controllers\Controller;
-use App\Models\Order;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use App\Events\PrintRequested;
 use App\Services\OrderService;
 use App\Services\InvoiceService;
-use App\Enums\PaymentStatus;
 
 class PrintController extends Controller
 {

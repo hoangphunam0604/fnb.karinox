@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCompleted;
+use App\Events\OrderPaymentSuccess;
 use App\Events\PrintRequested;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -191,6 +192,7 @@ class OrderService
   public function completePayment(Order $order, string $payment_method = 'cash', $print = false)
   {
     if ($order->payment_status === PaymentStatus::PAID) {
+      event(new OrderPaymentSuccess($order));
       // đã trả tiền rồi, không cần ghi đè
       return true;
     }
@@ -206,6 +208,8 @@ class OrderService
       // Note: Stock deduction is now handled by DeductStockAfterInvoice listener
       // when InvoiceCreated event is fired
 
+      // Fire event sau khi order completed thành công
+      event(new OrderPaymentSuccess($order));
       // Fire event sau khi order completed thành công
       event(new OrderCompleted($order, $print));
 
