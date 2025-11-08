@@ -20,6 +20,7 @@ class CustomerController extends Controller
   public function index(Request $request)
   {
     $customers = $this->customerService->getList($request->all());
+    $customers->load('membershipLevel');
     return response()->json([
       'success' => true,
       'data' => CustomerResource::collection($customers)

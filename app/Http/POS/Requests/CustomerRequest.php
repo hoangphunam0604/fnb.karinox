@@ -15,6 +15,7 @@ class CustomerRequest extends FormRequest
   {
     $id = $this->route('customer'); // nếu là PUT / PATCH
     return [
+      'loyalty_card_number' => ['required', 'string', 'max:255'],
       'fullname' => ['required', 'string', 'max:255'],
       'email'    => ['nullable', 'email', 'max:255', 'unique:customers,email,' . $id],
       'phone'    => ['required', 'string', 'max:20', 'unique:customers,phone,' . $id],
@@ -27,6 +28,7 @@ class CustomerRequest extends FormRequest
   public function messages(): array
   {
     return [
+      'loyalty_card_number.required' => 'Họ tên không được để trống.',
       'fullname.required' => 'Họ tên không được để trống.',
       'email.unique'      => 'Địa chỉ email đã tồn tại.',
       'phone.required'    => 'Số điện thoại là bắt buộc.',
