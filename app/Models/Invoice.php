@@ -122,6 +122,16 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     return $this->hasMany(InvoiceItem::class);
   }
 
+  public function kitchenItems()
+  {
+    return $this->items()->where('print_kitchen', true);
+  }
+
+
+  public function labelItems()
+  {
+    return $this->items()->where('print_label', true);
+  }
   public function order()
   {
     return $this->belongsTo(Order::class);

@@ -178,15 +178,10 @@ class InvoiceService extends BaseService
   private function copyOrderItemsToInvoice(Order $order, Invoice $invoice): void
   {
     foreach ($order->items as $orderItem) {
-      $invoiceItem = InvoiceItem::create([
-        'invoice_id' => $invoice->id,
-        'product_id' => $orderItem->product_id,
-        'product_name' => $orderItem->product_name,
-        'product_price' => $orderItem->product_price,
-        'quantity' => $orderItem->quantity,
-        'unit_price' => $orderItem->unit_price,
-        'total_price' => $orderItem->total_price,
-      ]);
+      $data = $orderItem->toArray();
+      unset($data['id'], $data['order_id'], $data['created_at'], $data['updated_at'], $data['status']);
+      $data['invoice_id'] = $invoice->id;
+      $invoiceItem = InvoiceItem::create($data);
       $this->copyOrderToppingsToInvoice($orderItem, $invoiceItem);
     }
   }
@@ -194,14 +189,10 @@ class InvoiceService extends BaseService
   private function copyOrderToppingsToInvoice(OrderItem $orderItem, InvoiceItem $invoiceItem): void
   {
     foreach ($orderItem->toppings as $orderTopping) {
-      InvoiceTopping::create([
-        'invoice_item_id' => $invoiceItem->id,
-        'topping_id' => $orderTopping->topping_id,
-        'topping_name' => $orderTopping->topping_name,
-        'quantity' => $orderTopping->quantity,
-        'unit_price' => $orderTopping->unit_price,
-        'total_price' => $orderTopping->total_price,
-      ]);
+      $data = $orderTopping->toArray();
+      unset($data['id'], $data['order_item_id'], $data['created_at'], $data['updated_at']);
+      $data['invoice_item_id'] = $invoiceItem->id;
+      InvoiceTopping::create($data);
     }
   }
 }

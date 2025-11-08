@@ -83,5 +83,4 @@ class OrderController extends Controller
     ]);
   }
 
-  public function getVNPayQrCode($orderID) {}
 }

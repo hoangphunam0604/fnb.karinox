@@ -21,11 +21,11 @@ class InfoPlusController extends Controller
   {
     $this->service = $service;
   }
-  public function getQrCode(string $code)
+  public function getQrCode(string $order_code)
   {
-    return DB::transaction(function () use ($code) {
-      return Cache::remember("infoplus_qr_code_{$code}", 20, function () use ($code) {
-        $order = Order::where('code', $code)->firstOrFail();
+    return DB::transaction(function () use ($order_code) {
+      return Cache::remember("infoplus_qr_code_{$order_code}", 20, function () use ($order_code) {
+        $order = Order::where('order_code', $order_code)->firstOrFail();
         $paymentData =  $this->service->createQRCode($order);
         $order->payment_started_at = now();
         $order->payment_url = $paymentData['qrCode'];
@@ -51,8 +51,8 @@ class InfoPlusController extends Controller
         return $this->responseData("000001", "Chữ ký không hợp lệ.");
 
       $data = json_decode($rawBody, true);
-      $code = $data['data']['transactionUuid'];
-      $order  = Order::where('code', $code)->first();
+      $order_code = $data['data']['transactionUuid'];
+      $order  = Order::where('order_code', $order_code)->first();
 
       if (!$order)
         return $this->responseData('C00099', 'Giao dịch không tồn tại.');
@@ -72,10 +72,10 @@ class InfoPlusController extends Controller
     }
   }
 
-  private function responseData(string $code, $msg)
+  private function responseData(string $order_code, $msg)
   {
     return response()->json([
-      "responseCd"  => $code,
+      "responseCd"  => $order_code,
       "responseMsg" => $msg,
       "responseTs"  =>  Carbon::now()->format('Y-m-d H:i:s v'),
       "responseTraceId" => null,

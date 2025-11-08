@@ -22,7 +22,7 @@ class CashController extends Controller
    */
   public function confirm(string $code)
   {
-    $order = Order::where('code', $code)->firstOrFail();
+    $order = Order::where('order_code', $code)->firstOrFail();
 
     $payStatus = $this->service->pay($order);
 
@@ -32,7 +32,7 @@ class CashController extends Controller
         'message' => 'Thanh toán thành công',
         'order' => [
           'id' => $order->id,
-          'code' => $order->code,
+          'order_code' => $order->order_code,
           'table_name' => $order->table?->name,
           'payment_method' => $order->payment_method,
         ]

@@ -12,7 +12,7 @@ class TableAndRoom extends Model
 
   protected $table = 'tables_and_rooms';
 
-  protected $fillable = ['name', 'area_id', 'capacity', 'note', 'status'];
+  protected $fillable = ['name', 'area_id', 'branch_id', 'capacity', 'note', 'status'];
 
   protected $casts = [
     'capacity' => 'integer',
@@ -22,11 +22,12 @@ class TableAndRoom extends Model
 
   public function area()
   {
-    return $this->belongsTo(Area::class)->withDefault([
-      'name' => 'Không có khu vực'
-    ]);
+    return $this->belongsTo(Area::class);
   }
-
+  public function branch()
+  {
+    return $this->belongsTo(Branch::class);
+  }
   /**
    * Scope tìm kiếm phòng/bàn theo trạng thái
    */

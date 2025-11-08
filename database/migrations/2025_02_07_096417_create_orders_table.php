@@ -29,6 +29,7 @@ return new class extends Migration
       $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete(); // Khách hàng
       $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete(); // Chi nhánh
       $table->foreignId('table_id')->nullable()->constrained('tables_and_rooms')->nullOnDelete(); // Bàn/phòng
+      $table->string('table_name')->nullable(); // Tên bàn/phòng
 
       // Invoice relationship (không tạo FK constraint vì invoices table tạo sau)
       $table->unsignedBigInteger('invoice_id')->nullable(); // Hóa đơn được tạo từ order này

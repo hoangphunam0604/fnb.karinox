@@ -17,9 +17,8 @@ class OrderResource extends JsonResource
     return [
       'id' => $this->id,
       'table_id' => $this->table_id,
-      'code' => $this->code,
+      'order_code' => $this->order_code,
       'ordered_at' => $this->ordered_at,
-      'creator_id' => $this->creator_id,
       'receiver_id' => $this->receiver_id,
       'customer_id' => $this->customer_id,
       'subtotal_price' => $this->subtotal_price,

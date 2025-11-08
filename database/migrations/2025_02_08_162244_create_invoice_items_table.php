@@ -21,7 +21,14 @@ return new class extends Migration
       $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
       $table->integer('quantity')->default(1); // Số lượng sản phẩm
       $table->decimal('total_price', 15, 2);
-      $table->text('note')->nullable();
+      $table->enum('status', ['success', 'refunded'])->default('success');
+      $table->string('note')->nullable(); // Ghi chú
+      $table->boolean('print_label'); // In tem (dán ly/giữ lại)
+      $table->boolean('printed_label')->default(false); // Đã từng in tem
+      $table->timestamp('printed_label_at')->nullable(); // In lúc
+      $table->boolean('print_kitchen'); // In phiếu bếp      
+      $table->boolean('printed_kitchen')->default(false); // Đã từng in phiếu bếp
+      $table->timestamp('printed_kitchen_at')->nullable(); // In phiếu bếp lúc
     });
   }
 

@@ -26,6 +26,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     'customer_id',
     'branch_id',
     'table_id',
+    'table_name',
     'invoice_id',
 
     'subtotal_price',
@@ -67,8 +68,10 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
     parent::boot();
 
     static::creating(function ($order) {
-      if (!$order->code)
-        $order->code = self::generateOrderCode($order->branch_id);
+      if (!$order->user_id)
+        $order->user_id = Auth::id();
+      if (!$order->order_code)
+        $order->order_code = self::generateOrderCode($order->branch_id);
     });
 
     static::updating(function ($order) {
@@ -90,7 +93,7 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
       ->orderBy('id', 'desc')
       ->first();
 
-    $increment = $latestOrder ? ((int) substr($latestOrder->code, -4)) + 1 : 1;
+    $increment = $latestOrder ? ((int) substr($latestOrder->order_code, -4)) + 1 : 1;
 
     return sprintf("CN%02dN%sORD%04d", $branchId, now()->format('ymd'), $increment);
   }
@@ -129,7 +132,10 @@ class Order extends Model implements RewardPointUsable, VoucherApplicable
   {
     return $this->hasMany(OrderItem::class);
   }
-
+  public function kitchenItems()
+  {
+    return $this->hasMany(OrderItem::class)->where('print_kitchen', true);
+  }
   public function voucher()
   {
     return $this->belongsTo(Voucher::class)->withDefault([]);

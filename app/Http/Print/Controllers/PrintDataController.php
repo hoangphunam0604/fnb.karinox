@@ -31,8 +31,9 @@ class PrintDataController extends Controller
       $data = match ($type) {
         'provisional' => $this->printDataService->getProvisionalData($id),
         'invoice-all' => $this->printDataService->getInvoiceAllData($id),
-        'label' => $this->printDataService->getLabelData($id),
-        'kitchen' => $this->printDataService->getKitchenData($id),
+        'labels' => $this->printDataService->getLabelsDataFromInvoice($id),
+        'order-kitchen' => $this->printDataService->getKitchentDataFromOrder($id),
+        'invoice-kitchen' => $this->printDataService->getKitchentDataFromInvoice($id),
         default => throw new \InvalidArgumentException('Type không hợp lệ: ' . $type)
       };
 

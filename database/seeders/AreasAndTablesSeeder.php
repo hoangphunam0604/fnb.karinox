@@ -52,11 +52,11 @@ class AreasAndTablesSeeder extends Seeder
 
     // Tạo dữ liệu cho các khu vực, mỗi khu vực gắn với một chi nhánh cụ thể
     $areas = [
-      ['name' => 'Khu vực tầng 1', 'note' => 'Khu vực tiếp khách chính', 'branch_id' => $branchIds[0]],
-      ['name' => 'Khu vực tầng 2', 'note' => 'Khu vực yên tĩnh, phù hợp làm việc', 'branch_id' => $branchIds[0]],
-      ['name' => 'Khu vực sân thượng', 'note' => 'Không gian mở, thoáng mát', 'branch_id' => $branchIds[1]],
-      ['name' => 'Khu vực ngoài trời', 'note' => 'Phù hợp cho các buổi tiệc ngoài trời', 'branch_id' => $branchIds[1]],
-      ['name' => 'Khu vực VIP', 'note' => 'Khu vực dành cho khách hàng VIP', 'branch_id' => $branchIds[2]],
+      ['name' => $branches[0]['name'] . ' - Tầng 1', 'note' => 'Tiếp khách chính', 'branch_id' => $branchIds[0]],
+      ['name' => $branches[0]['name'] . ' - Tầng 2', 'note' => 'Khu vực yên tĩnh, phù hợp làm việc', 'branch_id' => $branchIds[0]],
+      ['name' => $branches[1]['name'] . ' - Sân thượng', 'note' => 'Không gian mở, thoáng mát', 'branch_id' => $branchIds[1]],
+      ['name' => $branches[1]['name'] . ' - Ngoài trời', 'note' => 'Phù hợp cho các buổi tiệc ngoài trời', 'branch_id' => $branchIds[1]],
+      ['name' => $branches[2]['name'] . ' - VIP', 'note' => 'Khu vực dành cho khách hàng VIP', 'branch_id' => $branchIds[2]],
     ];
 
     // Chèn dữ liệu vào bảng `areas` và lưu lại ID
@@ -72,6 +72,7 @@ class AreasAndTablesSeeder extends Seeder
         $tablesAndRooms[] = [
           'name' => "Bàn $i",
           'area_id' => $areaId,
+          'branch_id' => $areas[array_search($areaId, $areaIds)]['branch_id'],
           'capacity' => rand(2, 10),
           'status' => 'available',
         ];

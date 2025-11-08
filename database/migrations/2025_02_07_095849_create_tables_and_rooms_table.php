@@ -14,7 +14,8 @@ return new class extends Migration
     Schema::create('tables_and_rooms', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
-      $table->foreignId('area_id')->nullable()->constrained()->nullOnDelete();
+      $table->foreignId('area_id')->constrained()->deleteOnDelete();
+      $table->foreignId('branch_id')->constrained()->deleteOnDelete();
       $table->string('name');
       $table->integer('capacity')->default(0);
       $table->text('note')->nullable();

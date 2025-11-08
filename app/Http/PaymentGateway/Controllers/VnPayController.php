@@ -17,11 +17,11 @@ class VNPayController extends Controller
   {
     $this->service = $service;
   }
-  public function getQrCode(string $code)
+  public function getQrCode(string $order_code)
   {
-    $order = Order::where('code', $code)->firstOrFail();
+    $order = Order::where('order_code', $order_code)->firstOrFail();
 
-    $paymentData =  $this->service->createQRCode($order->code, $order->total_price);
+    $paymentData =  $this->service->createQRCode($order->order_code, $order->total_price);
 
     $order->payment_started_at = now();
     $order->payment_url = $paymentData['qrCode'];

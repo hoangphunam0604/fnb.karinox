@@ -16,6 +16,7 @@ class TableAndRoomService  extends BaseService
   }
   protected function applySearch($query, array $params)
   {
+    // $query = parent::applySearch($query, $params);
     if (!empty($params['keyword'])) {
       $query->where('name', 'like', '%' . $params['keyword'] . '%');
     }

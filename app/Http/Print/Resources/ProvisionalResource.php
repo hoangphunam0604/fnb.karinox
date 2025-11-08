@@ -5,7 +5,7 @@ namespace App\Http\Print\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class InvoiceResource extends JsonResource
+class ProvisionalResource extends JsonResource
 {
 
   /**
@@ -17,7 +17,6 @@ class InvoiceResource extends JsonResource
   {
     return [
       'Ma_Dat_Hang'  =>  $this->order_code,
-      'Ma_Don_Hang'  =>  $this->code,
       'Nhan_Vien_Ban_Hang'  =>  $this->staff->fullname,
       'Ngay_Thang_Nam'  =>  $this->created_at->format('d/m/Y H:i:s'),
       'Ten_Phong_Ban'  =>  $this->table_name,

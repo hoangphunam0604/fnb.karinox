@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\OrderTopping;
 use App\Models\Product;
 use App\Models\ProductTopping;
+use App\Models\TableAndRoom;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -40,27 +41,32 @@ class OrderService
   }
   public function getOrdersByTableId(int $branchId, int $tableId)
   {
-    // Lấy tất cả các đơn hàng PENDING
-    $orders = Order::where('table_id', $tableId)
-      ->where('branch_id', $branchId)
-      ->where('order_status', OrderStatus::PENDING)
-      ->with(['items.toppings', 'customer.membershipLevel', 'table'])
-      ->get();
+    return DB::transaction(function () use ($branchId, $tableId) {
+      $table = TableAndRoom::where('id', $tableId)
+        ->firstOrFail();
+      // Lấy tất cả các đơn hàng PENDING
+      $orders = Order::where('table_id', $table->id)
+        ->where('branch_id', $branchId)
+        ->where('order_status', OrderStatus::PENDING)
+        ->with(['items.toppings', 'customer.membershipLevel', 'table'])
+        ->get();
 
-    // Nếu chưa có đơn nào thì tạo mới
-    if ($orders->isEmpty()) {
-      $order = Order::create([
-        'table_id' => $tableId,
-        'branch_id' => $branchId,
-        'order_status' => OrderStatus::PENDING,
-        'total_price' => 0,
-      ]);
+      // Nếu chưa có đơn nào thì tạo mới
+      if ($orders->isEmpty()) {
+        $order = Order::create([
+          'table_id' => $table->id,
+          'table_name' => $table->name,
+          'branch_id' => $branchId,
+          'order_status' => OrderStatus::PENDING,
+          'total_price' => 0,
+        ]);
 
-      $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
-      $orders->push($order);
-    }
+        $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+        $orders->push($order);
+      }
 
-    return $orders;
+      return $orders;
+    });
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã

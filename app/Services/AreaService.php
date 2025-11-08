@@ -80,6 +80,7 @@ class AreaService extends BaseService
       $tables[] = [
         'name' => $tablePrefix . ' ' . str_pad($tableNumber, 2, '0', STR_PAD_LEFT),
         'area_id' => $area->id,
+        'branch_id' => $area->branch_id,
         'capacity' => $tableCapacity,
         'status' => TableAndRoomStatus::AVAILABLE,
         'created_at' => now(),

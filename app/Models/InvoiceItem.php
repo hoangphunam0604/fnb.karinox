@@ -16,6 +16,14 @@ class InvoiceItem extends Model
     'unit_price',
     'quantity',
     'total_price',
+    'status',
+    'note',
+    'print_label',
+    'printed_label',
+    'printed_label_at',
+    'print_kitchen',
+    'printed_kitchen',
+    'printed_kitchen_at',
   ];
   protected $casts = [
     'product_id' => 'integer',
@@ -23,6 +31,13 @@ class InvoiceItem extends Model
     'unit_price' => 'integer',
     'quantity' => 'integer',
     'total_price' => 'integer',
+
+    'print_label' =>  'boolean',
+    'printed_label' =>  'boolean',
+    'printed_label_at'  =>  'datetime',
+    'print_kitchen' =>  'boolean',
+    'printed_kitchen' =>  'boolean',
+    'printed_kitchen_at'  =>  'datetime',
   ];
   /**
    * Mối quan hệ với hóa đơn

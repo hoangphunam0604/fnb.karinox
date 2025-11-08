@@ -5,7 +5,7 @@ namespace App\Http\Print\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductResource extends JsonResource
+class ItemResource extends JsonResource
 {
 
   /**
