@@ -292,54 +292,6 @@ class OrderService
     return $order;
   }
 
-  public function getPrintData($orderId)
-  {
-    return DB::transaction(function () use ($orderId) {
-      $now = now()->toDateTimeString();
-      $order = Order::with(['items.toppings', 'customer.membershipLevel', 'table'])
-        ->findOrFail($orderId);
-
-      // Cập nhật toàn bộ item chưa in tem
-      $order->items()
-        ->where('print_label', true)
-        ->where('printed_label', false)
-        ->update([
-          'printed_label' => true,
-          'printed_label_at' => $now,
-        ]);
-
-      // Cập nhật toàn bộ item chưa in phiếu bếp
-      $order->items()
-        ->where('print_kitchen', true)
-        ->where('printed_kitchen', false)
-        ->update([
-          'printed_kitchen' => true,
-          'printed_kitchen_at' => $now,
-        ]);
-
-      // Lấy lại dữ liệu để in (sau khi đã cập nhật)
-      $allItems = $order->items()->with('toppings')->get();
-      // Tách lại dữ liệu theo mục đích in (phân loại in trước/sau)
-      $labels = $allItems->filter(fn($item) => optional($item->printed_label_at)?->toDateTimeString() === $now);
-      $kitchenItems = $allItems->filter(fn($item) => optional($item->printed_kitchen_at)?->toDateTimeString() === $now);
-
-      // Set lại danh sách items để in hoá đơn
-      return [$order, $kitchenItems, $labels];
-    });
-  }
-  /* 
-  public function payment($orderId)
-  {
-    $order = Order::findOrFail($orderId);
-    $now = now();
-    $order->payment_started_at = $now;
-    $order->paid_at = $now;
-    $order->save();
-    if ($order->order_status !== OrderStatus::COMPLETED) {
-      $order->markAsCompleted();
-    }
-    return $this->notifyKitchen($orderId);
-  } */
 
   public function extend($orderId, $oldOrderCode): Order
   {
@@ -372,7 +324,7 @@ class OrderService
 
   public function splitOrder(int $orderId, array $splitItems): array
   {
-    DB::transaction(function () use ($orderId, $splitItems, &$originalOrder, &$newOrder) {
+    return DB::transaction(function () use ($orderId, $splitItems) {
       $originalOrder = Order::with('items.toppings')->findOrFail($orderId);
 
       // Tạo đơn hàng mới
@@ -422,12 +374,12 @@ class OrderService
       $newOrder->save();
       $newOrder->refresh();
       $this->updateTotalPrice($newOrder);
+      $originalOrder->refresh();
+      $newOrder->refresh();
+      $originalOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+      $newOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+      return [$originalOrder, $newOrder];
     });
-    $originalOrder->refresh();
-    $newOrder->refresh();
-    $originalOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
-    $newOrder->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
-    return [$originalOrder, $newOrder];
   }
   /**
    * Chuẩn bị đơn hàng
@@ -475,7 +427,7 @@ class OrderService
           OrderTopping::where('order_item_id', $orderItem->id)->delete();
         }
       else:
-        $orderItem = OrderItem::where('product_id', $item['product_id'])
+        /* $orderItem = OrderItem::where('product_id', $item['product_id'])
           ->where('order_id', $order->id)
           ->where('printed_label', false)
           ->where('printed_kitchen', false)
@@ -486,21 +438,21 @@ class OrderService
           $orderItem->increment('quantity');
           $orderItem->total_price = $unitPrice * $orderItem->quantity;
           $orderItem->save();
-        else :
-          $orderItem = OrderItem::create(
-            [
-              'order_id' => $order->id,
-              'product_id' => $product->id,
-              'product_name' => $product->name,
-              'product_price' => $product->price,
-              'quantity' => $item['quantity'] ?? 1,
-              'unit_price' => $unitPrice,
-              'total_price' => $unitPrice  * $item['quantity'],
-              'print_label' =>  $product->print_label,
-              'print_kitchen' =>  $product->print_kitchen,
-            ]
-          );
-        endif;
+        else : */
+        $orderItem = OrderItem::create(
+          [
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'product_price' => $product->price,
+            'quantity' => $item['quantity'] ?? 1,
+            'unit_price' => $unitPrice,
+            'total_price' => $unitPrice  * $item['quantity'],
+            'print_label' =>  $product->print_label,
+            'print_kitchen' =>  $product->print_kitchen,
+          ]
+        );
+      /* endif; */
       endif;
 
       $orderItemIds[] = $orderItem->id;
