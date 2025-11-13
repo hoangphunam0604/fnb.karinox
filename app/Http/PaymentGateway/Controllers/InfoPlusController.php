@@ -4,40 +4,51 @@ namespace App\Http\PaymentGateway\Controllers;
 
 use App\Enums\PaymentStatus;
 use App\Http\Common\Controllers\Controller;
+use App\Http\PaymentGateway\Requests\PayRequest;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\PaymentGateways\InfoPlusGateway;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Facades\Log;
 
 class InfoPlusController extends Controller
 {
-  protected InfoPlusGateway $service;
 
-  public function __construct(InfoPlusGateway $service)
+  public function __construct(protected InfoPlusGateway $service, protected OrderService $order)
   {
     $this->service = $service;
   }
-  public function getQrCode(string $order_code)
+
+  public function pay(PayRequest $request)
   {
-    return DB::transaction(function () use ($order_code) {
-      return Cache::remember("infoplus_qr_code_{$order_code}", 20, function () use ($order_code) {
-        $order = Order::where('order_code', $order_code)->firstOrFail();
-        $paymentData =  $this->service->createQRCode($order);
-        $order->payment_started_at = now();
-        $order->payment_url = $paymentData['qrCode'];
-        $order->save();
-        return $paymentData;
-      });
-      return $paymentData;
+    $order_code = $request->order_code;
+    $qrData = Cache::remember("infoplus_qr_{$order_code}", now()->addMinutes(60), function () use ($order_code) {
+      $order = $this->order->findByCode($order_code);
+      return $this->service->generateQrString($order);
     });
+    return response()->json([
+      'success'  =>  true,
+      'data'  => $qrData
+    ]);
   }
 
   /**
-   * IPN xác thực từ VNPAY: VNPAY gọi về khi KH đã thanh toán
+   * IPN xác thực thanh toán từ InfoPlus
+   */
+  public function mock(string $order_code)
+  {
+    $order  = Order::where('order_code', $order_code)->first();
+    $this->service->pay($order);
+    return response()->json([
+      'success'  =>  true,
+      'message' => 'Thanh toán thành công (Mock)'
+    ]);
+  }
+
+  /**
+   * IPN xác thực thanh toán từ InfoPlus
    */
   public function callback(Request $request)
   {

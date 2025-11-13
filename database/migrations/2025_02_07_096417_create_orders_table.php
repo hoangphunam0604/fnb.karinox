@@ -47,7 +47,7 @@ return new class extends Migration
 
       $table->enum('order_status', ['pending', 'confirmed', 'completed', 'canceled'])->default('pending'); // Trạng thái đơn hàng
 
-      $table->enum('payment_status', ['paid', 'unpaid', 'refunded'])->default('unpaid');
+      $table->enum('payment_status', ['paid', 'pending', 'unpaid', 'refunded'])->default('unpaid');
       $table->string('payment_method', 20)->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->text('payment_url')->nullable(); // Liên kết thanh toán hoặc data QR
       $table->timestamp('payment_started_at')->nullable(); // Bắt đầu thanh toán lúc

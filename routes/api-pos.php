@@ -9,6 +9,7 @@ use App\Http\POS\Controllers\VoucherController;
 use App\Http\PaymentGateway\Controllers\InfoPlusController;
 use App\Http\PaymentGateway\Controllers\VNPayController;
 use App\Http\PaymentGateway\Controllers\CashController;
+use App\Http\PaymentGateway\Controllers\CardController;
 use App\Http\POS\Controllers\InvoiceController;
 use App\Http\POS\Controllers\PrintController;
 use App\Http\POS\Controllers\CashInventoryController;
@@ -53,9 +54,10 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
 
 
   Route::prefix('payments')->group(function () {
-    Route::post('/cash/{code}/confirm', [CashController::class, 'confirm']);
-    Route::post('/vnpay/{code}/get-qr-code', [VNPayController::class, 'getQrCode']);
-    Route::post('/infoplus/{code}/get-qr-code', [InfoPlusController::class, 'getQrCode']);
+    Route::post('/cash', [CashController::class, 'pay']);
+    Route::post('/card', [CardController::class, 'pay']);
+    Route::post('/vnpay', [VNPayController::class, 'pay']);
+    Route::post('/infoplus', [InfoPlusController::class, 'pay']);
   });
 });
 Route::get('/invoices/{id}/print/{brandId}/{type}', [InvoiceController::class, 'requestPrint']);

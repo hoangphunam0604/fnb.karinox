@@ -3,6 +3,7 @@
 namespace App\Http\PaymentGateway\Controllers;
 
 use App\Http\Common\Controllers\Controller;
+use App\Http\PaymentGateway\Requests\PayRequest;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\PaymentGateways\VNPayQRService;
@@ -17,9 +18,9 @@ class VNPayController extends Controller
   {
     $this->service = $service;
   }
-  public function getQrCode(string $order_code)
+  public function pay(PayRequest $request)
   {
-    $order = Order::where('order_code', $order_code)->firstOrFail();
+    $order = Order::where('order_code', $request->order_code)->firstOrFail();
 
     $paymentData =  $this->service->createQRCode($order->order_code, $order->total_price);
 

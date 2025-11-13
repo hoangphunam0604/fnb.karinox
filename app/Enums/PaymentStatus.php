@@ -8,6 +8,7 @@ enum PaymentStatus: string
 {
   case UNPAID = 'unpaid';
   case PAID = 'paid';
+  case PENDING = 'pending';
   case REFUNDED = 'refunded';
 
   public static function isValid(string $status): bool

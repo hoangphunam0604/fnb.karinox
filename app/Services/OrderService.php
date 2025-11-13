@@ -79,6 +79,13 @@ class OrderService
   /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
+  public function findByCode($code)
+  {
+    return Order::where('order_code', strtoupper($code))->firstOrFail();
+  }
+  /**
+   * Tìm kiếm đơn đặt hàng theo mã
+   */
   public function findOrderById($id)
   {
     return Order::findOrFail($id);
@@ -181,12 +188,6 @@ class OrderService
       throw new Exception('Đơn hàng đã được thanh toán, không thể huỷ');
 
     DB::transaction(function () use ($order) {
-      $order->delete();
-      return;
-      if ($order->items->isEmpty()) {
-        $order->delete();
-        return;
-      }
       $this->pointService->restoreTransactionRewardPoints($order);
       $this->voucherService->restoreVoucherUsage($order);
       $order->order_status = OrderStatus::CANCELED;
@@ -203,11 +204,14 @@ class OrderService
     }
 
     return DB::transaction(function () use ($order, $payment_method, $print) {
-
+      if ($order->payment_started_at === null) {
+        $order->payment_started_at = now();
+      }
       $order->paid_at = now();
       $order->payment_method = $payment_method;
       $order->payment_status = PaymentStatus::PAID;
       $order->order_status = OrderStatus::COMPLETED;
+
       $order->save();
 
       // Note: Stock deduction is now handled by DeductStockAfterInvoice listener

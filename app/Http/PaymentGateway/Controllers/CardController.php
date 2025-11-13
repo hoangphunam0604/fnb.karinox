@@ -5,19 +5,19 @@ namespace App\Http\PaymentGateway\Controllers;
 use App\Http\Common\Controllers\Controller;
 use App\Http\PaymentGateway\Requests\PayRequest;
 use App\Models\Order;
-use App\Services\PaymentGateways\CashGateway;
+use App\Services\PaymentGateways\CardGateway;
 
-class CashController extends Controller
+class CardController extends Controller
 {
-  protected CashGateway $service;
+  protected CardGateway $service;
 
-  public function __construct(CashGateway $service)
+  public function __construct(CardGateway $service)
   {
     $this->service = $service;
   }
 
   /**
-   * Xác nhận thanh toán tiền mặt tại quầy.
+   * Xác nhận thanh toán thẻ tại quầy.
    * Gọi khi thu ngân bấm "Xác nhận đã thu tiền".
    * Print jobs sẽ được tự động tạo thông qua OrderCompleted event listener.
    */
@@ -27,7 +27,7 @@ class CashController extends Controller
     $payStatus = $this->service->pay($order);
     if ($payStatus) {
       return response()->json([
-        'status' => true,
+        'success' => true,
         'message' => 'Thanh toán thành công',
         'order' => [
           'id' => $order->id,
@@ -38,6 +38,6 @@ class CashController extends Controller
       ]);
     }
 
-    return response()->json(['status' => false, 'message' => 'Internal error']);
+    return response()->json(['success' => false, 'message' => 'Internal error']);
   }
 }

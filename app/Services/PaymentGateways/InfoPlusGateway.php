@@ -2,11 +2,13 @@
 
 namespace App\Services\PaymentGateways;
 
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InfoPlusGateway extends BaseGateway
 {
@@ -67,17 +69,31 @@ class InfoPlusGateway extends BaseGateway
    * @param float $amount Số tiền cần thanh toán
    * @return array Thông tin thanh toán
    */
-  public function createQrCode(Order $order)
+  public function generateQrString(Order $order)
+  {
+    $qrData = $this->getQrDataFromInfoPlus($order);
+    DB::transaction(function () use ($order, $qrData) {
+      $order->payment_method = $this->getPaymentMethod();
+      $order->payment_status = PaymentStatus::PENDING;
+      $order->payment_started_at = now();
+      $order->payment_url = $qrData;
+      $order->save();
+    });
+    return $qrData;
+  }
+
+
+  private function getQrDataFromInfoPlus(Order $order)
   {
     $payload = [
       'data'  =>  [
-        'transactionUuid' => $order->code,
+        'transactionUuid' => $order->order_code,
         'depositAmt' => (int) $order->total_price,
         'posUniqueId' => $this->posUniqueId,
         'posFranchiseeName' => $this->posFranchiseeName,
         'posCompanyName' => $this->posCompanyName,
         'posBillNo' => $order->id,
-        'remark' => "Thanh Toan Don Hang {$order->code}"
+        'remark' => "Thanh Toan Don Hang {$order->order_code}"
       ]
     ];
 
@@ -99,29 +115,13 @@ class InfoPlusGateway extends BaseGateway
       'body' => $json_payload,
       'verify' => false // Nếu cần tắt SSL dev
     ]);
-
+    Log::info('InfoPlus Create QR Response: ' . $response->getBody());
     $data = json_decode($response->getBody(), true);
-
-    if (!isset($data['responseCd']) || $data['responseCd'] != "000000")
-      return [
-        'status'  =>  false,
-        'message'  => "Không thể lấy mã QR",
-        'data'  =>  $data
-      ];
-
-    return  DB::transaction(function () use ($order, $data) {
-      $order->payment_started_at = now();
-      $order->payment_url = $data['data']['qrData'];
-      $order->save();
-      return [
-        'status'  =>  true,
-        'data' =>  [
-          'qrData'  =>  $data['data']['qrData']
-        ]
-      ];
-    });
+    if (!isset($data['responseCd']) || $data['responseCd'] != "000000" || !isset($data['data']['qrData'])):
+      throw new \RuntimeException('Lỗi khi tạo mã QR');
+    endif;
+    return $data['data']['qrData'];
   }
-
   private function getAccessToken(): array
   {
     return Cache::remember("infoplus_access_token", 20, function () {
