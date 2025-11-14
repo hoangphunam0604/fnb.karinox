@@ -19,7 +19,6 @@ class CardController extends Controller
   /**
    * Xác nhận thanh toán thẻ tại quầy.
    * Gọi khi thu ngân bấm "Xác nhận đã thu tiền".
-   * Print jobs sẽ được tự động tạo thông qua OrderCompleted event listener.
    */
   public function pay(PayRequest $request)
   {

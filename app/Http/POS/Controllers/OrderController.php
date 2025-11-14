@@ -82,17 +82,4 @@ class OrderController extends Controller
       'new_order' =>  new OrderResource($newOrder),
     ]);
   }
-
-  /**
-   * Gửi yêu cầu in phiếu bếp
-   */
-  public function notifyKitchen($orderId)
-  {
-    $order = $this->orderService->findOrderById($orderId);
-    if ($order->kitchenItems->isEmpty()) {
-      return ApiResponse::error('Đã báo rồi hoặc không có món nào cần báo bếp');
-    }
-
-    broadcast(new PrintRequested('order-kitchen', ['id' => $order->id], $order->branch_id));
-  }
 }

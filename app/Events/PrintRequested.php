@@ -7,6 +7,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class PrintRequested implements ShouldBroadcast
 {
@@ -27,6 +28,7 @@ class PrintRequested implements ShouldBroadcast
     $this->type = $type;
     $this->data = $data;
     $this->branchId = $branchId;
+    Log::info("PrintRequested event created: type={$this->type}, data=" . json_encode($this->data) . ", branchId={$this->branchId}");
   }
 
   /**

@@ -311,7 +311,7 @@ class PrintDataService
         'branch_id' => $invoice->branch_id,
         'metadata' => [
           'invoice_code' => $invoice->code,
-          'table_name' => $invoice->table?->name,
+          'table_name' => $invoice->table_name,
           'items' => $invoice->items->map(function ($item) {
             return [
               'product_name' => $item->product_name,

@@ -39,17 +39,14 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('/vouchers', [VoucherController::class, 'index']);
 
   // Cash inventory endpoint
-  Route::post('/cash-inventory', [CashInventoryController::class, 'store']);
   Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
 
   //Gửi lệnh in
   Route::prefix('print')->group(function () {
-    // In tạm tính
-    Route::post('/orders/{id}', [PrintController::class, 'provisional']);
-    //Báo bếp
-    Route::post('/kitchen/{id}', [PrintController::class, 'kitchen']);
-    // Print từ Invoice (đảm bảo data chính xác 100%)
-    Route::post('/invoices/{id}', [PrintController::class, 'invoice']);
+    Route::post('/cash-inventory', [PrintController::class, 'cashInventory']);
+    Route::post('/orders/{orderCode}', [PrintController::class, 'provisional']);
+    Route::post('/kitchen/{orderCode}', [PrintController::class, 'kitchen']);
+    Route::post('/invoice/{invoiceCode}', [PrintController::class, 'invoice']);
   });
 
 

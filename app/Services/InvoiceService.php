@@ -35,9 +35,9 @@ class InvoiceService extends BaseService
     return new Invoice();
   }
 
-  public function findByCode(string $code): ?Invoice
+  public function findByCode(string $invoiceCode): ?Invoice
   {
-    return Invoice::where('code', strtoupper($code))->first();
+    return Invoice::where('code', strtoupper($invoiceCode))->firstOrFail();
   }
 
   public function findById(int $id): ?Invoice

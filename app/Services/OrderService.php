@@ -21,25 +21,13 @@ use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
-  protected PointService $pointService;
-  protected VoucherService $voucherService;
-  protected InvoiceService $invoiceService;
-  protected SystemSettingService $systemSettingService;
-  protected StockDeductionService $stockDeductionService;
-
   public function __construct(
-    PointService $pointService,
-    VoucherService $voucherService,
-    InvoiceService $invoiceService,
-    SystemSettingService $systemSettingService,
-    StockDeductionService $stockDeductionService
-  ) {
-    $this->pointService = $pointService;
-    $this->voucherService = $voucherService;
-    $this->invoiceService = $invoiceService;
-    $this->systemSettingService = $systemSettingService;
-    $this->stockDeductionService = $stockDeductionService;
-  }
+    protected PointService $pointService,
+    protected VoucherService $voucherService,
+    protected InvoiceService $invoiceService,
+    protected SystemSettingService $systemSettingService,
+    protected StockDeductionService $stockDeductionService
+  ) {}
   public function getOrdersByTableId(int $branchId, int $tableId)
   {
     return DB::transaction(function () use ($branchId, $tableId) {
@@ -79,9 +67,9 @@ class OrderService
   /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
-  public function findByCode($code)
+  public function findByCode($orderCode)
   {
-    return Order::where('order_code', strtoupper($code))->firstOrFail();
+    return Order::where('order_code', strtoupper($orderCode))->firstOrFail();
   }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
@@ -213,14 +201,11 @@ class OrderService
       $order->order_status = OrderStatus::COMPLETED;
 
       $order->save();
-
-      // Note: Stock deduction is now handled by DeductStockAfterInvoice listener
-      // when InvoiceCreated event is fired
+      //Tạo hoá đơn
+      $this->invoiceService->createInvoiceFromOrder($order->id, $print);
 
       // Fire event sau khi order completed thành công
       event(new OrderPaymentSuccess($order));
-      // Fire event sau khi order completed thành công
-      event(new OrderCompleted($order, $print));
 
       return true;
     });
