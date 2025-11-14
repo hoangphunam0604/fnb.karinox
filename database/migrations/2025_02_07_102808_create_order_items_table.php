@@ -11,7 +11,7 @@ return new class extends Migration {
       $table->id();
       $table->timestamps();
       $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete(); // Đơn hàng
-      $table->foreignId('product_id')->constrained('products')->nullOnDelete(); // Sản phẩm
+      $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete(); // Sản phẩm
       $table->string('product_name'); // Tên sản phẩm
       $table->decimal('product_price', 15, 2)->comment('Giá gốc sản phẩm chưa bao gồm topping');
       $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
