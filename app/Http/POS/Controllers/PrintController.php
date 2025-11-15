@@ -18,10 +18,10 @@ class PrintController extends Controller
    * Tạo job in tạm tính
    * POST /api/pos/orders/{id}/provisional
    */
-  public function provisional($orderCode): JsonResponse
+  public function provisional(Request $request): JsonResponse
   {
     try {
-      $order = $this->orderService->findByCode($orderCode);
+      $order = $this->orderService->findByCode($request->orderCode);
       broadcast(new PrintRequested('provisional', ['id' => $order->id], $order->branch_id));
       return response()->json([
         'success' => true,
@@ -38,24 +38,28 @@ class PrintController extends Controller
   /**
    * Gửi yêu cầu in phiếu bếp
    */
-  public function kitchen($orderCode)
+  public function kitchen(Request $request)
   {
-    $order = $this->orderService->findByCode($orderCode);
+    $order = $this->orderService->findByCode($request->orderCode);
     if ($order->kitchenItems->isEmpty()) {
       return ApiResponse::error('Đã báo rồi hoặc không có món nào cần báo bếp');
     }
 
     broadcast(new PrintRequested('order-kitchen', ['id' => $order->id], $order->branch_id));
+    return ApiResponse::success('Đã gửi lệnh in phiếu bếp', [
+      'order_code' => $order->code,
+      'branch_id' => $order->branch_id
+    ]);
   }
 
   /**
    * Tạo job in hóa đơn
    * POST /api/pos/orders/{invoiceCode}/invoice
    */
-  public function invoice($invoiceCode): JsonResponse
+  public function invoice(Request $request): JsonResponse
   {
     try {
-      $invoice = $this->invoiceService->findByCode($invoiceCode);
+      $invoice = $this->invoiceService->findByCode($request->invoiceCode);
       $this->invoiceService->requestPrint($invoice->id, $invoice->branch_id);
       return response()->json([
         'success' => true,
