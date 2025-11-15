@@ -80,7 +80,7 @@ class ProductService extends BaseService
       $this->syncAttributes($product->id, $data['attributes'] ?? []);
       $this->syncFormulas($product->id, $data['formulas'] ?? []);
       $this->syncToppings($product->id, $data['toppings'] ?? []);
-
+      /* 
       // Cập nhật stock dependencies trong các trường hợp sau:
       // 1. Khi có formulas (sản phẩm chế biến/combo)
       // 2. Khi sản phẩm có thể là topping và có formulas
@@ -98,7 +98,7 @@ class ProductService extends BaseService
       if ($shouldUpdateDependencies) {
         $this->dependencyService->updateDependencies($product);
       }
-
+ */
       return $product;
     });
   }
