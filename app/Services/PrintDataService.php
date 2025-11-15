@@ -55,17 +55,17 @@ class PrintDataService
     }
     // Cập nhật print count cho invoice
     $invoice->markAsPrinted();
-
-    return [
-      'invoice' => [
-        'id' => $invoice->id,
-        'code' => $invoice->code,
-        'type' => 'invoice',
-        'metadata' => $this->getEntryData($invoice)
-      ],
-      'kitchen' => $this->getKitchenData($invoice),
-      'labels' =>  $this->getLabelsDataFromInvoice($invoice->id),
+    $data = [];
+    $data['invoice'] = [
+      'type' => 'invoice',
+      'metadata' => $this->getEntryData($invoice)
     ];
+    $kitchenData = $this->getKitchenData($invoice);
+    if (!empty($kitchenData)) {
+      $data['kitchen'] = $kitchenData;
+    }
+    $data['labels'] =  $this->getLabelsDataFromInvoice($invoice->id);
+    return $data;
   }
 
 
