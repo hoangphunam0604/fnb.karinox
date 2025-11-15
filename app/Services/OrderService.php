@@ -318,9 +318,9 @@ class OrderService
 
       // Tạo đơn hàng mới
       $newOrder = $originalOrder->replicate();
-      $newOrder->code = $originalOrder->code . "-2";
+      $newOrder->order_code = $originalOrder->order_code . "-2";
       $newOrder->save();
-      $originalOrder->code .= "-1";
+      $originalOrder->order_code .= "-1";
 
 
       foreach ($splitItems as $itemId => $quantityToSplit) {
