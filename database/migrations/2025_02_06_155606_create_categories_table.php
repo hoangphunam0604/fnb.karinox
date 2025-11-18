@@ -16,7 +16,6 @@ return new class extends Migration
       $table->timestamps();
       $table->foreignId('parent_id')->nullable()->constrained('categories')->onDelete('set null'); // Hỗ trợ danh mục cha - con           
       $table->string('name');
-      $table->string('code_prefix', 10)->unique(); // Prefix cho mã sản phẩm (VD: CF, TEA, MILK)
       $table->text('description')->nullable();
     });
   }
