@@ -21,6 +21,8 @@ use App\Http\Admin\Controllers\PermissionController;
 use App\Http\Admin\Controllers\ReportController;
 use App\Http\Admin\Controllers\InventoryController;
 
+Route::get('/admin/products/sync', [ProductController::class, 'syncFromKiotViet']);
+
 // Admin routes: require API auth, app check, branch context and only allow users with role admin or manager
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:admin|manager'])->prefix('admin')->group(function () {
 

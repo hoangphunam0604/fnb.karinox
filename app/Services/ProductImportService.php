@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Client\KiotViet;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductBranch;
@@ -15,6 +16,36 @@ class ProductImportService
 {
   protected array $toppingList = [];
   protected array $formulaList = [];
+
+  public function __construct(
+    protected KiotViet $kiot_viet
+  ) {}
+
+  public function importFromKiotViet($pageSize = 100, $currentItem = 0)
+  {
+    $products = $this->kiot_viet->getProducts([
+      'pageSize'  => $pageSize,
+      'currentItem' =>  $currentItem,
+      'includePricebook' => 1
+    ]);
+    foreach ($products['data'] as $product) {
+      if (isset($product['toppings'])) {
+        foreach ($product['toppings'] as $topping) {
+          Log::info('Topping: ' . json_encode($topping));
+        }
+      }
+      if (isset($product['formulas'])) {
+        foreach ($product['formulas'] as $topping) {
+          Log::info('formulas: ' . json_encode($topping));
+        }
+      }
+      unset($product['toppings']);
+      unset($product['formulas']);
+      Log::info('Product: ' . json_encode($product));
+      Log::info('-----------------------------------');
+    }
+    return $products;
+  }
 
   public function importFromExcel($branch_id, $filePath)
   {

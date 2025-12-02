@@ -2,6 +2,7 @@
 
 namespace App\Http\Admin\Controllers;
 
+use App\Client\KiotViet;
 use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\ProductRequest;
 use App\Http\Admin\Resources\ProductResource;
@@ -13,7 +14,10 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
 
-  public function __construct(protected ProductService $service, protected ProductImportService $importService) {}
+  public function __construct(
+    protected ProductService $service,
+    protected ProductImportService $importService,
+  ) {}
 
   public function index(Request $request)
   {
@@ -89,5 +93,13 @@ class ProductController extends Controller
   {
     $items = $this->service->manufacturingAutocomplete($request->all());
     return ProductResource::collection($items);
+  }
+
+  public function syncFromKiotViet(Request $request)
+  {
+    $pageSize  = $request->get('pageSize', 100);
+    $currentItem =  $request->get('currentItem', 0);
+    $result = $this->importService->importFromKiotViet($pageSize, $currentItem);
+    return response()->json($result);
   }
 }
