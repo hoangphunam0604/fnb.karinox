@@ -14,16 +14,12 @@ return new class extends Migration
     Schema::create('products', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
-      $table->unsignedTinyInteger('product_group')->default(1);
-      $table->enum('product_type', ['ingredient', 'goods', 'processed', 'service', 'combo'])->default('goods');
-      $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
+      $table->unsignedBigInteger('kiotviet_id')->unique()->nullable();
+      $table->foreignId('menu_id')->nullable()->constrained()->onDelete('set null');
       $table->string('code')->unique();
-      $table->string('barcode')->nullable();
       $table->string('name');
       $table->text('description')->nullable();
-      $table->unsignedInteger('cost_price')->nullable();
-      $table->unsignedInteger('regular_price')->nullable();
-      $table->unsignedInteger('sale_price')->nullable();
+      $table->unsignedInteger('price')->default(0);
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
       $table->boolean('allows_sale')->default(false);
@@ -32,8 +28,7 @@ return new class extends Migration
       $table->boolean('manage_stock')->default(false);
       $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
       $table->boolean('print_kitchen')->default(false); // In phiếu bếp
-      $table->string('thumbnail')->default('https://karinox.vn/img/product-image.png');
-      $table->json('images')->nullable();
+      $table->string('thumbnail')->default('https://karinox.vn/medias/logo-karinox.png');
     });
   }
 

@@ -11,12 +11,10 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('categories', function (Blueprint $table) {
+    Schema::create('menus', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
-      $table->foreignId('parent_id')->nullable()->constrained('categories')->onDelete('set null'); // Hỗ trợ danh mục cha - con           
       $table->string('name');
-      $table->text('description')->nullable();
     });
   }
 
@@ -25,6 +23,6 @@ return new class extends Migration
    */
   public function down(): void
   {
-    Schema::dropIfExists('categories');
+    Schema::dropIfExists('menus');
   }
 };

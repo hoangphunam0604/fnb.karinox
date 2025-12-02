@@ -18,35 +18,82 @@ class ProductImportService
   protected array $formulaList = [];
 
   public function __construct(
-    protected KiotViet $kiot_viet
+    protected KiotViet $kiot_viet,
+    protected ProductService $productService
   ) {}
 
-  public function importFromKiotViet($pageSize = 100, $currentItem = 0)
+  public function importFromKiotViet($pageSize = 100)
   {
-    $products = $this->kiot_viet->getProducts([
-      'pageSize'  => $pageSize,
-      'currentItem' =>  $currentItem,
-      'includePricebook' => 1
-    ]);
-    foreach ($products['data'] as $product) {
-      if (isset($product['toppings'])) {
-        foreach ($product['toppings'] as $topping) {
-          Log::info('Topping: ' . json_encode($topping));
+    $result = [];
+
+    $currentItem = 0;
+    $totalItem = 1;
+    while ($currentItem < $totalItem) {
+      $response = $this->kiot_viet->getProducts($pageSize, $currentItem);
+      $items = $response['data'];
+      $totalItem = $response['total'];
+      $currentItem += count($items);
+
+      foreach ($items as $item) {
+        $toppings = [];
+        $formulas = [];
+        if (isset($item['toppings'])) {
+          foreach ($item['toppings'] as $topping) {
+            $topping['isTopping'] = true;
+            $topping_product = $this->upserProduct($topping);
+            $toppings[] = ['topping_id' => $topping_product->id];
+          }
         }
-      }
-      if (isset($product['formulas'])) {
-        foreach ($product['formulas'] as $topping) {
-          Log::info('formulas: ' . json_encode($topping));
+        if (isset($item['formulas'])) {
+          foreach ($item['formulas'] as $formula) {
+            $formula_product = $this->upserProduct($formula);
+            $formulas[] = ['ingredient_id' => $formula_product->id, 'quantity' => $formula['quantity']];
+          }
         }
+
+        $product = $this->upserProduct($item, $toppings, $formulas);
+
+        $result[] = $product;
       }
-      unset($product['toppings']);
-      unset($product['formulas']);
-      Log::info('Product: ' . json_encode($product));
-      Log::info('-----------------------------------');
     }
-    return $products;
+    return $result;
   }
 
+
+  private function upserProduct($data, $toppings = [], $formulas = [])
+  {
+    return DB::transaction(function () use ($data, $toppings, $formulas) {
+      $productData = $this->getProductDataFromKiotViet($data);
+      Product::updateOrCreate(
+        ['kiotviet_id' => $productData['kiotviet_id']],
+        $productData
+      );
+      $product = Product::where('kiotviet_id', $productData['kiotviet_id'])->first();
+      // Đồng bộ toppings
+      if (!empty($toppings)) {
+        $this->productService->syncToppings($product->id, $toppings);
+      }
+      // Đồng bộ công thức
+      if (!empty($formulas)) {
+        $this->productService->syncFormulas($product->id, $formulas);
+      }
+      return $product;
+    });
+  }
+
+  private function getProductDataFromKiotViet($item)
+  {
+    return [
+      'kiotviet_id'        => $item['id'],
+      'name'      => $item['name'] ?? "-",
+      'code'      => $item['code'],
+      "price" =>  $item['basePrice'],
+      "unit"  =>  $item['unit'] ?? null,
+      "allows_sale"  =>  $item['allowsSale'] ?? false,
+      "is_topping" =>  $item['isTopping'] ?? false,
+    ];
+  }
+  /* 
   public function importFromExcel($branch_id, $filePath)
   {
     if (!file_exists($filePath)) {
@@ -218,5 +265,5 @@ class ProductImportService
         }
       }
     }
-  }
+  } */
 }

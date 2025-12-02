@@ -24,23 +24,23 @@ class KiotViet
     $this->kioviet_access_token = $this->getAccessToken();
   }
 
-  public function getProducts($params = [
-    'pageSize'  => 100,
-    'currentItem' =>  0,
-    'includePricebook' => 1
-  ])
+  public function getProducts($pageSize  = 100, $currentItem =  0)
   {
-    return $this->get('products', $params);
+    return $this->get('products', [
+      'pageSize' => $pageSize,
+      'currentItem' => $currentItem,
+      'includePricebook' => 1
+    ]);
   }
 
 
-  public function getMembers($params = [
-    'pageSize'  => 100,
-    'currentItem' =>  0,
-    'includeTotal' => 1
-  ])
+  public function getMembers($pageSize  = 100, $currentItem =  0)
   {
-    return $this->get('customers', $params);
+    return $this->get('customers', [
+      'pageSize' => $pageSize,
+      'currentItem' => $currentItem,
+      'includeTotal' => 1
+    ]);
   }
   protected function getAccessToken()
   {

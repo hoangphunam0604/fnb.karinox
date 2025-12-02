@@ -17,6 +17,7 @@ class ProductController extends Controller
   public function __construct(
     protected ProductService $service,
     protected ProductImportService $importService,
+    protected KiotViet $kiotVietClient
   ) {}
 
   public function index(Request $request)
@@ -56,7 +57,7 @@ class ProductController extends Controller
     return response()->json(['message' => 'Deleted successfully.']);
   }
 
-
+  /* 
   public function import(Request $request)
   {
     $request->validate(['branch_id' => 'required', 'file' => 'required|mimes:xlsx']);
@@ -87,12 +88,24 @@ class ProductController extends Controller
     $result = $this->importService->importFromExcel($branch_id, $fullPath);
 
     return response()->json($result);
-  }
+  } */
 
   public function manufacturingAutocomplete(Request $request)
   {
     $items = $this->service->manufacturingAutocomplete($request->all());
     return ProductResource::collection($items);
+  }
+  public function kiotViet(Request $request)
+  {
+    $pageSize  = $request->get('pageSize', 100);
+    $currentItem =  $request->get('currentItem', 0);
+    $result = $this->kiotVietClient->getProducts($pageSize, $currentItem);
+    $data = [];
+    /* foreach ($result['data'] as $item) {
+      $data[] = ['productType'  =>  $item['productType'], 'name' =>  $item['name']];
+    }
+    return response()->json($data); */
+    return response()->json($result);
   }
 
   public function syncFromKiotViet(Request $request)
@@ -100,6 +113,7 @@ class ProductController extends Controller
     $pageSize  = $request->get('pageSize', 100);
     $currentItem =  $request->get('currentItem', 0);
     $result = $this->importService->importFromKiotViet($pageSize, $currentItem);
+
     return response()->json($result);
   }
 }

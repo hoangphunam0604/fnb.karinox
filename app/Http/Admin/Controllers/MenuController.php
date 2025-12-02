@@ -4,41 +4,41 @@ namespace App\Http\Admin\Controllers;
 
 use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\CategoryRequest;
-use App\Http\Admin\Resources\CategoryResource;
-use App\Services\CategoryService;
+use App\Http\Admin\Resources\MenuResource;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+class MenuController extends Controller
 {
-  public function __construct(protected CategoryService $service) {}
+  public function __construct(protected MenuService $service) {}
 
   public function index(Request $request)
   {
     $data = $this->service->getList($request->all());
-    return CategoryResource::collection($data);
+    return MenuResource::collection($data);
   }
 
   public function all()
   {
     $data = $this->service->getAll();
-    return CategoryResource::collection($data);
+    return MenuResource::collection($data);
   }
 
   public function store(CategoryRequest $request)
   {
     $category = $this->service->create($request->validated());
-    return new CategoryResource($category);
+    return new MenuResource($category);
   }
 
   public function show($id)
   {
-    return new CategoryResource($this->service->find($id));
+    return new MenuResource($this->service->find($id));
   }
 
   public function update(CategoryRequest $request, $id)
   {
     $category = $this->service->update($id, $request->validated());
-    return new CategoryResource($category);
+    return new MenuResource($category);
   }
 
   public function destroy($id)

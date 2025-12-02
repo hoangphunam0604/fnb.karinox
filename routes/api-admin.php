@@ -6,7 +6,7 @@ use App\Http\Admin\Controllers\AreaController;
 use App\Http\Admin\Controllers\AttributeController;
 use App\Http\Admin\Controllers\BranchController;
 use App\Http\Admin\Controllers\TableAndRoomController;
-use App\Http\Admin\Controllers\CategoryController;
+use App\Http\Admin\Controllers\MenuController;
 use App\Http\Admin\Controllers\CustomerController;
 use App\Http\Admin\Controllers\FileUploadController;
 use App\Http\Admin\Controllers\InvoiceController;
@@ -20,6 +20,8 @@ use App\Http\Admin\Controllers\RoleController;
 use App\Http\Admin\Controllers\PermissionController;
 use App\Http\Admin\Controllers\ReportController;
 use App\Http\Admin\Controllers\InventoryController;
+
+Route::get('/admin/products/kiot-viet', [ProductController::class, 'kiotViet']);
 
 Route::get('/admin/products/sync', [ProductController::class, 'syncFromKiotViet']);
 
@@ -36,8 +38,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id', 'role:
   Route::get('branches/all', [BranchController::class, 'all']);
   Route::apiResource('branches', BranchController::class);
 
-  Route::get('categories/all', [CategoryController::class, 'all']);
-  Route::apiResource('categories', CategoryController::class);
+  Route::get('menus/all', [MenuController::class, 'all']);
+  Route::apiResource('menus', MenuController::class);
 
   Route::post('customers/import', [CustomerController::class, 'import']);
   Route::apiResource('customers', CustomerController::class);

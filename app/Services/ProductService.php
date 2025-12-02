@@ -92,14 +92,14 @@ class ProductService extends BaseService
     if (!empty($params['category_id']))
       $query->where('category_id', $params['category_id']);
 
-    if (!empty($params['product_type'])):
+    /* if (!empty($params['product_type'])):
       $productType = $params['product_type'];
       if (is_array($productType)) {
         $query->whereIn('product_type', $productType);
       } else {
         $query->where('product_type', $productType);
       }
-    endif;
+    endif; */
 
     if (!empty($params['is_topping'])):
       $isTopping = filter_var($params['is_topping'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
@@ -182,7 +182,7 @@ class ProductService extends BaseService
   /**
    * Đồng bộ công thức (thành phần) sản phẩm
    */
-  private function syncFormulas($productId, array $formulas)
+  public function syncFormulas($productId, array $formulas)
   {
     ProductFormula::where('product_id', $productId)->delete();
 
@@ -200,7 +200,7 @@ class ProductService extends BaseService
   /**
    * Đồng bộ topping sản phẩm (chỉ nhận các sản phẩm có is_topping = true)
    */
-  private function syncToppings($productId, array $toppings)
+  public function syncToppings($productId, array $toppings)
   {
     ProductTopping::where('product_id', $productId)->delete();
     $toppingIds =  array_map(fn($topping) => $topping['topping_id'], $toppings);
