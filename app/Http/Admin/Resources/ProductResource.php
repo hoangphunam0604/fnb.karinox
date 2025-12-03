@@ -11,12 +11,9 @@ class ProductResource extends JsonResource
   {
     return [
       'id' => $this->id,
+      'menu_id' => $this->menu_id,
       'code' => $this->code,
       'name' => $this->name,
-      'category_id' => $this->category_id,
-      'cost_price'  =>  $this->cost_price,
-      'regular_price'  =>  $this->regular_price,
-      'sale_price'  =>  $this->sale_price,
       'price' => $this->price,
       'product_type' => $this->product_type,
       'allows_sale' => $this->allows_sale,
@@ -28,7 +25,6 @@ class ProductResource extends JsonResource
       'thumbnail'  =>  $this->thumbnail,
       'manage_stock'  =>  $this->manage_stock,
       'sell_branches' => $this->sell_branches,
-      'category' => new CategoryResource($this->whenLoaded('category')),
     ];
   }
 }

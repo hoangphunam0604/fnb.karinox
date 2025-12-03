@@ -37,7 +37,6 @@ class ProductController extends Controller
   {
     $item = $this->service->find($id);
     $item->load([
-      'category',
       'branches',
       'attributes',
       'toppings.topping',
@@ -111,14 +110,8 @@ class ProductController extends Controller
 
   public function syncFromKiotViet()
   {
-    return new StreamedResponse(function () {
-      $result = $this->importService->importFromKiotViet();
+    $this->importService->importFromKiotViet();
 
-      return response()->json($result);
-    }, 200, [
-      'Content-Type' => 'text/event-stream',
-      'Cache-Control' => 'no-cache, no-transform',
-      'X-Accel-Buffering' => 'no'
-    ]);
+    return response()->json(['success' => true, 'message' => 'Đồng bộ sản phẩm từ KiotViet thành công.']);
   }
 }

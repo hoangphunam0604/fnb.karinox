@@ -12,12 +12,11 @@ class Product extends Model
 
   protected $fillable = [
     'kiotviet_id',
-    'product_group',
+    //'product_group',
     //info
     //'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
     'menu_id', //danh mục sản phẩm
     'code',
-    'barcode',
     'name',
     'description', // Mô tả
     'price', //Giá nhập, giá gốc

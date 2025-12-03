@@ -53,7 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         // Danh sách mã lỗi và thông điệp tương ứng
-        $errorResponses = [
+        /* $errorResponses = [
           \Illuminate\Auth\AuthenticationException::class => ['Bạn không có quyền truy cập.', 401],
           \Illuminate\Auth\Access\AuthorizationException::class => ['Bạn không có quyền thực hiện hành động này.', 403],
           \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => ['Không tìm thấy dữ liệu.', 404],
@@ -69,7 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
               'code' => $code
             ], $code);
           }
-        }
+        } */
 
         return response()->json([
           'success' => false,

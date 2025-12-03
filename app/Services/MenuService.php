@@ -13,4 +13,11 @@ class MenuService extends BaseService
   {
     return new Menu();
   }
+  public function create(array $data): Model
+  {
+    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $data['branch_id'];
+    return parent::create(array_merge($data, [
+      'branch_id' => $branchId
+    ]));
+  }
 }

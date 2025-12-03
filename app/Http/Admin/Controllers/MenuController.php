@@ -3,7 +3,7 @@
 namespace App\Http\Admin\Controllers;
 
 use App\Http\Common\Controllers\Controller;
-use App\Http\Admin\Requests\CategoryRequest;
+use App\Http\Admin\Requests\MenuRequest;
 use App\Http\Admin\Resources\MenuResource;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
@@ -24,10 +24,10 @@ class MenuController extends Controller
     return MenuResource::collection($data);
   }
 
-  public function store(CategoryRequest $request)
+  public function store(MenuRequest $request)
   {
-    $category = $this->service->create($request->validated());
-    return new MenuResource($category);
+    $menu = $this->service->create($request->validated());
+    return new MenuResource($menu);
   }
 
   public function show($id)
@@ -35,10 +35,10 @@ class MenuController extends Controller
     return new MenuResource($this->service->find($id));
   }
 
-  public function update(CategoryRequest $request, $id)
+  public function update(MenuRequest $request, $id)
   {
-    $category = $this->service->update($id, $request->validated());
-    return new MenuResource($category);
+    $menu = $this->service->update($id, $request->validated());
+    return new MenuResource($menu);
   }
 
   public function destroy($id)

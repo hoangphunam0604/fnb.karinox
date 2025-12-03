@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
       SystemSettingSeeder::class,
       AreasAndTablesSeeder::class,
       MembershipLevelSeeder::class,
-      ProductSeeder::class, // Thêm ProductSeeder
+      // ProductSeeder::class, // Thêm ProductSeeder
       VoucherSeeder::class,
       HolidaySeeder::class,
       PrintTemplateSeeder::class,

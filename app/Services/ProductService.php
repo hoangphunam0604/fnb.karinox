@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProductService extends BaseService
 {
-  protected array $with = ['category'];
   protected array $withCount = [];
 
   protected function model(): Model
@@ -52,13 +51,11 @@ class ProductService extends BaseService
         ? Product::findOrFail($productId)
         : new Product();
       $defaults = [
-        'product_type'   => 'goods',
+        'menu_id'      => null,
         'allows_sale'    => false,
         'is_reward_point' => false,
-        'is_topping'     => false,
         'print_label'    => false,
-        'print_kitchen'  => false,
-        'product_group'  => 1,
+        'print_kitchen'  => false
       ];
       // lấy danh sách field cho phép fill
       $fields = $product->getFillable();
@@ -71,9 +68,9 @@ class ProductService extends BaseService
 
       // Đồng bộ dữ liệu liên quan
       $this->syncBranches($product, $data['branches'] ?? []);
-      $this->syncAttributes($product->id, $data['attributes'] ?? []);
+      /*  $this->syncAttributes($product->id, $data['attributes'] ?? []);
       $this->syncFormulas($product->id, $data['formulas'] ?? []);
-      $this->syncToppings($product->id, $data['toppings'] ?? []);
+      $this->syncToppings($product->id, $data['toppings'] ?? []); */
 
       return $product;
     });

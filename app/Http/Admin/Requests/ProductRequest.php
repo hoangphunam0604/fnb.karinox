@@ -18,45 +18,21 @@ class ProductRequest extends FormRequest
   {
     $id = $this->id;
     return [
-      // nhóm chung
-      'product_group'   => ['nullable', 'integer', 'min:1'],
-
-      // info
-      'product_type'    => ['required', Rule::enum(ProductType::class)],
-      'category_id'     => ['nullable', 'exists:categories,id'],
-      'code'            => ['required', 'string', 'max:100', "unique:products,code,{$id}"],
-      'barcode'         => ['nullable', 'string', 'max:255', "unique:products,barcode,{$id}"],
-      'name'            => ['required', 'string', 'max:255'],
-      'description'     => ['nullable', 'string', 'max:2000'],
-      'unit'            => ['nullable', 'string', 'max:50'],
-      'status'          => ['nullable', Rule::enum(CommonStatus::class)],
-
-      // giá
-      'cost_price'      => ['nullable', 'integer', 'min:0'],
-      'regular_price'   => ['nullable', 'integer', 'min:0'],
-      'sale_price'      => ['nullable', 'integer', 'min:0', 'lte:regular_price'],
-
-      // flags
+      'menu_id'     => ['nullable', 'exists:menus,id'],
       'allows_sale'     => ['boolean'],
       'is_reward_point' => ['boolean'],
-      'is_topping'      => ['boolean'],
-
-      'manage_stock'    => ['boolean'],
-
       'print_label'     => ['boolean'],
       'print_kitchen'   => ['boolean'],
 
       // media
       'thumbnail'       => ['nullable', 'string', 'max:2048'],
 
-      'images'  => ['sometimes', 'array'],
-      'images.*' => ['string'],
 
       // ====== RELATION: BRANCHES (pivot: is_selling stock_quantity) ======
       // branches: [{ branch_id: 5, is_selling: true }, ...]
       'branches'                           => ['sometimes', 'array'],
       'branches.*.branch_id'               => ['required', 'integer', 'exists:branches,id', 'distinct'],
-      'branches.*.is_selling'              => ['required', 'boolean'],
+      'branches.*.is_selling'              => ['required', 'boolean'],/* 
 
       // ====== RELATION: ATTRIBUTES (pivot: value) ======
       // attributes: [{ attribute_id: 5, value: "Size L" }, ...]
@@ -75,7 +51,7 @@ class ProductRequest extends FormRequest
       // ====== RELATION: TOPPINGS ======
       // toppings: [{ product_id: 99, extra_price: 5000 }, ...]
       'toppings'                         => ['sometimes', 'array'],
-      'toppings.*.topping_id'            => ['required', 'integer', 'exists:products,id', 'distinct']
+      'toppings.*.topping_id'            => ['required', 'integer', 'exists:products,id', 'distinct'] */
     ];
   }
 
