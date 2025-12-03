@@ -52,11 +52,13 @@ class ProductImportService
         }
 
         $product = $this->upserProduct($item, $toppings, $formulas);
+        echo "data: " . json_encode($product->toArray()) . "\n\n";
 
+        ob_flush();
+        flush();
         $result[] = $product;
       }
     }
-    return $result;
   }
 
 

@@ -10,6 +10,7 @@ use App\Http\Admin\Resources\ProductDetailResource;
 use App\Services\ProductService;
 use App\Services\ProductImportService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductController extends Controller
 {
@@ -108,12 +109,16 @@ class ProductController extends Controller
     return response()->json($result);
   }
 
-  public function syncFromKiotViet(Request $request)
+  public function syncFromKiotViet()
   {
-    $pageSize  = $request->get('pageSize', 100);
-    $currentItem =  $request->get('currentItem', 0);
-    $result = $this->importService->importFromKiotViet($pageSize, $currentItem);
+    return new StreamedResponse(function () {
+      $result = $this->importService->importFromKiotViet();
 
-    return response()->json($result);
+      return response()->json($result);
+    }, 200, [
+      'Content-Type' => 'text/event-stream',
+      'Cache-Control' => 'no-cache, no-transform',
+      'X-Accel-Buffering' => 'no'
+    ]);
   }
 }
