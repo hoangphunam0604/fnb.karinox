@@ -24,6 +24,9 @@ class ProductController extends Controller
   public function index(Request $request)
   {
     $items = $this->service->getList($request->all());
+    $items->load([
+      'menu'
+    ]);
     return ProductResource::collection($items);
   }
 

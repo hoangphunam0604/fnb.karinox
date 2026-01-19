@@ -25,6 +25,7 @@ class ProductResource extends JsonResource
       'thumbnail'  =>  $this->thumbnail,
       'manage_stock'  =>  $this->manage_stock,
       'sell_branches' => $this->sell_branches,
+      'menu' => new MenuResource($this->whenLoaded('menu')),
     ];
   }
 }

@@ -98,6 +98,10 @@ class ProductService extends BaseService
       }
     endif; */
 
+    if (!empty($params['allows_sale']) && $params['allows_sale'] != null):
+      $allowsSale = filter_var($params['allows_sale'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+      $query->where('allows_sale', $allowsSale);
+    endif;
     if (!empty($params['is_topping'])):
       $isTopping = filter_var($params['is_topping'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
       $query->where('is_topping', $isTopping);

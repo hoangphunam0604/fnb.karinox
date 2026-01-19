@@ -48,6 +48,7 @@ class Product extends Model
     parent::boot();
 
     static::saving(function ($product) {
+      $product->menu_id = $product->menu_id ?? 1; // Mặc định danh mục sản phẩm
       // chuẩn hoá để luôn là mảng ID duy nhất, kiểu int
       if (is_array($product->sell_branches)) {
         $ids = array_values(array_unique(array_map('intval', $product->sell_branches)));

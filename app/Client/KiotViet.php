@@ -24,6 +24,11 @@ class KiotViet
     $this->kioviet_access_token = $this->getAccessToken();
   }
 
+  public function createOrder($data)
+  {
+    return $this->post('orders', $data);
+  }
+
   public function getProducts($pageSize  = 100, $currentItem =  0)
   {
     return $this->get('products', [
@@ -32,7 +37,6 @@ class KiotViet
       'includePricebook' => 1
     ]);
   }
-
 
   public function getMembers($pageSize  = 100, $currentItem =  0)
   {
@@ -56,6 +60,18 @@ class KiotViet
       $data = $this->getContents($response);
       return $data["access_token"];
     });
+  }
+
+  public function post($endpoint, $data)
+  {
+    $response = $this->client->post($this->api . $endpoint, [
+      'headers' => [
+        'Retailer' => 'karinopr',
+        'Authorization'     => "Bearer {$this->kioviet_access_token}"
+      ],
+      'form_params' => $data
+    ]);
+    return $this->getContents($response);
   }
 
   public function get($endpoint, $query = [])
