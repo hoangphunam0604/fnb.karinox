@@ -15,7 +15,7 @@ class MenuSeeder extends Seeder
   {
 
     Menu::query()->delete();
-    Menu::create(['name' => 'Thực đơn']);
+    Menu::create(['name' => 'Thực đơn', 'order' => 100]);
     Menu::create(['name' => 'Cà phê']);
     Menu::create(['name' => 'Ca cao']);
     Menu::create(['name' => 'Trà sữa']);
