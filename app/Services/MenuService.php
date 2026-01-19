@@ -13,11 +13,10 @@ class MenuService extends BaseService
   {
     return new Menu();
   }
-  public function create(array $data): Model
+  public function delete($id): bool
   {
-    $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : $data['branch_id'];
-    return parent::create(array_merge($data, [
-      'branch_id' => $branchId
-    ]));
+    if ($id == 1)
+      throw new \Exception("Không thể xóa thực đơn chính");
+    return parent::delete($id);
   }
 }

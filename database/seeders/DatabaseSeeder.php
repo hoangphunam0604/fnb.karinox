@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -18,7 +16,7 @@ class DatabaseSeeder extends Seeder
       SystemSettingSeeder::class,
       AreasAndTablesSeeder::class,
       MembershipLevelSeeder::class,
-      // ProductSeeder::class, // Thêm ProductSeeder
+      MenuSeeder::class,
       VoucherSeeder::class,
       HolidaySeeder::class,
       PrintTemplateSeeder::class,

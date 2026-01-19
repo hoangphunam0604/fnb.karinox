@@ -86,8 +86,8 @@ class ProductService extends BaseService
           ->orWhere('code', 'LIKE', '%' . $keyword . '%');
       });
     endif;
-    if (!empty($params['category_id']))
-      $query->where('category_id', $params['category_id']);
+    if (!empty($params['menu_id']))
+      $query->where('menu_id', $params['menu_id']);
 
     /* if (!empty($params['product_type'])):
       $productType = $params['product_type'];
@@ -230,15 +230,14 @@ class ProductService extends BaseService
     // Lấy danh sách sản phẩm thuộc chi nhánh được chọn
     $products = Product::select(
       'products.*',
-      'categories.name as category_name',
-      DB::raw('COALESCE(products.sale_price, products.regular_price) as final_price')
+      'menus.name as category_name'
     )
       ->with('toppings.topping')
       ->join('product_branches', 'products.id', '=', 'product_branches.product_id')
-      ->join('categories', 'products.category_id', '=', 'categories.id')
+      ->join('menus', 'products.menu_id', '=', 'menus.id')
       ->where('product_branches.branch_id', $branchId)
       ->where('products.allows_sale', true) // Chỉ lấy sản phẩm đang kinh doanh
-      ->orderBy('categories.name')
+      ->orderBy('menus.name')
       ->orderBy('products.name')
       ->get();
 
