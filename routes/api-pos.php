@@ -12,7 +12,7 @@ use App\Http\PaymentGateway\Controllers\CashController;
 use App\Http\PaymentGateway\Controllers\CardController;
 use App\Http\POS\Controllers\InvoiceController;
 use App\Http\POS\Controllers\PrintController;
-use App\Http\POS\Controllers\CashInventoryController;
+use App\Http\POS\Controllers\TemplateController;
 
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
@@ -37,6 +37,8 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::post('/customers/{customer}/receive-birthday-gifts', [CustomerController::class, 'receiveBirthdayGift']);
 
   Route::get('/vouchers', [VoucherController::class, 'index']);
+
+  Route::get('/print-templates', [TemplateController::class, 'index']);
 
   // Cash inventory endpoint
   Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
