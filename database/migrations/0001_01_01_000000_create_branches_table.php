@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('branches', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->enum('type', ['store', 'pickleball'])->default('store');
       $table->string('name');
       $table->string('phone_number')->nullable();
       $table->string('email')->nullable();
