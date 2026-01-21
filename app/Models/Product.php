@@ -33,6 +33,7 @@ class Product extends Model
 
   protected $casts = [
     'price' => 'int',
+    'booking' => 'boolean',
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
     'is_topping' => 'boolean',
