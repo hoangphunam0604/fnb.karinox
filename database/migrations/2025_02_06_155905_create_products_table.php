@@ -16,12 +16,14 @@ return new class extends Migration
       $table->timestamps();
       $table->unsignedBigInteger('kiotviet_id')->unique()->nullable();
       $table->foreignId('menu_id')->nullable()->constrained()->onDelete('set null');
+      $table->string('product_type')->nullable();
       $table->string('code')->unique();
       $table->string('name');
       $table->text('description')->nullable();
       $table->unsignedInteger('price')->default(0);
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
+      $table->boolean('booking')->default(false);
       $table->boolean('allows_sale')->default(false);
       $table->boolean('is_reward_point')->default(false);
       $table->boolean('is_topping')->default(false);

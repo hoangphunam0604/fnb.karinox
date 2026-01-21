@@ -14,7 +14,7 @@ class Product extends Model
     'kiotviet_id',
     //'product_group',
     //info
-    //'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
+    'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
     'menu_id', //danh mục sản phẩm
     'code',
     'name',
@@ -22,6 +22,7 @@ class Product extends Model
     'price', //Giá nhập, giá gốc
     'unit', //Đơn vị
     'status', //Bán | ngừng bán
+    'booking', //Đặt vé
     'allows_sale', //Bán trực tiếp
     'is_reward_point', //Tích điểm
     'is_topping', //Có thể sử dụng làm topping

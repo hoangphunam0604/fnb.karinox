@@ -11,13 +11,13 @@ class Branch extends Model
   use HasFactory;
 
   protected $fillable = [
+    'type',
     'name',
     'phone_number',
     'email',
     'address',
     'status',
     'sort_order',
-    'connection_code',
   ];
 
   protected $casts = [
@@ -35,15 +35,5 @@ class Branch extends Model
   {
     return $this->belongsToMany(User::class, 'branch_user')
       ->using(BranchUser::class);
-  }
-
-  /**
-   * Tìm chi nhánh theo print connection code
-   */
-  public static function findByConnectionCode(string $code): ?self
-  {
-    return static::where('connection_code', $code)
-      ->where('status', CommonStatus::ACTIVE)
-      ->first();
   }
 }

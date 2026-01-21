@@ -80,6 +80,7 @@ class ProductImportService
   {
     return [
       'kiotviet_id'        => $item['id'],
+      'product_type'  =>  $item['productType'] ?? 1,
       'name'      => $item['name'] ?? "-",
       'code'      => $item['code'],
       "price" =>  $item['basePrice'],

@@ -2,8 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Area;
+use App\Models\Branch;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+
+use function Symfony\Component\String\b;
 
 class AreasAndTablesSeeder extends Seeder
 {
@@ -19,29 +23,45 @@ class AreasAndTablesSeeder extends Seeder
 
     // Kích hoạt lại kiểm tra khóa ngoại
     DB::statement('SET FOREIGN_KEY_CHECKS=1');
+    $arena = Branch::create([
+      'name' => 'Karinox Arena',
+      'address' => 'Lô TM27-1 Hoàng Diệu',
+      'email' => 'karinox@domain.com',
+      'phone_number' => '0987654321',
+    ]);
+    $area = Area::create(['name' => 'Sân Pickleball', 'branch_id' => $arena->id]);
+    $san = [];
+    for ($i = 1; $i < 8; $i++) {
+      $san[] = [
+        'name'  =>  'Sân ' . $i,
+        'area_id' => $area->id,
+        'branch_id' => $arena->id,
+        'capacity' => 20,
+        'status' => 'available',
+      ];
+    }
+    $san[] = [
+      'name'  =>  'Sân Trung Tâm',
+      'area_id' => $area->id,
+      'branch_id' => $arena->id,
+      'capacity' => 20,
+      'status' => 'available',
+    ];
+    DB::table('tables_and_rooms')->insert($san);
 
     // Tạo dữ liệu cho các chi nhánh với mã kết nối
     $branches = [
       [
-        'name' => 'Gà Rán Pippy Kids',
-        'address' => 'Lô TM27-1 Hoàng Diệu',
-        'email' => 'pippykids@domain.com',
-        'phone_number' => '0123456789',
-        'connection_code' => 'PIPPYKIDS'
-      ],
-      [
         'name' => 'Karinox Coffee',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'karinox@domain.com',
-        'phone_number' => '0987654321',
-        'connection_code' => 'KARINOX'
+        'phone_number' => '0987654321'
       ],
       [
         'name' => 'Khu Vui Chơi Pippy Kids',
         'address' => 'Lô TM27-1 Hoàng Diệu',
         'email' => 'playground@domain.com',
-        'phone_number' => '0123987654',
-        'connection_code' => 'PLAYGROUND'
+        'phone_number' => '0123987654'
       ],
     ];
 
@@ -56,7 +76,6 @@ class AreasAndTablesSeeder extends Seeder
       ['name' => $branches[0]['name'] . ' - Tầng 2', 'note' => 'Khu vực yên tĩnh, phù hợp làm việc', 'branch_id' => $branchIds[0]],
       ['name' => $branches[1]['name'] . ' - Sân thượng', 'note' => 'Không gian mở, thoáng mát', 'branch_id' => $branchIds[1]],
       ['name' => $branches[1]['name'] . ' - Ngoài trời', 'note' => 'Phù hợp cho các buổi tiệc ngoài trời', 'branch_id' => $branchIds[1]],
-      ['name' => $branches[2]['name'] . ' - VIP', 'note' => 'Khu vực dành cho khách hàng VIP', 'branch_id' => $branchIds[2]],
     ];
 
     // Chèn dữ liệu vào bảng `areas` và lưu lại ID
@@ -68,7 +87,7 @@ class AreasAndTablesSeeder extends Seeder
     // Tạo 30 bàn/phòng cho mỗi khu vực
     $tablesAndRooms = [];
     foreach ($areaIds as $areaId) {
-      for ($i = 1; $i <= 30; $i++) {
+      for ($i = 1; $i <= 10; $i++) {
         $tablesAndRooms[] = [
           'name' => "Bàn $i",
           'area_id' => $areaId,

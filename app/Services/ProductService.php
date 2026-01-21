@@ -89,14 +89,14 @@ class ProductService extends BaseService
     if (!empty($params['menu_id']))
       $query->where('menu_id', $params['menu_id']);
 
-    /* if (!empty($params['product_type'])):
+    if (!empty($params['product_type'])):
       $productType = $params['product_type'];
       if (is_array($productType)) {
         $query->whereIn('product_type', $productType);
       } else {
         $query->where('product_type', $productType);
       }
-    endif; */
+    endif;
 
     if (!empty($params['allows_sale']) && $params['allows_sale'] != null):
       $allowsSale = filter_var($params['allows_sale'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
