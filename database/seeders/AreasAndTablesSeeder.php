@@ -25,6 +25,7 @@ class AreasAndTablesSeeder extends Seeder
     DB::statement('SET FOREIGN_KEY_CHECKS=1');
     $arena = Branch::create([
       'name' => 'Karinox Arena',
+      'type' => 'pickleball',
       'address' => 'Lô TM27-1 Hoàng Diệu',
       'email' => 'karinox@domain.com',
       'phone_number' => '0987654321',
