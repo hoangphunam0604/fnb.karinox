@@ -22,7 +22,7 @@ class Product extends Model
     'price', //Giá nhập, giá gốc
     'unit', //Đơn vị
     'status', //Bán | ngừng bán
-    'booking', //Đặt vé
+    'booking_type', //Đặt vé
     'allows_sale', //Bán trực tiếp
     'is_reward_point', //Tích điểm
     'is_topping', //Có thể sử dụng làm topping
@@ -33,7 +33,6 @@ class Product extends Model
 
   protected $casts = [
     'price' => 'int',
-    'booking' => 'boolean',
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
     'is_topping' => 'boolean',
