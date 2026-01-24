@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\CommonStatus;
+use App\Enums\ProductBookingType;
+use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Reverb\Loggers\Log;
 
 class Product extends Model
 {
@@ -32,6 +35,8 @@ class Product extends Model
   ];
 
   protected $casts = [
+    'product_type' => ProductType::class,
+    'booking_type' => ProductBookingType::class,
     'price' => 'int',
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
@@ -80,5 +85,14 @@ class Product extends Model
   public function toppings()
   {
     return $this->hasMany(ProductTopping::class);
+  }
+
+  /**
+   * Kiểm tra sản phẩm có phải là booking item không
+   */
+  public function isBookingProduct(): bool
+  {
+    return $this->product_type === \App\Enums\ProductType::SERVICE
+      && $this->booking_type === ProductBookingType::PICKLEBALL_FIXED;
   }
 }

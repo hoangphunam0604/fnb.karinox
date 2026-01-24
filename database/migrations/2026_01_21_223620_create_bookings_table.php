@@ -20,9 +20,11 @@ return new class extends Migration
       $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete(); // Người nhận đơn
       $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete(); // Khách hàng
       $table->enum('type', ['full', 'social']); //Bao sân | vé lẻ social
+      $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending'); // Trạng thái booking
       $table->dateTime('start_time');
       $table->dateTime('end_time');
       $table->integer('duration_hours');
+      $table->foreignId('order_item_id')->nullable()->constrained('order_items')->nullOnDelete(); // Order item tạo booking này
     });
   }
 

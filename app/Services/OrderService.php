@@ -26,7 +26,8 @@ class OrderService
     protected VoucherService $voucherService,
     protected InvoiceService $invoiceService,
     protected SystemSettingService $systemSettingService,
-    protected StockDeductionService $stockDeductionService
+    protected StockDeductionService $stockDeductionService,
+    protected BookingService $bookingService
   ) {}
   public function getOrdersByTableId(int $branchId, int $tableId)
   {
@@ -178,6 +179,10 @@ class OrderService
     DB::transaction(function () use ($order) {
       $this->pointService->restoreTransactionRewardPoints($order);
       $this->voucherService->restoreVoucherUsage($order);
+
+      // Hủy bookings nếu có
+      $this->bookingService->cancelBookings($order);
+
       $order->order_status = OrderStatus::CANCELED;
       $order->save();
     });
@@ -201,6 +206,10 @@ class OrderService
       $order->order_status = OrderStatus::COMPLETED;
 
       $order->save();
+
+      // Xác nhận bookings nếu có
+      $this->bookingService->confirmBookings($order);
+
       //Tạo hoá đơn
       $this->invoiceService->createInvoiceFromOrder($order->id, $print);
 
@@ -403,6 +412,7 @@ class OrderService
       $unitPrice = $product->price;
       if (isset($item['id'])):
         $orderItem = OrderItem::findOrFail($item['id']);
+        $oldNote = $orderItem->note;
         $orderItem->quantity = $item['quantity'] ?? 1;
         $orderItem->unit_price = $unitPrice;
         // sale_price can be provided by staff; fallback to existing sale_price or unit price
@@ -411,6 +421,27 @@ class OrderService
         $orderItem->discount_value = $item['discount_value'] ?? $orderItem->discount_value;
         $orderItem->note = $item['note'] ?? $orderItem->note;
         $orderItem->save();
+
+        Log::info('Update order item - checking booking', [
+          'product_id' => $product->id,
+          'product_type' => $product->product_type,
+          'product_type_value' => $product->product_type->value ?? 'null',
+          'booking_type' => $product->booking_type,
+          'is_booking' => $product->isBookingProduct()
+        ]);
+
+        // Xử lý booking nếu là sản phẩm đặt sân
+        if ($product->isBookingProduct()) {
+          Log::info('Syncing bookings for updated order item', [
+            'order_item_id' => $orderItem->id,
+            'product_id' => $product->id,
+            'product_type' => $product->product_type->value,
+            'booking_type' => $product->booking_type,
+            'old_note' => $oldNote,
+            'new_note' => $orderItem->note
+          ]);
+          $this->bookingService->syncBookingsForItem($orderItem, $product);
+        }
         // Xử lý topping
         if (!empty($item['toppings'])) {
           $this->updateOrderToppings($orderItem, $item['product_id'], $item['toppings']);
@@ -445,8 +476,30 @@ class OrderService
             'discount_amount' => $item['discount_amount'] ?? 0,
             'print_label' =>  $product->print_label,
             'print_kitchen' =>  $product->print_kitchen,
+            'note' => $item['note'] ?? null,
           ]
         );
+
+        Log::info('Create order item - checking booking', [
+          'product_id' => $product->id,
+          'product_type' => $product->product_type,
+          'product_type_value' => $product->product_type->value ?? 'null',
+          'booking_type' => $product->booking_type,
+          'is_booking' => $product->isBookingProduct(),
+          'note' => $item['note'] ?? 'null'
+        ]);
+
+        // Tạo bookings nếu là sản phẩm đặt sân
+        if ($product->isBookingProduct()) {
+          Log::info('Creating bookings for new order item', [
+            'order_item_id' => $orderItem->id,
+            'product_id' => $product->id,
+            'product_type' => $product->product_type->value,
+            'booking_type' => $product->booking_type,
+            'note' => $item['note'] ?? null
+          ]);
+          $this->bookingService->syncBookingsForItem($orderItem, $product);
+        }
       /* endif; */
       endif;
 
