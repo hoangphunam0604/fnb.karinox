@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\POS\Controllers\BookingController;
 use App\Http\POS\Controllers\OrderController;
 use App\Http\POS\Controllers\ProductController;
 use App\Http\POS\Controllers\CustomerController;
@@ -17,6 +18,7 @@ use App\Http\POS\Controllers\TemplateController;
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
+  Route::get('/bookings', [BookingController::class, 'index']);
   Route::get('/orders/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
   Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
