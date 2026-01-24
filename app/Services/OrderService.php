@@ -405,8 +405,11 @@ class OrderService
         $orderItem = OrderItem::findOrFail($item['id']);
         $orderItem->quantity = $item['quantity'] ?? 1;
         $orderItem->unit_price = $unitPrice;
-        $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
-        $orderItem->note = $item['note'];
+        // sale_price can be provided by staff; fallback to existing sale_price or unit price
+        $orderItem->sale_price = $item['sale_price'] ?? $orderItem->sale_price ?? $unitPrice;
+        $orderItem->discount_type = $item['discount_type'] ?? $orderItem->discount_type;
+        $orderItem->discount_value = $item['discount_value'] ?? $orderItem->discount_value;
+        $orderItem->note = $item['note'] ?? $orderItem->note;
         $orderItem->save();
         // Xử lý topping
         if (!empty($item['toppings'])) {
@@ -436,7 +439,10 @@ class OrderService
             'product_price' => $product->price,
             'quantity' => $item['quantity'] ?? 1,
             'unit_price' => $unitPrice,
-            'total_price' => $unitPrice  * $item['quantity'],
+            'sale_price' => $item['sale_price'] ?? $unitPrice,
+            'discount_type' => $item['discount_type'] ?? null,
+            'discount_value' => $item['discount_value'] ?? 0,
+            'discount_amount' => $item['discount_amount'] ?? 0,
             'print_label' =>  $product->print_label,
             'print_kitchen' =>  $product->print_kitchen,
           ]
@@ -484,9 +490,11 @@ class OrderService
     // Xóa các topping không còn trong danh sách mới
     OrderTopping::where('order_item_id', $orderItem->id)->whereNotIn('id', $toppingIds)->delete();
 
-    // Cập nhật tổng tiền sản phẩm kèm topping
+    // Cập nhật đơn giá (product + toppings) và đảm bảo sale_price tồn tại
     $orderItem->unit_price = $orderItem->product_price + $orderItem->toppings->sum('total_price');
-    $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
+    if (!$orderItem->sale_price) {
+      $orderItem->sale_price = $orderItem->unit_price;
+    }
     $orderItem->save();
   }
 

@@ -15,7 +15,8 @@ class OrderItemPrintResource extends JsonResource
       'Ten_Hang_Hoa' => $this->product->name ?? '',
       'Ghi_Chu_Hang_Hoa' => $this->getToppingsTextAndNote(),
       'So_Luong' => $this->quantity,
-      'Don_Gia' => number_format($this->unit_price),
+      'Don_Gia' => number_format($this->sale_price),
+      'Giam_Gia' => number_format($this->discount_amount ?? 0),
       'Thanh_Tien' => number_format($this->total_price),
     ];
   }
