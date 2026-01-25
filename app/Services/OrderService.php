@@ -344,14 +344,14 @@ class OrderService
           $orderItem->save();
         } else {
           $orderItem->quantity -= $quantityToSplit;
-          $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
+          $orderItem->total_price = $orderItem->sale_price * $orderItem->quantity;
           $orderItem->save();
           // Tạo mới sản phẩm ở đơn mới
           $newItem = $orderItem->replicate();
           $newItem->order_id = $newOrder->id;
           $newItem->quantity = $quantityToSplit;
 
-          $newItem->total_price = $newItem->unit_price * $newItem->quantity;
+          $newItem->total_price = $newItem->sale_price * $newItem->quantity;
           $newItem->save();
 
           // Copy topping nếu có
@@ -415,12 +415,18 @@ class OrderService
         $oldNote = $orderItem->note;
         $orderItem->quantity = $item['quantity'] ?? 1;
         $orderItem->unit_price = $unitPrice;
-        // sale_price can be provided by staff; fallback to existing sale_price or unit price
-        $orderItem->sale_price = $item['sale_price'] ?? $orderItem->sale_price ?? $unitPrice;
         $orderItem->discount_type = $item['discount_type'] ?? $orderItem->discount_type;
-        $orderItem->discount_value = $item['discount_value'] ?? $orderItem->discount_value;
+
+        // Cập nhật discount values tùy theo type
+        if ($orderItem->discount_type === 'percent') {
+          $orderItem->discount_percent = $item['discount_percent'] ?? $orderItem->discount_percent ?? 0;
+        } elseif ($orderItem->discount_type === 'fixed') {
+          $orderItem->discount_amount = $item['discount_amount'] ?? $orderItem->discount_amount ?? 0;
+        }
+
         $orderItem->note = $item['note'] ?? $orderItem->note;
-        $orderItem->save();
+        $orderItem->sale_price = $item['sale_price'] ?? $orderItem->sale_price;
+        $orderItem->save(); // calculatePrices() được gọi tự động trong model
 
         Log::info('Update order item - checking booking', [
           'product_id' => $product->id,
@@ -462,23 +468,21 @@ class OrderService
           $orderItem->total_price = $unitPrice * $orderItem->quantity;
           $orderItem->save();
         else : */
-        $orderItem = OrderItem::create(
-          [
-            'order_id' => $order->id,
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-            'product_price' => $product->price,
-            'quantity' => $item['quantity'] ?? 1,
-            'unit_price' => $unitPrice,
-            'sale_price' => $item['sale_price'] ?? $unitPrice,
-            'discount_type' => $item['discount_type'] ?? null,
-            'discount_value' => $item['discount_value'] ?? 0,
-            'discount_amount' => $item['discount_amount'] ?? 0,
-            'print_label' =>  $product->print_label,
-            'print_kitchen' =>  $product->print_kitchen,
-            'note' => $item['note'] ?? null,
-          ]
-        );
+        $orderItem = OrderItem::create([
+          'order_id' => $order->id,
+          'product_id' => $product->id,
+          'product_name' => $product->name,
+          'product_price' => $product->price,
+          'quantity' => $item['quantity'] ?? 1,
+          'unit_price' => $unitPrice,
+          'sale_price' => $item['sale_price'] ?? $product->price,
+          'discount_type' => $item['discount_type'] ?? null,
+          'discount_percent' => $item['discount_percent'] ?? 0,
+          'discount_amount' => $item['discount_amount'] ?? 0,
+          'print_label' => $product->print_label,
+          'print_kitchen' => $product->print_kitchen,
+          'note' => $item['note'] ?? null,
+        ]); // calculatePrices() được gọi tự động trong model
 
         Log::info('Create order item - checking booking', [
           'product_id' => $product->id,
@@ -543,11 +547,9 @@ class OrderService
     // Xóa các topping không còn trong danh sách mới
     OrderTopping::where('order_item_id', $orderItem->id)->whereNotIn('id', $toppingIds)->delete();
 
-    // Cập nhật đơn giá (product + toppings) và đảm bảo sale_price tồn tại
-    $orderItem->unit_price = $orderItem->product_price + $orderItem->toppings->sum('total_price');
-    if (!$orderItem->sale_price) {
-      $orderItem->sale_price = $orderItem->unit_price;
-    }
+    // Refresh để lấy toppings mới và tính lại prices
+    $orderItem->refresh();
+    $orderItem->recalculateWithToppings();
     $orderItem->save();
   }
 

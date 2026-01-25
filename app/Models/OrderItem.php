@@ -18,8 +18,10 @@ class OrderItem extends Model
     'unit_price',
     'sale_price',
     'discount_type',
-    'discount_value',
+    'discount_percent',
     'discount_amount',
+    'quantity',
+    'total_price',
     'status',
     'note',
     'print_label',
@@ -32,11 +34,10 @@ class OrderItem extends Model
 
   protected $casts = [
     'product_id' => 'integer',
-    'product_price' => 'integer',
     'product_price' => 'float',
     'unit_price' => 'float',
     'sale_price' => 'float',
-    'discount_value' => 'float',
+    'discount_percent' => 'float',
     'discount_amount' => 'float',
     'quantity' => 'integer',
     'total_price' => 'float',
@@ -95,33 +96,57 @@ class OrderItem extends Model
     })->join(', ');
   }
 
+  /**
+   * Tính toán discount và prices dựa trên discount_type
+   * Nếu type='percent': discount_amount = unit_price * discount_percent / 100
+   * Nếu type='fixed': discount_percent = (discount_amount / unit_price) * 100
+   * sale_price = unit_price - discount_amount
+   * total_price = sale_price * quantity
+   */
+  public function calculatePrices(): void
+  {
+    $unitPrice = $this->unit_price ?? 0;
+    $quantity = $this->quantity ?? 1;
+
+    // Tính discount_amount và discount_percent dựa trên discount_type
+    if ($this->discount_type === 'percent') {
+      $this->discount_percent = $this->discount_percent ?? 0;
+      $this->discount_amount = round(($unitPrice * $this->discount_percent) / 100, 2);
+    } elseif ($this->discount_type === 'fixed') {
+      $this->discount_amount = $this->discount_amount ?? 0;
+      // Tính discount_percent từ discount_amount
+      $this->discount_percent = $unitPrice > 0 ? round(($this->discount_amount / $unitPrice) * 100, 2) : 0;
+    } else {
+      $this->discount_percent = 0;
+      $this->discount_amount = 0;
+    }
+
+    // Đảm bảo discount_amount không âm và không vượt quá unit_price
+    $this->discount_amount = max(0, min($this->discount_amount, $unitPrice));
+    if ($this->discount_amount) {
+      // Tính sale_price và total_price
+      $this->sale_price = round($unitPrice - $this->discount_amount, 2);
+    }
+    $this->total_price = round($this->sale_price * $quantity, 2);
+  }
+
+  /**
+   * Cập nhật unit_price khi có toppings và tính lại prices
+   */
+  public function recalculateWithToppings(): void
+  {
+    // Cập nhật unit_price = product_price + tổng toppings
+    $this->unit_price = $this->product_price + $this->toppings->sum('total_price');
+
+    // Tính lại discount và prices
+    $this->calculatePrices();
+  }
+
   protected static function booted()
   {
+    // Auto calculate prices before saving
     static::saving(function (self $item) {
-      $salePrice = $item->sale_price ?? $item->unit_price ?? 0;
-      $quantity = $item->quantity ?? 1;
-
-      // Calculate discount_amount based on discount_type and discount_value
-      if ($item->discount_type === 'percent') {
-        $item->discount_amount = round($salePrice * $quantity * ($item->discount_value / 100), 2);
-      } elseif ($item->discount_type === 'fixed') {
-        // assume discount_value is fixed amount per item
-        $item->discount_amount = round(($item->discount_value ?? 0) * $quantity, 2);
-      } else {
-        $item->discount_amount = $item->discount_amount ?? 0;
-      }
-
-      // Ensure discount_amount is not negative or greater than subtotal
-      $subtotal = round($salePrice * $quantity, 2);
-      if ($item->discount_amount < 0) {
-        $item->discount_amount = 0;
-      }
-      if ($item->discount_amount > $subtotal) {
-        $item->discount_amount = $subtotal;
-      }
-
-      // total_price = sale_price * quantity - discount_amount
-      $item->total_price = round($subtotal - $item->discount_amount, 2);
+      $item->calculatePrices();
     });
   }
 }
