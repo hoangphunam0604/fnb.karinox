@@ -18,6 +18,7 @@ return new class extends Migration {
       $table->enum('discount_type', ['percent', 'fixed'])->nullable()->comment('Loại giảm giá: percent hoặc fixed');
       $table->decimal('discount_percent', 15, 2)->default(0)->comment('Phần trăm giảm giá (0-100), chỉ dùng khi discount_type = percent');
       $table->decimal('discount_amount', 15, 2)->default(0)->comment('Số tiền giảm giá thực tế: nếu type=percent thì tính từ unit_price * discount_percent/100, nếu type=fixed thì lưu trực tiếp');
+      $table->text('discount_note')->nullable(); // Ghi chú giảm giá
       $table->decimal('sale_price', 15, 2)->comment('Giá bán sau giảm giá: unit_price - discount_amount');
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('total_price', 15, 2)->comment('Tổng giá: sale_price * quantity'); // Tổng giá
