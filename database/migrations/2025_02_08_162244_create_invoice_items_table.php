@@ -22,7 +22,7 @@ return new class extends Migration
       $table->integer('quantity')->default(1); // Số lượng sản phẩm
       $table->decimal('total_price', 15, 2);
       $table->enum('status', ['success', 'refunded'])->default('success');
-      $table->string('note')->nullable(); // Ghi chú
+      $table->text('note')->nullable(); // Ghi chú
       $table->boolean('print_label'); // In tem (dán ly/giữ lại)
       $table->boolean('printed_label')->default(false); // Đã từng in tem
       $table->timestamp('printed_label_at')->nullable(); // In lúc

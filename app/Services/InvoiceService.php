@@ -48,89 +48,87 @@ class InvoiceService extends BaseService
   /**
    * Tạo hóa đơn từ đơn hàng đã hoàn tất
    */
-  public function createInvoiceFromOrder(int $orderId, bool $requestPrint = false): Invoice
+  public function createInvoiceFromOrder(int $orderId, bool $requestPrint = false)
   {
 
-    return DB::transaction(function () use ($orderId, $requestPrint) {
-      $order = Order::findOrFail($orderId);
+    $order = Order::findOrFail($orderId);
 
-      if ($order->order_status !== OrderStatus::COMPLETED) {
-        throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
-      }
+    if ($order->order_status !== OrderStatus::COMPLETED) {
+      throw new \Exception("Đơn hàng chưa hoàn tất, không thể tạo hóa đơn.");
+    }
 
-      $totalPrice = $order->total_price;
-      // Tính toán thuế bằng TaxService
-      $taxData = $this->taxService->calculateTax($totalPrice) ?: [
-        'tax_rate' => null,
-        'tax_amount' => 0,
-        'total_price_without_vat' => $totalPrice
-      ];
+    $totalPrice = $order->total_price;
+    // Tính toán thuế bằng TaxService
+    $taxData = $this->taxService->calculateTax($totalPrice) ?: [
+      'tax_rate' => null,
+      'tax_amount' => 0,
+      'total_price_without_vat' => $totalPrice
+    ];
 
-      $invoice = Invoice::create([
-        'branch_id' => $order->branch_id,
-        'user_id' => $order->user_id, // Nhân viên bán hàng
-        // Thông tin khách hàng
-        'customer_id' => $order->customer_id,
-        'loyalty_card_number' => $order->customer?->loyalty_card_number,
-        'customer_name' => $order->customer?->name ?? 'Khách lẻ',
-        'customer_phone' => $order->customer?->phone ?? '',
-        'customer_email' => $order->customer?->email ?? '',
-        'customer_address' => $order->customer?->address ?? '',
+    $invoice = Invoice::create([
+      'branch_id' => $order->branch_id,
+      'user_id' => $order->user_id, // Nhân viên bán hàng
+      // Thông tin khách hàng
+      'customer_id' => $order->customer_id,
+      'loyalty_card_number' => $order->customer?->loyalty_card_number,
+      'customer_name' => $order->customer?->name ?? 'Khách lẻ',
+      'customer_phone' => $order->customer?->phone ?? '',
+      'customer_email' => $order->customer?->email ?? '',
+      'customer_address' => $order->customer?->address ?? '',
 
-        'order_id' => $order->id,
-        'order_code' => $order->order_code,
-        'table_id' => $order->table?->id, // Lưu id bàn
-        'table_name' => $order->table?->name, // Lưu tên bàn
+      'order_id' => $order->id,
+      'order_code' => $order->order_code,
+      'table_id' => $order->table?->id, // Lưu id bàn
+      'table_name' => $order->table?->name, // Lưu tên bàn
 
-        'subtotal_price' => $order->subtotal_price,
+      'subtotal_price' => $order->subtotal_price,
 
-        'voucher_id' => $order->voucher_id,
-        'voucher_code' => $order->voucher_code,
-        'voucher_discount' => $order->voucher_discount,
+      'voucher_id' => $order->voucher_id,
+      'voucher_code' => $order->voucher_code,
+      'voucher_discount' => $order->voucher_discount,
 
-        'reward_points_used' => $order->reward_points_used,
-        'reward_discount' => $order->reward_discount,
+      'reward_points_used' => $order->reward_points_used,
+      'reward_discount' => $order->reward_discount,
 
-        'total_price' => $order->total_price,
-        'paid_amount' => $totalPrice,
+      'total_price' => $order->total_price,
+      'paid_amount' => $totalPrice,
 
-        'tax_rate' => $taxData['tax_rate'],
-        'tax_amount' => $taxData['tax_amount'],
-        'total_price_without_vat' => $taxData['total_price_without_vat'],
+      'tax_rate' => $taxData['tax_rate'],
+      'tax_amount' => $taxData['tax_amount'],
+      'total_price_without_vat' => $taxData['total_price_without_vat'],
 
-        'invoice_status' => InvoiceStatus::COMPLETED,
-        'payment_status' => PaymentStatus::PAID,
-        'payment_method' => $order->payment_method,
-        'note' => $order->note,
-      ]);
-      $this->voucherService->transferUsedVoucherToInvoice($order->id, $invoice->id);
+      'invoice_status' => InvoiceStatus::COMPLETED,
+      'payment_status' => PaymentStatus::PAID,
+      'payment_method' => $order->payment_method,
+      'note' => $order->note,
+    ]);
+    $this->voucherService->transferUsedVoucherToInvoice($order->id, $invoice->id);
+    $this->pointService->earnPointsOnTransactionCompletion($invoice);
+
+    $order->loadMissing(['items', 'items.toppings']);
+    $this->copyOrderItemsToInvoice($order, $invoice);
+    if ($invoice->customer) {
+      // Chuyển điểm đã sử dụng từ đơn đặt hàng sang hoá đơn
+      $this->pointService->transferUsedPointsToInvoice($invoice);
+
+      // Cập nhật tổng số tiền đã chi tiêu
+      $this->customerService->updateTotalSpent($invoice->customer, $invoice->total_amount);
+      //Cộng điểm từ hoá đơn
       $this->pointService->earnPointsOnTransactionCompletion($invoice);
+      // Cập nhật cấp độ thành viên
+      $this->customerService->updateMembershipLevel($invoice->customer);
+    }
+    $invoice->refresh();
+    /* 
+    // Fire InvoiceCreated event after all data is saved
+    event(new InvoiceCreated($invoice));
 
-      $order->loadMissing(['items', 'items.toppings']);
-      $this->copyOrderItemsToInvoice($order, $invoice);
-      if ($invoice->customer) {
-        // Chuyển điểm đã sử dụng từ đơn đặt hàng sang hoá đơn
-        $this->pointService->transferUsedPointsToInvoice($invoice);
-
-        // Cập nhật tổng số tiền đã chi tiêu
-        $this->customerService->updateTotalSpent($invoice->customer, $invoice->total_amount);
-        //Cộng điểm từ hoá đơn
-        $this->pointService->earnPointsOnTransactionCompletion($invoice);
-        // Cập nhật cấp độ thành viên
-        $this->customerService->updateMembershipLevel($invoice->customer);
-      }
-      $invoice->refresh();
-
-      // Fire InvoiceCreated event after all data is saved
-      event(new InvoiceCreated($invoice));
-
-      // Nếu có yêu cầu in (requestPrint = true)
-      if ($requestPrint) {
-        $invoice = $this->requestPrint($invoice->id);
-      }
-
-      return $invoice;
-    });
+    // Nếu có yêu cầu in (requestPrint = true)
+    if ($requestPrint) {
+      $invoice = $this->requestPrint($invoice->id);
+    }
+    return $invoice;
+    */
   }
 
   /**

@@ -190,9 +190,9 @@ class OrderService
 
   public function completePayment(Order $order, string $payment_method = 'cash', $print = false)
   {
-    if ($order->payment_status === PaymentStatus::PAID) {
+    if ($order->payment_status === PaymentStatus::PAID) {/* 
       event(new OrderPaymentSuccess($order));
-      // đã trả tiền rồi, không cần ghi đè
+      // đã trả tiền rồi, không cần ghi đè */
       return true;
     }
 
@@ -212,9 +212,9 @@ class OrderService
 
       //Tạo hoá đơn
       $this->invoiceService->createInvoiceFromOrder($order->id, $print);
-
+      /* 
       // Fire event sau khi order completed thành công
-      event(new OrderPaymentSuccess($order));
+      event(new OrderPaymentSuccess($order)); */
 
       return true;
     });
