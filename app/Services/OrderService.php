@@ -415,13 +415,13 @@ class OrderService
         $oldNote = $orderItem->note;
         $orderItem->quantity = $item['quantity'] ?? 1;
         $orderItem->unit_price = $unitPrice;
-        $orderItem->discount_type = $item['discount_type'] ?? $orderItem->discount_type;
-
+        $orderItem->discount_type = $item['discount_type'] ?? null;
+        $orderItem->discount_note = $item['discount_note'] ?? null;
         // Cập nhật discount values tùy theo type
         if ($orderItem->discount_type === 'percent') {
-          $orderItem->discount_percent = $item['discount_percent'] ?? $orderItem->discount_percent ?? 0;
+          $orderItem->discount_percent = $item['discount_percent'] ??  0;
         } elseif ($orderItem->discount_type === 'fixed') {
-          $orderItem->discount_amount = $item['discount_amount'] ?? $orderItem->discount_amount ?? 0;
+          $orderItem->discount_amount = $item['discount_amount'] ??  0;
         }
 
         $orderItem->note = $item['note'] ?? $orderItem->note;
@@ -479,6 +479,7 @@ class OrderService
           'discount_type' => $item['discount_type'] ?? null,
           'discount_percent' => $item['discount_percent'] ?? 0,
           'discount_amount' => $item['discount_amount'] ?? 0,
+          'discount_note' => $item['discount_note'] ?? null,
           'print_label' => $product->print_label,
           'print_kitchen' => $product->print_kitchen,
           'note' => $item['note'] ?? null,

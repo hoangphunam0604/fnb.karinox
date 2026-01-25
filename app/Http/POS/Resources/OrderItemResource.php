@@ -18,6 +18,7 @@ class OrderItemResource extends JsonResource
       'discount_type' => $this->discount_type,
       'discount_percent' => $this->discount_percent,
       'discount_amount' => $this->discount_amount,
+      'discount_note' => $this->discount_note,
       'quantity' => $this->quantity,
       'unit_price' => $this->unit_price,
       'total_price' => $this->total_price,

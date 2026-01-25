@@ -20,6 +20,7 @@ class OrderItem extends Model
     'discount_type',
     'discount_percent',
     'discount_amount',
+    'discount_note',
     'quantity',
     'total_price',
     'status',
