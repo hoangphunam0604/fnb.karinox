@@ -43,6 +43,8 @@ Route::prefix('admin')->group(function () {
     Route::apiResource('menus', MenuController::class);
 
     Route::post('customers/import', [CustomerController::class, 'import']);
+     Route::post('/customers/sync-from-kiot-viet', [CustomerController::class, 'syncFromKiotViet']);
+
     Route::apiResource('customers', CustomerController::class);
 
     Route::apiResource('membership-levels', MembershipLevelController::class);

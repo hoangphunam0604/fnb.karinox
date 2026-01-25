@@ -38,7 +38,7 @@ class KiotViet
     ]);
   }
 
-  public function getMembers($pageSize  = 100, $currentItem =  0)
+  public function getCustomers($pageSize  = 100, $currentItem =  0)
   {
     return $this->get('customers', [
       'pageSize' => $pageSize,

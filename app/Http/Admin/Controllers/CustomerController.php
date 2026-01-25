@@ -47,7 +47,12 @@ class CustomerController extends Controller
     $this->service->delete($id);
     return response()->json(['message' => 'Deleted successfully.']);
   }
-
+  public function syncFromKiotViet()
+  {
+    $result = $this->importService->importFromKiotViet();
+    return response()->json(['success' => true, 'message' => 'Đồng bộ sản phẩm từ KiotViet thành công.']);
+  }
+  /* 
   public function import(Request $request)
   {
 
@@ -76,5 +81,5 @@ class CustomerController extends Controller
     $result = $this->importService->import($fullPath);
 
     return response()->json($result);
-  }
+  } */
 }

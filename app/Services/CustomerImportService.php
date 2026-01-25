@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\MembershipLevel;
+use App\Client\KiotViet;
+use App\Enums\Gender;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +14,10 @@ use Exception;
 
 class CustomerImportService
 {
+  public function __construct(
+    protected KiotViet $kiot_viet
+  ) {}
+  /* 
   public function import($filePath)
   {
     if (!file_exists($filePath)) {
@@ -69,6 +76,42 @@ class CustomerImportService
       Log::error('Lỗi import khách hàng: ' . $e->getMessage());
       return ['success' => false, 'message' => 'Lỗi import dữ liệu'];
     }
+  } */
+
+  public function importFromKiotViet($pageSize = 100)
+  {
+    $currentItem = 0;
+    $totalItem = 1;
+    while ($currentItem < $totalItem) {
+      $response = $this->kiot_viet->getCustomers($pageSize, $currentItem);
+      $items = $response['data'];
+      $totalItem = $response['total'];
+      $currentItem += count($items);
+
+      foreach ($items as $item) {
+        if (!isset($item['contactNumber']) || empty($item['contactNumber'])) {
+          Log::warning('Bỏ qua khách hàng không có số điện thoại: ' . json_encode($item));
+          continue; // Bỏ qua nếu không có số điện thoại
+        }
+        $customerData = [
+          'loyalty_card_number' => $item['code'] ?? null,
+          'fullname' => $item['name'],
+          'phone' => $item['contactNumber'],
+          'email' => !empty($item['email']) ? $item['email'] : null,
+          'birthday' => Carbon::parse($item['birthDate'] ?? null)->format('Y-m-d'),
+          'gender' => ($item['gender'] ?? true) ? Gender::FEMALE : Gender::MALE,
+          'address' => $item['address'] ?? null,
+          'loyalty_points' => is_numeric($item['totalPoint'] ?? null) ? $item['totalPoint'] : 0,
+          'reward_points' => is_numeric($item['rewardPoint'] ?? null) ? $item['rewardPoint'] : 0,
+          'total_spent' => is_numeric($item['totalInvoiced'] ?? null) ? $item['totalInvoiced'] : 0
+        ];
+        Customer::updateOrCreate([
+          'phone' => $customerData['phone']
+        ], $customerData);
+      }
+    }
+
+    $this->updateMembershipLevels();
   }
 
   private function updateMembershipLevels()

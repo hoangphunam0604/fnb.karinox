@@ -49,7 +49,7 @@ class ProductImportService
           }
         }
 
-        $product = $this->upserProduct($item, $toppings, $formulas);
+        $this->upserProduct($item, $toppings, $formulas);
       }
     }
   }
