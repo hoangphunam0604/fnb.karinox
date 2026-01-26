@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Client\KiotViet;
+use App\Enums\ProductType;
+use App\Enums\ProductBookingType;
 use App\Models\Invoice;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -30,7 +32,7 @@ class SyncInvoiceToKiotViet implements ShouldQueue
   {
     try {
       // Load relationships needed
-      $this->invoice->load(['items.product', 'branch', 'customer']);
+      $this->invoice->load(['items.product', 'items.toppings', 'branch', 'customer']);
 
       // Kiểm tra branch có kiotviet_id không
       if (!$this->invoice->branch || !$this->invoice->branch->kiotviet_id) {
@@ -88,17 +90,44 @@ class SyncInvoiceToKiotViet implements ShouldQueue
           'productId' => (int) $item->product->kiotviet_id,
           'quantity' => (float) $item->quantity,
           'price' => (float) $item->sale_price,
-          'note' => $item->note ?? ''
+          'note' => $this->buildItemNote($item)
         ];
       }
     }
 
     return [
       'branchId' => (int) $this->invoice->branch->kiotviet_id,
-      'customerId' => $this->invoice->customer && $this->invoice->customer->kiotviet_id
-        ? (int) $this->invoice->customer->kiotviet_id
-        : null,
+      'customerId' => null,
       'orderDetails' => $orderDetails
     ];
+  }
+
+  /**
+   * Xây dựng note cho item theo logic:
+   * - Nếu product_type = SERVICE và booking_type = PICKLEBALL_FIXED: không có note
+   * - Nếu có toppings: danh sách topping_name x quantity
+   * - Trường hợp còn lại: note mặc định
+   */
+  protected function buildItemNote($item): string
+  {
+    // Trường hợp đặc biệt: dịch vụ thuê sân pickleball cố định
+    if (
+      $item->product_type === ProductType::SERVICE->value
+      && $item->booking_type === ProductBookingType::PICKLEBALL_FIXED->value
+    ) {
+      return '';
+    }
+
+    // Nếu có toppings: format danh sách topping
+    if ($item->toppings && $item->toppings->isNotEmpty()) {
+      $toppingList = $item->toppings->map(function ($topping) {
+        return "{$topping->topping_name} x {$topping->quantity}";
+      })->join(', ');
+
+      return $toppingList;
+    }
+
+    // Trường hợp còn lại: lấy note mặc định
+    return $item->note ?? '';
   }
 }
