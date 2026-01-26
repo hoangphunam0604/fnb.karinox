@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\OrderItemStatus;
+use App\Enums\DiscountType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,6 +38,7 @@ class OrderItem extends Model
     'product_price' => 'float',
     'unit_price' => 'float',
     'sale_price' => 'float',
+    'discount_type' => DiscountType::class,
     'discount_percent' => 'float',
     'discount_amount' => 'float',
     'quantity' => 'integer',
@@ -110,10 +111,10 @@ class OrderItem extends Model
     $quantity = $this->quantity ?? 1;
 
     // Tính discount_amount và discount_percent dựa trên discount_type
-    if ($this->discount_type === 'percent') {
+    if ($this->discount_type === DiscountType::PERCENTAGE) {
       $this->discount_percent = $this->discount_percent ?? 0;
       $this->discount_amount = round(($unitPrice * $this->discount_percent) / 100, 2);
-    } elseif ($this->discount_type === 'fixed') {
+    } elseif ($this->discount_type === DiscountType::FIXED) {
       $this->discount_amount = $this->discount_amount ?? 0;
       // Tính discount_percent từ discount_amount
       $this->discount_percent = $unitPrice > 0 ? round(($this->discount_amount / $unitPrice) * 100, 2) : 0;
