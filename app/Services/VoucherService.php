@@ -453,6 +453,9 @@ class VoucherService
               // Tạo item mới cho phần còn lại (không giảm giá đặc biệt)
               $remainingItem = $item->replicate();
               $remainingItem->quantity = $item->quantity - 1;
+              $remainingItem->discount_type = DiscountType::PERCENT;
+              $remainingItem->discount_percent = $voucher->discount_value;
+              $remainingItem->discount_note = $voucher->code;
               $remainingItem->save();
 
               // Cập nhật item hiện tại về quantity = 1
