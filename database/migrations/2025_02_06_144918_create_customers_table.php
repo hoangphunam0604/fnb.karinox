@@ -46,6 +46,7 @@ return new class extends Migration
       $table->string('zalo_id')->nullable(); // ID Zalo khách hàng
       $table->string('signup_source')->nullable(); // Nguồn đăng ký tài khoản
       $table->text('note')->nullable(); // Ghi chú nội bộ về khách hàng
+      $table->text('pickleball_member')->nullable(); // Thông tin hội viên pickleball (JSON)
     });
   }
 
