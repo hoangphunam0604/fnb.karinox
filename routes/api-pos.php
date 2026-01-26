@@ -51,6 +51,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
     Route::post('/provisional', [PrintController::class, 'provisional']);
     Route::post('/kitchen', [PrintController::class, 'kitchen']);
     Route::post('/invoice', [PrintController::class, 'invoice']);
+    Route::post('/label', [PrintController::class, 'label']);
   });
 
 
