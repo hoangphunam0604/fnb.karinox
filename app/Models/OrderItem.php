@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\DiscountType;
+use App\Enums\ProductBookingType;
+use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +17,8 @@ class OrderItem extends Model
     'product_id',
     'product_name',
     'product_price',
+    'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
+    'booking_type', //Đặt vé
     'unit_price',
     'sale_price',
     'discount_type',
@@ -34,6 +38,8 @@ class OrderItem extends Model
   ];
 
   protected $casts = [
+    'product_type' => ProductType::class,
+    'booking_type' => ProductBookingType::class,
     'product_id' => 'integer',
     'product_price' => 'float',
     'unit_price' => 'float',

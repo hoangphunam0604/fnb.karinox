@@ -11,8 +11,10 @@ use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
+use App\Enums\ProductBookingType;
 use App\Enums\VoucherType;
 use App\Models\Holiday;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -626,7 +628,7 @@ class VoucherService
     $order->load('items');
 
     $eligibleItems = $order->items->filter(function ($item) {
-      return empty($item->discount_type);
+      return empty($item->discount_type) && $item->booking_type != ProductBookingType::PICKLEBALL_FIXED;
     });
 
     return $eligibleItems->sum('total_price');

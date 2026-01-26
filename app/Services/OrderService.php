@@ -473,6 +473,8 @@ class OrderService
           'product_id' => $product->id,
           'product_name' => $product->name,
           'product_price' => $product->price,
+          'product_type' => $product->product_type,
+          'booking_type' => $product->booking_type,
           'quantity' => $item['quantity'] ?? 1,
           'unit_price' => $unitPrice,
           'sale_price' => $item['sale_price'] ?? $product->price,
