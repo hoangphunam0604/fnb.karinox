@@ -18,6 +18,7 @@ class OrderItem extends Model
     'product_name',
     'product_price',
     'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
+    'is_product_new',
     'booking_type', //Đặt vé
     'unit_price',
     'sale_price',
@@ -43,6 +44,7 @@ class OrderItem extends Model
     'discount_type' => DiscountType::class,
     'product_id' => 'integer',
     'product_price' => 'float',
+    'is_product_new' => 'boolean',
     'unit_price' => 'float',
     'sale_price' => 'float',
     'discount_percent' => 'float',

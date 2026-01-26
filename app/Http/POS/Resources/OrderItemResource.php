@@ -15,6 +15,7 @@ class OrderItemResource extends JsonResource
       'product_name' => $this->product_name,
       'product_price' => $this->product_price,
       'product_type' => $this->product_type,
+      'is_product_new' => $this->is_product_new,
       'booking_type' => $this->booking_type,
       'sale_price' => $this->sale_price,
       'discount_type' => $this->discount_type,

@@ -15,6 +15,7 @@ return new class extends Migration {
       $table->string('product_name'); // Tên sản phẩm
       $table->decimal('product_price', 15, 2)->comment('Giá gốc sản phẩm chưa bao gồm topping');
       $table->string('product_type')->nullable();
+      $table->boolean('is_product_new')->default(false);
       $table->string('booking_type', 30)->default('none');
       $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
       $table->enum('discount_type', ['percent', 'fixed'])->nullable()->comment('Loại giảm giá: percent hoặc fixed');

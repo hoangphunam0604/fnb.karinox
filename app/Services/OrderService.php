@@ -475,6 +475,7 @@ class OrderService
           'product_name' => $product->name,
           'product_price' => $product->price,
           'product_type' => $product->product_type,
+          'is_product_new' => $product->is_new,
           'booking_type' => $product->booking_type,
           'quantity' => $item['quantity'] ?? 1,
           'unit_price' => $unitPrice,
