@@ -113,9 +113,17 @@ class OrderItem extends Model
    */
   public function calculatePrices(): void
   {
+    if ($this->isBookingProduct()) {
+      // Đối với sản phẩm đặt vé, không áp dụng giảm giá
+      $this->discount_type = null;
+      $this->discount_percent = 0;
+      $this->discount_amount = 0;
+      $this->total_price = round($this->sale_price * $this->quantity, 2);
+      return;
+    }
     $unitPrice = $this->unit_price ?? 0;
     $quantity = $this->quantity ?? 1;
-    $this->sale_price = $unitPrice; // Mặc định sale_price = unit_price
+    $this->sale_price = $unitPrice;
 
     // Tính discount_amount và discount_percent dựa trên discount_type
     if ($this->discount_type === DiscountType::PERCENT) {
@@ -157,5 +165,10 @@ class OrderItem extends Model
     static::saving(function (self $item) {
       $item->calculatePrices();
     });
+  }
+  public function isBookingProduct(): bool
+  {
+    return $this->product_type === \App\Enums\ProductType::SERVICE
+      && $this->booking_type === ProductBookingType::PICKLEBALL_FIXED;
   }
 }

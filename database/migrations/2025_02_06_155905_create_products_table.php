@@ -27,7 +27,7 @@ return new class extends Migration
       $table->boolean('allows_sale')->default(false);
       $table->boolean('is_reward_point')->default(false);
       $table->boolean('is_topping')->default(false);
-      $table->boolean('manage_stock')->default(false);
+      $table->boolean('is_new')->default(false);
       $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
       $table->boolean('print_kitchen')->default(false); // In phiếu bếp
       $table->string('thumbnail')->default('https://karinox.vn/medias/logo-karinox.png');

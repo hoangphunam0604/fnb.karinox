@@ -22,6 +22,7 @@ class ProductRequest extends FormRequest
       'booking_type'     => ['string'],
       'allows_sale'     => ['boolean'],
       'is_reward_point' => ['boolean'],
+      'is_new' => ['boolean'],
       'print_label'     => ['boolean'],
       'print_kitchen'   => ['boolean'],
 

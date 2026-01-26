@@ -20,6 +20,7 @@ class ProductResource extends JsonResource
       'allows_sale' => $this->allows_sale,
       'is_reward_point' => $this->is_reward_point,
       'is_topping' => $this->is_topping,
+      'is_new' => $this->is_new,
       'print_label' =>  $this->print_label,
       'print_kitchen' =>  $this->print_kitchen,
       'unit' =>  $this->unit,

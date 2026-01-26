@@ -430,21 +430,53 @@ class VoucherService
     // Tính tổng giá trị các items hợp lệ
     $eligibleTotal = $this->getEligibleTotal($order);
 
-
     // Xử lý tùy theo loại voucher
     if ($voucher->discount_type === DiscountType::PERCENT) {
       // Áp dụng % trực tiếp cho mỗi item cho đến khi chạm max_discount
       $totalVoucherDiscount = 0;
       $maxDiscount = $voucher->max_discount;
+      $processedNewProducts = []; // Tracking sản phẩm mới đã được giảm giá
 
       foreach ($eligibleItems as $item) {
+        Log::info("SP Mới: {$item->product->is_new} --  {$item->product->name}");
+
+        if ($item->product && $item->product->is_new && $voucher->discount_for_new_product) {
+          // Kiểm tra xem sản phẩm này đã được giảm giá chưa
+          if (in_array($item->product_id, $processedNewProducts)) {
+            // Đã giảm giá rồi, bỏ qua và áp dụng voucher bình thường ở dưới
+          } else {
+            // Đánh dấu sản phẩm đã được xử lý
+            $processedNewProducts[] = $item->product_id;
+
+            // Nếu quantity > 1, tách thành 2 items
+            if ($item->quantity > 1) {
+              // Tạo item mới cho phần còn lại (không giảm giá đặc biệt)
+              $remainingItem = $item->replicate();
+              $remainingItem->quantity = $item->quantity - 1;
+              $remainingItem->save();
+
+              // Cập nhật item hiện tại về quantity = 1
+              $item->quantity = 1;
+            }
+
+            // Áp dụng giảm giá đặc biệt cho 1 sản phẩm
+            $item->discount_type = DiscountType::PERCENT;
+            $item->discount_percent = $voucher->discount_for_new_product;
+            $item->discount_note = $voucher->code;
+            $item->save(); // Auto calculatePrices() sẽ tính discount_amount
+
+            // Refresh item
+            $item->refresh();
+            continue; // Chuyển sang item tiếp theo
+          }
+        }
         // Tính discount cho item này
         $itemDiscount = round(($item->unit_price * $voucher->discount_value / 100) * $item->quantity, 2);
 
         // Kiểm tra xem có chạm max_discount không
         if ($maxDiscount && ($totalVoucherDiscount + $itemDiscount) > $maxDiscount) {
-          // Nếu chạm max, bỏ qua item này và các item còn lại
-          break;
+          // Nếu chạm max, bỏ qua item này để tiếp tục các item tiếp theo, tránh sót sản phẩm mới
+          continue;
         }
 
         // Áp dụng discount cho item
@@ -604,12 +636,12 @@ class VoucherService
     return $eligibleItems->sum('total_price');
   }
 
-  public function getEligibleitems(Order $order)
+  public function getEligibleItems(Order $order)
   {
-    $order->load('items');
+    $order->load('items.product');
 
     return $order->items->filter(function ($item) {
-      return empty($item->discount_type) && $item->booking_type != ProductBookingType::PICKLEBALL_FIXED;
+      return !$item->isBookingProduct();
     });
   }
 

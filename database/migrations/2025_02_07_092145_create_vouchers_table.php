@@ -17,6 +17,7 @@ return new class extends Migration {
       $table->enum('voucher_type', ['membership', 'standard'])->default('standard');
       $table->enum('discount_type', ['fixed', 'percent']);
       $table->unsignedInteger('discount_value');
+      $table->integer('discount_for_new_product')->default(0); // Giảm giá đặc biệt cho sản phẩm mới
       $table->unsignedInteger('max_discount')->nullable();
       $table->unsignedInteger('min_order_value')->nullable();
       $table->dateTime('start_date')->nullable();

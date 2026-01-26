@@ -18,6 +18,7 @@ class Voucher extends Model
     'voucher_type', // Loại voucher: 'standard' | 'membership'
     'discount_type', // 'fixed' hoặc 'percent'
     'discount_value', // Giá trị giảm (tiền hoặc phần trăm)
+    'discount_for_new_product', // Giảm giá đặc biệt cho sản phẩm mới
     'applied_count', // Số lần voucher đã được áp dụng
     'max_discount', // Giảm tối đa (áp dụng cho percent)
     'min_order_value', // Giá trị đơn hàng tối thiểu để áp dụng

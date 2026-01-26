@@ -46,6 +46,7 @@ class VoucherSeeder extends Seeder
         'voucher_type'  =>  'membership',
         'discount_type' => 'percent',
         'discount_value' => 5,
+        'discount_for_new_product'  => 50, // Giảm 50% cho sản phẩm mới
         'per_customer_daily_limit' => 2,
         'is_active' => true,
         'applicable_membership_levels' => [2],
@@ -56,6 +57,7 @@ class VoucherSeeder extends Seeder
         'voucher_type'  =>  'membership',
         'discount_type' => 'percent',
         'discount_value' => 8,
+        'discount_for_new_product'  => 100, // Giảm 100% cho sản phẩm mới
         'per_customer_daily_limit' => 3,
         'is_active' => true,
         'applicable_membership_levels' => [3],

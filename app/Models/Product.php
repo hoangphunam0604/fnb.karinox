@@ -29,6 +29,7 @@ class Product extends Model
     'allows_sale', //Bán trực tiếp
     'is_reward_point', //Tích điểm
     'is_topping', //Có thể sử dụng làm topping
+    'is_new', // Sản phẩm mới
     'print_label', // In tem
     'print_kitchen', // In phiếu bếp
     'thumbnail',
@@ -41,7 +42,7 @@ class Product extends Model
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
     'is_topping' => 'boolean',
-    'manage_stock' => 'boolean',
+    'is_new' => 'boolean',
     'print_label' => 'boolean',
     'print_kitchen' => 'boolean',
     'status'  => CommonStatus::class

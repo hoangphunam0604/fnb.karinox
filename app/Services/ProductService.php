@@ -54,6 +54,7 @@ class ProductService extends BaseService
         'menu_id'      => null,
         'allows_sale'    => false,
         'is_reward_point' => false,
+        'is_new' => false,
         'print_label'    => false,
         'print_kitchen'  => false
       ];
