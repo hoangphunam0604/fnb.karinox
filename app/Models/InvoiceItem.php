@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\DiscountType;
+use App\Enums\ProductType;
+use App\Enums\ProductBookingType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,7 +16,14 @@ class InvoiceItem extends Model
     'product_id',
     'product_name',
     'product_price',
+    'product_type',
+    'booking_type',
     'unit_price',
+    'discount_type',
+    'discount_percent',
+    'discount_amount',
+    'discount_note',
+    'sale_price',
     'quantity',
     'total_price',
     'status',
@@ -26,11 +36,17 @@ class InvoiceItem extends Model
     'printed_kitchen_at',
   ];
   protected $casts = [
+    'product_type' => ProductType::class,
+    'booking_type' => ProductBookingType::class,
+    'discount_type' => DiscountType::class,
     'product_id' => 'integer',
-    'product_price' => 'integer',
-    'unit_price' => 'integer',
+    'product_price' => 'float',
+    'unit_price' => 'float',
+    'sale_price' => 'float',
+    'discount_percent' => 'float',
+    'discount_amount' => 'float',
     'quantity' => 'integer',
-    'total_price' => 'integer',
+    'total_price' => 'float',
 
     'print_label' =>  'boolean',
     'printed_label' =>  'boolean',

@@ -16,11 +16,18 @@ return new class extends Migration
       $table->timestamps();
       $table->foreignId('invoice_id')->constrained('invoices')->cascadeOnDelete(); // Hóa đơn liên kết
       $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete(); // Sản phẩm liên kết
-      $table->string('product_name'); // Số lượng
+      $table->string('product_name'); // Tên sản phẩm
       $table->decimal('product_price', 15, 2)->comment('Giá gốc sản phẩm chưa bao gồm topping');
+      $table->string('product_type')->nullable();
+      $table->string('booking_type', 30)->default('none');
       $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
+      $table->enum('discount_type', ['percent', 'fixed'])->nullable()->comment('Loại giảm giá: percent hoặc fixed');
+      $table->decimal('discount_percent', 15, 2)->default(0)->comment('Phần trăm giảm giá (0-100), chỉ dùng khi discount_type = percent');
+      $table->decimal('discount_amount', 15, 2)->default(0)->comment('Số tiền giảm giá thực tế: nếu type=percent thì tính từ unit_price * discount_percent/100, nếu type=fixed thì lưu trực tiếp');
+      $table->text('discount_note')->nullable(); // Ghi chú giảm giá
+      $table->decimal('sale_price', 15, 2)->comment('Giá bán sau giảm giá: unit_price - discount_amount');
       $table->integer('quantity')->default(1); // Số lượng sản phẩm
-      $table->decimal('total_price', 15, 2);
+      $table->decimal('total_price', 15, 2)->comment('Tổng giá: sale_price * quantity');
       $table->enum('status', ['success', 'refunded'])->default('success');
       $table->text('note')->nullable(); // Ghi chú
       $table->boolean('print_label'); // In tem (dán ly/giữ lại)

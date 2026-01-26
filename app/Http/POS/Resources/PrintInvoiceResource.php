@@ -43,7 +43,7 @@ class PrintInvoiceResource extends JsonResource
           'Topping' => $this->formatToppings($item),
           'Ghi_Chu' => $item->note ? "Ghi chú: {$item->note}" : '',
           'So_Luong' => $item->quantity ?? 0,
-          'Don_Gia' => number_format($item->unit_price, 0, ',', '.') . ' đ',
+          'Don_Gia' => number_format($item->sale_price ?? $item->unit_price, 0, ',', '.') . ' đ',
           'Thanh_Tien' => number_format($item->total_price, 0, ',', '.') . ' đ',
           'Don_Vi' => $item->product->unit ?? 'Phần',
         ];

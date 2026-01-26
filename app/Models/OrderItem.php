@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Enums\DiscountType;
-use App\Enums\ProductBookingType;
 use App\Enums\ProductType;
+use App\Enums\ProductBookingType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,11 +40,11 @@ class OrderItem extends Model
   protected $casts = [
     'product_type' => ProductType::class,
     'booking_type' => ProductBookingType::class,
+    'discount_type' => DiscountType::class,
     'product_id' => 'integer',
     'product_price' => 'float',
     'unit_price' => 'float',
     'sale_price' => 'float',
-    'discount_type' => DiscountType::class,
     'discount_percent' => 'float',
     'discount_amount' => 'float',
     'quantity' => 'integer',
