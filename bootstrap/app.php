@@ -16,10 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     commands: __DIR__ . '/../routes/console.php',
     health: '/up',
   )
-  ->withSchedule(function (Schedule $schedule) {
-    // Tự động hủy đơn hàng booking chưa thanh toán sau 30 phút
-    $schedule->job(new CancelExpiredBookingOrders())->everyFiveMinutes();
-  })
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->encryptCookies(except: ['appearance']);
 

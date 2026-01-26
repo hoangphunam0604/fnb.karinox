@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\ProductDependencyService;
 use Illuminate\Console\Command;
+use Illuminate\Console\Scheduling\Schedule;
 
 class RebuildProductDependencies extends Command
 {
@@ -20,6 +21,14 @@ class RebuildProductDependencies extends Command
    * @var string
    */
   protected $description = 'Rebuild all product stock dependencies';
+
+  /**
+   * Define the command's schedule.
+   */
+  public function schedule(Schedule $schedule): void
+  {
+    $schedule->command(static::class)->everyFiveMinutes();
+  }
 
   /**
    * Execute the console command.
