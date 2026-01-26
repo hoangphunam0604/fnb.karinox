@@ -26,7 +26,16 @@ class KiotViet
 
   public function createOrder($data)
   {
-    return $this->post('orders', $data);
+    return $this->post('orders/create', $data);
+  }
+
+  public function getBrands($pageSize  = 100, $currentItem =  0)
+  {
+    return $this->get('branches', [
+      'pageSize' => $pageSize,
+      'currentItem' => $currentItem,
+      'includePricebook' => 1
+    ]);
   }
 
   public function getProducts($pageSize  = 100, $currentItem =  0)

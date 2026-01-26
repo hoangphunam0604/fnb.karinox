@@ -58,13 +58,15 @@ return new class extends Migration
       $table->string('payment_method')->default('cash'); //Hình thức thanh toán (tiền mặt, thẻ, ví điện tử, v.v.).
       $table->text('note')->nullable(); //Ghi chú thêm về hóa đơn.
 
+      $table->boolean('kiotviet_synced')->default(false)->comment('Đã đồng bộ lên KiotViet chưa');
+      $table->datetime('kiotviet_synced_at')->nullable()->comment('Thời gian đồng bộ lên KiotViet');
+      $table->longText('kiotviet_invoice_response')->nullable()->comment('Kết quả phản hồi từ KiotViet sau khi đồng bộ');
 
       // Thông tin in ấn
       $table->integer('print_requested_count')->default(0)->comment('Số lần yêu cầu in hóa đơn');
       $table->datetime('print_requested_at')->nullable()->comment('Thời gian yêu cầu in');
       $table->integer('print_count')->default(0)->comment('Số lần in hóa đơn');
       $table->datetime('last_printed_at')->nullable()->comment('Lần in cuối');
-
       $table->index(['print_requested_at']);
       $table->index(['last_printed_at']);
     });

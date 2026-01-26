@@ -63,6 +63,13 @@ class Invoice extends Model implements PointEarningTransaction, RewardPointUsabl
     'customer_phone',
     'customer_email',
     'customer_address',
+
+    // KiotViet synchronization info
+    'kiotviet_synced',
+    'kiotviet_synced_at',
+    'kiotviet_invoice_response',
+
+    // Printing info
     'print_requested_count',
     'print_requested_at',
     'print_count',

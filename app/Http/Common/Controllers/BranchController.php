@@ -2,6 +2,7 @@
 
 namespace App\Http\Common\Controllers;
 
+use App\Client\KiotViet;
 use App\Enums\CommonStatus;
 use App\Http\Common\Controllers\Controller;
 use App\Http\Common\Resources\BranchResource;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\BranchService;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Reverb\Loggers\Log;
 
 class BranchController extends Controller
 {
@@ -52,5 +54,16 @@ class BranchController extends Controller
       'message' => 'Chi nhánh đã được chọn thành công!',
       'current_branch' => $user->currentBranch
     ], 200);
+  }
+
+  public function getKiotVietBrands()
+  {
+    $kiotViet = new KiotViet();
+    $response = $kiotViet->getBrands(100, 0);
+    Log::info("Chi nhánh tại KiotViet " . json_encode($response));
+    return response()->json([
+      'success' => true,
+      'data' => $response ?? []
+    ]);;
   }
 }

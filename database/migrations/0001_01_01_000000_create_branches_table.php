@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('branches', function (Blueprint $table) {
       $table->id();
       $table->timestamps();
+      $table->unsignedBigInteger('kiotviet_id')->unique()->nullable();
       $table->enum('type', ['store', 'pickleball'])->default('store');
       $table->string('name');
       $table->string('phone_number')->nullable();

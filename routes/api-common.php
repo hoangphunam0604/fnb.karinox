@@ -5,6 +5,7 @@ use App\Http\Auth\Controllers\AuthController;
 use App\Http\Common\Controllers\BranchController;
 
 Route::get('branches', [BranchController::class, 'getUserBranches']);
+Route::get('branches/kiotviet', [BranchController::class, 'getKiotVietBrands']);
 Route::post('branches/select', [BranchController::class, 'selectBranch']);
 
 Route::group(['prefix' => 'auth'], function () {
