@@ -121,7 +121,7 @@ try {
 
   foreach ($membershipLevels as $levelData) {
     $level = MembershipLevel::create($levelData);
-    echo "   ✅ {$level->name} (Từ {$level->min_points} điểm, giảm {$level->discount_percentage}%)\n";
+    echo "   ✅ {$level->name} (Từ {$level->min_points} điểm, giảm {$level->discount_percent}%)\n";
   }
 
   echo "\n📁 Bước 4: Tạo danh mục sản phẩm...\n";

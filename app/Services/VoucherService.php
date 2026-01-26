@@ -397,16 +397,8 @@ class VoucherService
       return ValidationResult::fail(config('messages.voucher.used'));
 
     if (!$order->extend_id): // Bỏ qua kiểm tra voucher nếu là đơn kế thừa
-      // Load items để tính tổng giá trị hợp lệ
-      $order->load('items');
-
-      // Lọc ra các items chưa được giảm giá
-      $eligibleItems = $order->items->filter(function ($item) {
-        return empty($item->discount_type);
-      });
-
       // Tính tổng giá trị các items hợp lệ
-      $eligibleTotal = $eligibleItems->sum('total_price');
+      $eligibleTotal = $this->getEligibleTotal($order);
 
       // Kiểm tra voucher hợp lệ với tổng giá trị items hợp lệ
       $checkValid = $this->isValid($voucher, $eligibleTotal, $order->customer_id);
@@ -427,141 +419,124 @@ class VoucherService
    */
   public function useVoucher(Order $order, Voucher $voucher): ValidationResult
   {
-    try {
-      // Load các order items
-      $order->load('items');
+    // Lọc ra các items chưa được giảm giá (không có discount_type)
+    $eligibleItems = $this->getEligibleitems($order);
 
-      // Lọc ra các items chưa được giảm giá (không có discount_type)
-      $eligibleItems = $order->items->filter(function ($item) {
-        return empty($item->discount_type);
-      });
-
-      // Nếu không có item nào hợp lệ
-      if ($eligibleItems->isEmpty()) {
-        return ValidationResult::fail('Không có sản phẩm nào hợp lệ để áp dụng voucher');
-      }
-
-      // Tính tổng giá trị các items hợp lệ
-      $eligibleTotal = $eligibleItems->sum('total_price');
-
-      DB::beginTransaction(); // Bắt đầu transaction
-
-      // Xử lý tùy theo loại voucher
-      if ($voucher->discount_type === DiscountType::PERCENTAGE) {
-        // Áp dụng % trực tiếp cho mỗi item cho đến khi chạm max_discount
-        $totalVoucherDiscount = 0;
-        $maxDiscount = $voucher->max_discount;
-
-        foreach ($eligibleItems as $item) {
-          // Tính discount cho item này
-          $itemDiscount = round(($item->unit_price * $voucher->discount_value / 100) * $item->quantity, 2);
-
-          // Kiểm tra xem có chạm max_discount không
-          if ($maxDiscount && ($totalVoucherDiscount + $itemDiscount) > $maxDiscount) {
-            // Nếu chạm max, bỏ qua item này và các item còn lại
-            break;
-          }
-
-          // Áp dụng discount cho item
-          $item->discount_type = DiscountType::PERCENTAGE;
-          $item->discount_percent = $voucher->discount_value;
-          $item->discount_note = $voucher->code;
-          $item->save(); // Auto calculatePrices() sẽ tính discount_amount
-
-          // Cộng dồn discount
-          $item->refresh();
-          $totalVoucherDiscount += ($item->discount_amount * $item->quantity);
-        }
-      } elseif ($voucher->discount_type === DiscountType::FIXED) {
-        // Phân bổ số tiền cố định cho các items theo tỷ lệ
-        $totalVoucherDiscount = min($voucher->discount_value, $eligibleTotal);
-        $remainingDiscount = $totalVoucherDiscount;
-        $itemCount = $eligibleItems->count();
-        $processedCount = 0;
-
-        foreach ($eligibleItems as $item) {
-          $processedCount++;
-
-          // Item cuối cùng nhận phần discount còn lại để tránh sai lệch làm tròn
-          if ($processedCount === $itemCount) {
-            $itemDiscount = $remainingDiscount;
-          } else {
-            // Tính discount theo tỷ lệ (cho 1 đơn vị)
-            $itemDiscount = round(($item->total_price / $eligibleTotal) * $totalVoucherDiscount / $item->quantity, 2);
-            $remainingDiscount -= ($itemDiscount * $item->quantity);
-          }
-
-          // Cập nhật item với discount từ voucher
-          $item->discount_type = DiscountType::FIXED;
-          $item->discount_amount = $itemDiscount;
-          $item->discount_note = $voucher->code;
-          $item->save(); // Auto calculatePrices() sẽ được gọi
-        }
-      } else {
-        DB::rollBack();
-        return ValidationResult::fail('Loại voucher không hợp lệ');
-      }
-
-      // Tăng số lần sử dụng voucher
-      $voucher->increment('applied_count');
-
-      // Refresh order để tính lại tổng discount thực tế từ các items
-      $order->refresh();
-
-      // Tính tổng discount thực tế từ các items đã được áp dụng voucher
-      $actualDiscount = 0;
-      foreach ($order->items as $item) {
-        if ($item->discount_note === $voucher->code) {
-          $actualDiscount += ($item->discount_amount * $item->quantity);
-        }
-      }
-
-      // Lưu thông tin voucher đã sử dụng kèm snapshot
-      $voucherSnapshot = [
-        'id' => $voucher->id,
-        'code' => $voucher->code,
-        'description' => $voucher->description,
-        'voucher_type' => $voucher->voucher_type,
-        'discount_type' => $voucher->discount_type,
-        'discount_value' => $voucher->discount_value,
-        'max_discount' => $voucher->max_discount,
-        'min_order_value' => $voucher->min_order_value,
-        'campaign_id' => $voucher->campaign_id,
-      ];
-
-      VoucherUsage::create([
-        'voucher_id' => $voucher->id,
-        'customer_id' => $order->customer_id,
-        'order_extend_id' => $order->extend_id,
-        'order_id' => $order->id,
-        'invoice_total_before_discount' => $eligibleTotal,
-        'invoice_total_after_discount' => $eligibleTotal - $actualDiscount,
-        'voucher_discount' => $actualDiscount,
-        'used_at' => now(),
-        'voucher_snapshot' => json_encode($voucherSnapshot),
-      ]);
-
-      // Tính lại tổng tiền đơn hàng
-      $newTotal = $order->items->sum('total_price');
-
-      $order->update([
-        'voucher_id' => $voucher->id,
-        'voucher_code' => $voucher->code,
-        'voucher_discount' => $actualDiscount,
-        'total_price' => $newTotal
-      ]);
-
-      DB::commit(); // Xác nhận transaction
-
-      return ValidationResult::success(config('messages.voucher.applied_success'));
-    } catch (\Throwable $e) {
-      DB::rollBack(); // Rollback nếu có lỗi
-
-      Log::error(config('messages.voucher.apply_error'));
-      Log::error($e->getMessage());
-
-      return ValidationResult::fail(config('messages.voucher.apply_error'));
+    // Nếu không có item nào hợp lệ
+    if ($eligibleItems->isEmpty()) {
+      return ValidationResult::fail('Không có sản phẩm nào hợp lệ để áp dụng voucher');
     }
+
+    // Tính tổng giá trị các items hợp lệ
+    $eligibleTotal = $this->getEligibleTotal($order);
+
+
+    // Xử lý tùy theo loại voucher
+    if ($voucher->discount_type === DiscountType::PERCENT) {
+      // Áp dụng % trực tiếp cho mỗi item cho đến khi chạm max_discount
+      $totalVoucherDiscount = 0;
+      $maxDiscount = $voucher->max_discount;
+
+      foreach ($eligibleItems as $item) {
+        // Tính discount cho item này
+        $itemDiscount = round(($item->unit_price * $voucher->discount_value / 100) * $item->quantity, 2);
+
+        // Kiểm tra xem có chạm max_discount không
+        if ($maxDiscount && ($totalVoucherDiscount + $itemDiscount) > $maxDiscount) {
+          // Nếu chạm max, bỏ qua item này và các item còn lại
+          break;
+        }
+
+        // Áp dụng discount cho item
+        $item->discount_type = DiscountType::PERCENT;
+        $item->discount_percent = $voucher->discount_value;
+        $item->discount_note = $voucher->code;
+        $item->save(); // Auto calculatePrices() sẽ tính discount_amount
+
+        // Cộng dồn discount
+        $item->refresh();
+        $totalVoucherDiscount += ($item->discount_amount * $item->quantity);
+      }
+    } elseif ($voucher->discount_type === DiscountType::FIXED) {
+      // Phân bổ số tiền cố định cho các items theo tỷ lệ
+      $totalVoucherDiscount = min($voucher->discount_value, $eligibleTotal);
+      $remainingDiscount = $totalVoucherDiscount;
+      $itemCount = $eligibleItems->count();
+      $processedCount = 0;
+
+      foreach ($eligibleItems as $item) {
+        $processedCount++;
+
+        // Item cuối cùng nhận phần discount còn lại để tránh sai lệch làm tròn
+        if ($processedCount === $itemCount) {
+          $itemDiscount = $remainingDiscount;
+        } else {
+          // Tính discount theo tỷ lệ (cho 1 đơn vị)
+          $itemDiscount = round(($item->total_price / $eligibleTotal) * $totalVoucherDiscount / $item->quantity, 2);
+          $remainingDiscount -= ($itemDiscount * $item->quantity);
+        }
+
+        // Cập nhật item với discount từ voucher
+        $item->discount_type = DiscountType::FIXED;
+        $item->discount_amount = $itemDiscount;
+        $item->discount_note = $voucher->code;
+        $item->save(); // Auto calculatePrices() sẽ được gọi
+      }
+    } else {
+      DB::rollBack();
+      return ValidationResult::fail('Loại voucher không hợp lệ');
+    }
+
+    // Tăng số lần sử dụng voucher
+    $voucher->increment('applied_count');
+
+    // Refresh order để tính lại tổng discount thực tế từ các items
+    $order->refresh();
+
+    // Tính tổng discount thực tế từ các items đã được áp dụng voucher
+    $actualDiscount = 0;
+    foreach ($order->items as $item) {
+      if ($item->discount_note === $voucher->code) {
+        $actualDiscount += ($item->discount_amount * $item->quantity);
+      }
+    }
+
+    // Lưu thông tin voucher đã sử dụng kèm snapshot
+    $voucherSnapshot = [
+      'id' => $voucher->id,
+      'code' => $voucher->code,
+      'description' => $voucher->description,
+      'voucher_type' => $voucher->voucher_type,
+      'discount_type' => $voucher->discount_type,
+      'discount_value' => $voucher->discount_value,
+      'max_discount' => $voucher->max_discount,
+      'min_order_value' => $voucher->min_order_value,
+      'campaign_id' => $voucher->campaign_id,
+    ];
+
+    VoucherUsage::create([
+      'voucher_id' => $voucher->id,
+      'customer_id' => $order->customer_id,
+      'order_extend_id' => $order->extend_id,
+      'order_id' => $order->id,
+      'invoice_total_before_discount' => $eligibleTotal,
+      'invoice_total_after_discount' => $eligibleTotal - $actualDiscount,
+      'voucher_discount' => $actualDiscount,
+      'used_at' => now(),
+      'voucher_snapshot' => json_encode($voucherSnapshot),
+    ]);
+
+    // Tính lại tổng tiền đơn hàng
+    $newTotal = $order->items->sum('total_price');
+
+    $order->update([
+      'voucher_id' => $voucher->id,
+      'voucher_code' => $voucher->code,
+      'voucher_discount' => $actualDiscount,
+      'total_price' => $newTotal
+    ]);
+
+    return ValidationResult::success(config('messages.voucher.applied_success'));
   }
   /**
    * Hoá đơn thành công: Chuyển voucher đã sử dụng từ đơn hàng sang hóa đơn tương ứng.
@@ -625,13 +600,17 @@ class VoucherService
    */
   public function getEligibleTotal(Order $order): float
   {
+    $eligibleItems = $this->getEligibleitems($order);
+    return $eligibleItems->sum('total_price');
+  }
+
+  public function getEligibleitems(Order $order)
+  {
     $order->load('items');
 
-    $eligibleItems = $order->items->filter(function ($item) {
+    return $order->items->filter(function ($item) {
       return empty($item->discount_type) && $item->booking_type != ProductBookingType::PICKLEBALL_FIXED;
     });
-
-    return $eligibleItems->sum('total_price');
   }
 
   private function todayIsLastOccurrenceOfWeekdayInMonth(?Carbon $date = null): bool

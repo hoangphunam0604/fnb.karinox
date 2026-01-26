@@ -310,7 +310,7 @@ Response:
     "email": "customer@example.com",
     "membership_level": {
       "name": "Gold",
-      "discount_percentage": 5
+      "discount_percent": 5
     },
     "loyalty_points": 1250,
     "total_spent": 2500000

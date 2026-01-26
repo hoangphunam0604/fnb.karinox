@@ -46,7 +46,7 @@ class VoucherServiceTest extends TestCase
   {
     $voucherData = [
       'code' => 'TEST50',
-      'discount_type' => 'percentage',
+      'discount_type' => 'percent',
       'discount_value' => 10,
       'max_discount' => 50,
       'min_order_value' => 200,
@@ -616,7 +616,7 @@ class VoucherServiceTest extends TestCase
     $voucher = Voucher::factory()->create([
       'is_active' => true,
       'code' => 'PERCENTVOUCHER',
-      'discount_type' => DiscountType::PERCENTAGE,
+      'discount_type' => DiscountType::PERCENT,
       'discount_value' => 20, // Giảm 20%
       'max_discount' => 15000, // Giảm tối đa 15k
       'start_date' => Carbon::now()->subDays(1),
@@ -730,7 +730,7 @@ class VoucherServiceTest extends TestCase
   { // Tạo voucher
     $voucher = Voucher::create([
       'code' => 'DISCOUNT50',
-      'discount_type' => 'percentage',
+      'discount_type' => 'percent',
       'discount_value' => 50,
       'applied_count' => 1,
       'usage_limit' => 10,
@@ -755,7 +755,7 @@ class VoucherServiceTest extends TestCase
     // Tạo voucher
     $voucher = Voucher::create([
       'code' => 'DISCOUNT50',
-      'discount_type' => 'percentage',
+      'discount_type' => 'percent',
       'discount_value' => 50,
       'applied_count' => 1,
       'usage_limit' => 10,
@@ -811,7 +811,7 @@ class VoucherServiceTest extends TestCase
     // Tạo voucher
     $voucher = Voucher::create([
       'code' => 'DISCOUNT50',
-      'discount_type' => 'percentage',
+      'discount_type' => 'percent',
       'discount_value' => 50,
       'applied_count' => 1,
       'usage_limit' => 10,

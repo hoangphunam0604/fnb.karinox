@@ -61,7 +61,7 @@ class VoucherCampaignService extends BaseService
           'voucher_type' => $template['voucher_type'] ?? VoucherType::STANDARD->value,
           'discount_type' => $template['discount_type'],
           'discount_value' => $template['discount_value'],
-          'max_discount' => $template['discount_type'] == 'percentage' ? $template['max_discount'] ?? null : null,
+          'max_discount' => $template['discount_type'] == 'percent' ? $template['max_discount'] ?? null : null,
           'min_order_value' => $template['min_order_value'] ?? null,
           'usage_limit' => $template['usage_limit'] ?? 1, // Default: single use
           'per_customer_limit' => $template['per_customer_limit'] ?? null,

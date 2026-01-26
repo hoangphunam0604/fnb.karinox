@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DiscountType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCompleted;
@@ -418,9 +419,9 @@ class OrderService
         $orderItem->discount_type = $item['discount_type'] ?? null;
         $orderItem->discount_note = $item['discount_note'] ?? null;
         // Cập nhật discount values tùy theo type
-        if ($orderItem->discount_type === 'percent') {
+        if ($orderItem->discount_type === DiscountType::PERCENT) {
           $orderItem->discount_percent = $item['discount_percent'] ??  0;
-        } elseif ($orderItem->discount_type === 'fixed') {
+        } elseif ($orderItem->discount_type === DiscountType::FIXED) {
           $orderItem->discount_amount = $item['discount_amount'] ??  0;
         }
 

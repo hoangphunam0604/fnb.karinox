@@ -110,7 +110,7 @@ class VoucherCampaignResource extends JsonResource
 
   private function formatDiscount(string $type, float $value, ?float $maxDiscount = null): string
   {
-    if ($type === 'percentage') {
+    if ($type === 'percent') {
       $formatted = number_format($value, 1) . '%';
       if ($maxDiscount) {
         $formatted .= ' (tối đa ' . number_format($maxDiscount, 0, ',', '.') . 'đ)';

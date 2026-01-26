@@ -75,7 +75,7 @@ interface VoucherCampaign {
 interface VoucherTemplate {
     description?: string;
     voucher_type: 'standard' | 'membership';
-    discount_type: 'fixed' | 'percentage';
+    discount_type: 'fixed' | 'percent';
     discount_value: number;
     max_discount?: number;
     min_order_value?: number;
@@ -424,7 +424,7 @@ const campaignTypes = [
             />
         </v-col>
 
-        <v-col v-if="template.discount_type === 'percentage'" cols="12" md="6">
+        <v-col v-if="template.discount_type === 'percent'" cols="12" md="6">
             <v-text-field v-model="template.max_discount" label="Giảm tối đa (VNĐ)" type="number" :rules="[rules.required]" required />
         </v-col>
 

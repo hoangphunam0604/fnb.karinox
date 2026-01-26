@@ -115,9 +115,10 @@ class OrderItem extends Model
   {
     $unitPrice = $this->unit_price ?? 0;
     $quantity = $this->quantity ?? 1;
+    $this->sale_price = $unitPrice; // Mặc định sale_price = unit_price
 
     // Tính discount_amount và discount_percent dựa trên discount_type
-    if ($this->discount_type === DiscountType::PERCENTAGE) {
+    if ($this->discount_type === DiscountType::PERCENT) {
       $this->discount_percent = $this->discount_percent ?? 0;
       $this->discount_amount = round(($unitPrice * $this->discount_percent) / 100, 2);
     } elseif ($this->discount_type === DiscountType::FIXED) {

@@ -7,13 +7,13 @@ use Illuminate\Support\Arr;
 enum DiscountType: string
 {
   case FIXED = 'fixed';
-  case PERCENTAGE = 'percentage';
+  case PERCENT = 'percent';
 
   public function getLabel(): string
   {
     return match ($this) {
       self::FIXED => 'Cố định',
-      self::PERCENTAGE => 'Theo %',
+      self::PERCENT => 'Theo %',
     };
   }
 

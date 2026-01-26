@@ -15,7 +15,7 @@ return new class extends Migration {
       $table->string('code')->unique();
       $table->string('description')->nullable();
       $table->enum('voucher_type', ['membership', 'standard'])->default('standard');
-      $table->enum('discount_type', ['fixed', 'percentage']);
+      $table->enum('discount_type', ['fixed', 'percent']);
       $table->unsignedInteger('discount_value');
       $table->unsignedInteger('max_discount')->nullable();
       $table->unsignedInteger('min_order_value')->nullable();

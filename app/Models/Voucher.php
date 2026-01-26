@@ -16,10 +16,10 @@ class Voucher extends Model
     'code', // Mã voucher duy nhất hiển thị cho khách hàng
     'description', // Mô tả ngắn của voucher
     'voucher_type', // Loại voucher: 'standard' | 'membership'
-    'discount_type', // 'fixed' hoặc 'percentage'
+    'discount_type', // 'fixed' hoặc 'percent'
     'discount_value', // Giá trị giảm (tiền hoặc phần trăm)
     'applied_count', // Số lần voucher đã được áp dụng
-    'max_discount', // Giảm tối đa (áp dụng cho percentage)
+    'max_discount', // Giảm tối đa (áp dụng cho percent)
     'min_order_value', // Giá trị đơn hàng tối thiểu để áp dụng
     'start_date', // Bắt đầu hiệu lực
     'end_date', // Hết hạn
