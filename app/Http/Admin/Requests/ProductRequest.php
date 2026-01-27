@@ -35,8 +35,8 @@ class ProductRequest extends FormRequest
       // branches: [{ branch_id: 5, is_selling: true }, ...]
       'branches'                           => ['sometimes', 'array'],
       'branches.*.branch_id'               => ['required', 'integer', 'exists:branches,id', 'distinct'],
-      'branches.*.is_selling'              => ['required', 'boolean'],/* 
-
+      'branches.*.is_selling'              => ['required', 'boolean'],
+      /* 
       // ====== RELATION: ATTRIBUTES (pivot: value) ======
       // attributes: [{ attribute_id: 5, value: "Size L" }, ...]
       'attributes'                       => ['sometimes', 'array'],

@@ -29,6 +29,7 @@ class ProductResource extends JsonResource
       'sell_branches' => $this->sell_branches,
       'arena_discount'  =>  $this->arena_discount,
       'menu' => new MenuResource($this->whenLoaded('menu')),
+      'branches'  =>  ProductBranchResource::collection($this->whenLoaded('branches')),
     ];
   }
 }

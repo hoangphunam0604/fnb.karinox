@@ -7,6 +7,7 @@ use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\ProductRequest;
 use App\Http\Admin\Resources\ProductResource;
 use App\Http\Admin\Resources\ProductDetailResource;
+use App\Models\Product;
 use App\Services\ProductService;
 use App\Services\ProductImportService;
 use Illuminate\Http\Request;
@@ -116,5 +117,34 @@ class ProductController extends Controller
     $this->importService->importFromKiotViet();
 
     return response()->json(['success' => true, 'message' => 'Đồng bộ sản phẩm từ KiotViet thành công.']);
+  }
+  public function branches(Request $request)
+  {
+    $items = $this->service->getList($request->all());
+    $items->load([
+      'branches'
+    ]);
+    return ProductResource::collection($items);
+  }
+  public function updateBranch(Request $request, Product $product)
+  {
+    $request->validate([
+      'branch_id'               => ['required', 'integer', 'exists:branches,id'],
+      'is_selling'              => ['required', 'boolean'],
+    ]);
+
+    $this->service->updateBranch($product, $request->branch_id, $request->is_selling);
+
+    return response()->json(['success' => true, 'message' => 'Cập nhật chi nhánh cho sản phẩm thành công.']);
+  }
+
+  public function updateMenu(Request $request, Product $product)
+  {
+    $request->validate([
+      'menu_id'               => ['required', 'integer', 'exists:menus,id'],
+    ]);
+    $product->menu_id = $request->menu_id;
+    $product->save();
+    return response()->json(['success' => true, 'message' => 'Cập nhật menu thành công.']);
   }
 }

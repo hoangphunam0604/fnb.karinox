@@ -22,9 +22,9 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('/orders/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
   Route::put('/orders/{id}', [OrderController::class, 'update']);
   Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
-  Route::put('/orders/{id}/remove-customer', [OrderController::class, 'removeCustomer']);
-  Route::put('/orders/{id}/remove-reward-points-used', [OrderController::class, 'removeRewardPointsUsed']);
-  Route::put('/orders/{id}/remove-voucher-used', [OrderController::class, 'removeVoucherUsed']);
+  Route::put('/orders/{id}/remove/customer', [OrderController::class, 'removeCustomer']);
+  Route::put('/orders/{id}/remove/point', [OrderController::class, 'removePoint']);
+  Route::put('/orders/{id}/remove/voucher', [OrderController::class, 'removeVoucher']);
   Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
   // Nhập bàn
   Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);

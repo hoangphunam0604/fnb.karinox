@@ -213,9 +213,9 @@ class OrderService
 
       //Tạo hoá đơn
       $this->invoiceService->createInvoiceFromOrder($order->id, $print);
-      /* 
+
       // Fire event sau khi order completed thành công
-      event(new OrderPaymentSuccess($order)); */
+      event(new OrderPaymentSuccess($order));
 
       return true;
     });
@@ -273,7 +273,7 @@ class OrderService
     return $order;
   }
 
-  public function removeRewardPointsUsed($orderId): Order
+  public function removePoint($orderId): Order
   {
     $order = Order::findOrFail($orderId);
     $this->pointService->restoreTransactionRewardPoints($order);
@@ -282,7 +282,7 @@ class OrderService
     return $order;
   }
 
-  public function removeVoucherUsed($orderId): Order
+  public function removeVoucher($orderId): Order
   {
     $order = Order::findOrFail($orderId);
     $this->voucherService->restoreVoucherUsage($order);
@@ -321,16 +321,16 @@ class OrderService
     return $order;
   }
 
-  public function splitOrder(int $orderId, array $splitItems): array
+  public function splitOrder(int $orderId, int $tableId, array $splitItems): array
   {
-    return DB::transaction(function () use ($orderId, $splitItems) {
+    return DB::transaction(function () use ($orderId, $tableId, $splitItems) {
       $originalOrder = Order::with('items.toppings')->findOrFail($orderId);
 
       // Tạo đơn hàng mới
       $newOrder = $originalOrder->replicate();
-      $newOrder->order_code = $originalOrder->order_code . "-2";
+      $newOrder->order_code = null; // Đặt lại mã đơn hàng để hệ thống tự sinh
+      $newOrder->table_id = $tableId;
       $newOrder->save();
-      $originalOrder->order_code .= "-1";
 
 
       foreach ($splitItems as $itemId => $quantityToSplit) {

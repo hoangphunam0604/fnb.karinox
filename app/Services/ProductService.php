@@ -124,6 +124,26 @@ class ProductService extends BaseService
     return $query;
   }
 
+  public function updateBranch($product, $branchId, $isSelling)
+  {
+    // Kiểm tra xem pivot đã tồn tại chưa
+    $exists = $product->branches()->where('branches.id', $branchId)->exists();
+
+    if ($exists) {
+      // Nếu đã tồn tại, cập nhật
+      $product->branches()->updateExistingPivot($branchId, [
+        'is_selling' => $isSelling,
+      ]);
+    } else {
+      // Nếu chưa tồn tại, tạo mới
+      $product->branches()->attach($branchId, [
+        'is_selling' => $isSelling,
+        'stock_quantity' => 0, // Giá trị mặc định
+      ]);
+    }
+
+    return $product;
+  }
   /**
    * Đồng bộ chi nhánh sản phẩm
    */

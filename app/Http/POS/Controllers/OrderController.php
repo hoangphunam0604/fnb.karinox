@@ -40,18 +40,20 @@ class OrderController extends Controller
   }
   public function removeCustomer($order_id)
   {
-    $order = $this->orderService->removeCustomer($order_id);
+    $this->orderService->removeCustomer($order_id);
+    $this->orderService->removeVoucher($order_id);
+    $order = $this->orderService->removePoint($order_id);
     return new OrderResource($order);
   }
 
-  public function removeRewardPointsUsed($order_id)
+  public function removePoint($order_id)
   {
-    $order = $this->orderService->removeRewardPointsUsed($order_id);
+    $order = $this->orderService->removePoint($order_id);
     return new OrderResource($order);
   }
-  public function removeVoucherUsed($order_id)
+  public function removeVoucher($order_id)
   {
-    $order = $this->orderService->removeVoucherUsed($order_id);
+    $order = $this->orderService->removeVoucher($order_id);
     return new OrderResource($order);
   }
 
@@ -70,11 +72,12 @@ class OrderController extends Controller
   public function split(Request $request,  $orderID)
   {
     $data = $request->validate([
+      'table_id' => 'integer|exists:tables,id',
       'split_items' => 'required|array',
       'split_items.*' => 'integer|min:1',
     ]);
 
-    [$updatedOrder, $newOrder] = $this->orderService->splitOrder($orderID, $data['split_items']);
+    [$updatedOrder, $newOrder] = $this->orderService->splitOrder($orderID, $data['table_id'], $data['split_items']);
 
     return response()->json([
       'message' => 'Tách đơn thành công',

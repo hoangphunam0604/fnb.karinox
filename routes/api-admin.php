@@ -43,7 +43,7 @@ Route::prefix('admin')->group(function () {
     Route::apiResource('menus', MenuController::class);
 
     Route::post('customers/import', [CustomerController::class, 'import']);
-     Route::post('/customers/sync-from-kiot-viet', [CustomerController::class, 'syncFromKiotViet']);
+    Route::post('/customers/sync-from-kiot-viet', [CustomerController::class, 'syncFromKiotViet']);
 
     Route::apiResource('customers', CustomerController::class);
 
@@ -57,6 +57,9 @@ Route::prefix('admin')->group(function () {
     Route::get('products/manufacturing-autocomplete', [ProductController::class, 'manufacturingAutocomplete']);
 
     Route::post('products/import', [ProductController::class, 'import']);
+    Route::get('products/branches', [ProductController::class, 'branches']);
+    Route::post('products/{product}/branch', [ProductController::class, 'updateBranch']);
+    Route::put('products/{product}/menu', [ProductController::class, 'updateMenu']);
     Route::post('/products/sync-from-kiot-viet', [ProductController::class, 'syncFromKiotViet']);
 
     Route::apiResource('products', ProductController::class);
