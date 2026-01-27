@@ -15,22 +15,22 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->unsignedBigInteger('kiotviet_id')->unique()->nullable();
-      $table->foreignId('menu_id')->nullable()->constrained()->onDelete('set null');
-      $table->string('product_type')->nullable();
+      $table->enum('status', ['active', 'inactive'])->default('active');
       $table->string('code')->unique();
       $table->string('name');
-      $table->text('description')->nullable();
       $table->unsignedInteger('price')->default(0);
       $table->string('unit', 50)->nullable();
-      $table->enum('status', ['active', 'inactive'])->default('active');
+      $table->string('product_type')->nullable();
       $table->string('booking_type', 30)->default('none');
-      $table->longText('arena_discount')->nullable();
       $table->boolean('allows_sale')->default(false);
       $table->boolean('is_reward_point')->default(false);
       $table->boolean('is_topping')->default(false);
       $table->boolean('is_new')->default(false);
       $table->boolean('print_label')->default(false); // In tem (dán ly/giữ lại)
       $table->boolean('print_kitchen')->default(false); // In phiếu bếp
+      $table->foreignId('menu_id')->nullable()->constrained()->onDelete('set null');
+      $table->text('description')->nullable();
+      $table->longText('arena_discount')->nullable();
       $table->string('thumbnail')->default('https://karinox.vn/medias/logo-karinox.png');
     });
   }
