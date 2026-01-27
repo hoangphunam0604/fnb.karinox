@@ -28,6 +28,7 @@ class ProductRequest extends FormRequest
 
       // media
       'thumbnail'       => ['nullable', 'string', 'max:2048'],
+      'arena_discount' => ['nullable', 'array'],
 
 
       // ====== RELATION: BRANCHES (pivot: is_selling stock_quantity) ======

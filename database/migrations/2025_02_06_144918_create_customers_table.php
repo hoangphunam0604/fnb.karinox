@@ -18,6 +18,7 @@ return new class extends Migration
 
       $table->foreignId('membership_level_id')->nullable()->constrained()->nullOnDelete(); // Xếp hạng thành viên
       $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
+      $table->string('arena_member')->nullable(); // Thông tin hội viên arena (JSON)
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
       $table->string('fullname')->nullable(); // Tên khách hàng
       $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null
@@ -46,7 +47,6 @@ return new class extends Migration
       $table->string('zalo_id')->nullable(); // ID Zalo khách hàng
       $table->string('signup_source')->nullable(); // Nguồn đăng ký tài khoản
       $table->text('note')->nullable(); // Ghi chú nội bộ về khách hàng
-      $table->text('pickleball_member')->nullable(); // Thông tin hội viên pickleball (JSON)
     });
   }
 

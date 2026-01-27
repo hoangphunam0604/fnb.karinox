@@ -24,6 +24,7 @@ return new class extends Migration
       $table->string('unit', 50)->nullable();
       $table->enum('status', ['active', 'inactive'])->default('active');
       $table->string('booking_type', 30)->default('none');
+      $table->longText('arena_discount')->nullable();
       $table->boolean('allows_sale')->default(false);
       $table->boolean('is_reward_point')->default(false);
       $table->boolean('is_topping')->default(false);

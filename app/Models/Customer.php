@@ -16,6 +16,7 @@ class Customer extends Model
     'id',
     'membership_level_id',
     'loyalty_card_number',
+    'arena_member',
     'loyalty_points',
     'reward_points',
     'used_reward_points',

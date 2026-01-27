@@ -33,6 +33,7 @@ class Product extends Model
     'print_label', // In tem
     'print_kitchen', // In phiếu bếp
     'thumbnail',
+    'arena_discount',
   ];
 
   protected $casts = [
@@ -45,6 +46,7 @@ class Product extends Model
     'is_new' => 'boolean',
     'print_label' => 'boolean',
     'print_kitchen' => 'boolean',
+    'arena_discount' => 'array',
     'status'  => CommonStatus::class
   ];
   /**
