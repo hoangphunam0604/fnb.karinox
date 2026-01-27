@@ -466,6 +466,8 @@ class VoucherService
             $item->discount_type = DiscountType::PERCENT;
             $item->discount_percent = $voucher->discount_for_new_product;
             $item->discount_note = $voucher->code;
+            $item->discount_for_new_product = true; // Đánh dấu đây là giảm giá cho sản phẩm mới
+
             $item->save(); // Auto calculatePrices() sẽ tính discount_amount
 
             // Refresh item

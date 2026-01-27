@@ -23,6 +23,7 @@ class InvoiceItem extends Model
     'discount_percent',
     'discount_amount',
     'discount_note',
+    'discount_for_new_product',
     'sale_price',
     'quantity',
     'total_price',
@@ -47,7 +48,7 @@ class InvoiceItem extends Model
     'discount_amount' => 'float',
     'quantity' => 'integer',
     'total_price' => 'float',
-
+    'discount_for_new_product' => 'boolean',
     'print_label' =>  'boolean',
     'printed_label' =>  'boolean',
     'printed_label_at'  =>  'datetime',

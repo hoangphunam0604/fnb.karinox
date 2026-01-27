@@ -25,6 +25,7 @@ return new class extends Migration
       $table->decimal('discount_percent', 15, 2)->default(0)->comment('Phần trăm giảm giá (0-100), chỉ dùng khi discount_type = percent');
       $table->decimal('discount_amount', 15, 2)->default(0)->comment('Số tiền giảm giá thực tế: nếu type=percent thì tính từ unit_price * discount_percent/100, nếu type=fixed thì lưu trực tiếp');
       $table->text('discount_note')->nullable(); // Ghi chú giảm giá
+      $table->boolean('discount_for_new_product')->default(false); // Đánh dấu đây là giảm giá cho sản phẩm mới
       $table->decimal('sale_price', 15, 2)->comment('Giá bán sau giảm giá: unit_price - discount_amount');
       $table->integer('quantity')->default(1); // Số lượng sản phẩm
       $table->decimal('total_price', 15, 2)->comment('Tổng giá: sale_price * quantity');

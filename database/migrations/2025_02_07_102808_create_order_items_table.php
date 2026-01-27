@@ -15,7 +15,6 @@ return new class extends Migration {
       $table->string('product_name'); // Tên sản phẩm
       $table->decimal('product_price', 15, 2)->comment('Giá gốc sản phẩm chưa bao gồm topping');
       $table->string('product_type')->nullable();
-      $table->boolean('is_product_new')->default(false);
       $table->string('booking_type', 30)->default('none');
       $table->decimal('unit_price', 15, 2)->comment('Đơn giá, đã bao gồm topping');
       $table->enum('discount_type', ['percent', 'fixed'])->nullable()->comment('Loại giảm giá: percent hoặc fixed');
@@ -23,6 +22,7 @@ return new class extends Migration {
       $table->decimal('discount_amount', 15, 2)->default(0)->comment('Số tiền giảm giá thực tế: nếu type=percent thì tính từ unit_price * discount_percent/100, nếu type=fixed thì lưu trực tiếp');
       $table->text('discount_note')->nullable(); // Ghi chú giảm giá
       $table->decimal('sale_price', 15, 2)->comment('Giá bán sau giảm giá: unit_price - discount_amount');
+      $table->boolean('discount_for_new_product')->default(false); // Đánh dấu đây là giảm giá cho sản phẩm mới
       $table->integer('quantity')->default(1); // Số lượng
       $table->decimal('total_price', 15, 2)->comment('Tổng giá: sale_price * quantity'); // Tổng giá
       $table->enum('status', ['pending', 'accepted', 'preparing', 'prepared', 'serving', 'served', 'canceled', 'refunded'])->default('pending');
