@@ -1,0 +1,41 @@
+apps:
+  - name: laravel-reverb
+    script: artisan
+    exec_mode: fork
+    interpreter: php
+    instances: 1
+    autorestart: true
+    watch: false
+    max_memory_restart: 500M
+    error_file: ./storage/logs/pm2-reverb-error.log
+    out_file: ./storage/logs/pm2-reverb-out.log
+    log_date_format: YYYY-MM-DD HH:mm:ss Z
+    args:
+      - reverb:start
+
+  - name: laravel-queue
+    script: artisan
+    exec_mode: fork
+    interpreter: php
+    instances: 1
+    autorestart: true
+    watch: true
+    ignore_watch:
+      - .git
+      - .vscode
+      - node_modules
+      - logs
+      - storage
+      - vendor
+      - public
+      - bootstrap/cache
+    max_memory_restart: 500M
+    error_file: ./storage/logs/pm2-queue-error.log
+    out_file: ./storage/logs/pm2-queue-out.log
+    log_date_format: YYYY-MM-DD HH:mm:ss Z
+    args:
+      - queue:work
+      - --tries=5
+      - --sleep=1
+      - --max-time=3600
+      - --timeout=60
