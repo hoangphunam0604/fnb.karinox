@@ -46,7 +46,7 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
 
   //Gửi lệnh in
-  Route::prefix('print')->group(function () {
+  Route::prefix('print/{order}')->group(function () {
     Route::post('/cash-inventory', [PrintController::class, 'cashInventory']);
     Route::post('/provisional', [PrintController::class, 'provisional']);
     Route::post('/kitchen', [PrintController::class, 'kitchen']);

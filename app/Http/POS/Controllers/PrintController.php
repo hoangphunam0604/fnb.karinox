@@ -11,6 +11,7 @@ use App\Http\POS\Resources\PrintInvoiceResource;
 use App\Http\POS\Resources\PrintProvisionalResource;
 use App\Http\POS\Resources\PrintKitchenResource;
 use App\Http\POS\Resources\PrintLabelResource;
+use App\Models\Order;
 
 class PrintController extends Controller
 {
@@ -19,16 +20,12 @@ class PrintController extends Controller
 
   /**
    * Lấy dữ liệu in tạm tính
-   * POST /api/pos/print/provisional
+   * POST /api/pos/print/{order}/provisional
    */
-  public function provisional(Request $request): JsonResponse
+  public function provisional($order): JsonResponse
   {
     try {
-      $request->validate([
-        'orderCode' => 'required|string'
-      ]);
-
-      $order = $this->orderService->findByCode($request->orderCode);
+      $order = $this->orderService->findByCode($order);
 
       // Load relationships needed for printing
       $order->load(['items.product', 'items.toppings', 'user']);
@@ -51,17 +48,11 @@ class PrintController extends Controller
 
   /**
    * Lấy dữ liệu in phiếu bếp
-   * POST /api/pos/print/kitchen
+   * POST /api/pos/print/{order}/kitchen
    */
-  public function kitchen(Request $request): JsonResponse
+  public function kitchen(Order $order): JsonResponse
   {
     try {
-      $request->validate([
-        'orderCode' => 'required|string'
-      ]);
-
-      $order = $this->orderService->findByCode($request->orderCode);
-
       // Load relationships needed for printing
       $order->load(['kitchenItems.product', 'kitchenItems.toppings', 'user']);
 
@@ -90,16 +81,26 @@ class PrintController extends Controller
 
   /**
    * Lấy dữ liệu in hóa đơn
-   * POST /api/pos/print/invoice
+   * POST /api/pos/print/{order}/invoice
+   * Note: order parameter có thể là orderCode hoặc invoiceCode
    */
-  public function invoice(Request $request): JsonResponse
+  public function invoice(Order $order): JsonResponse
   {
     try {
-      $request->validate([
-        'invoiceCode' => 'required|string'
-      ]);
-
-      $invoice = $this->invoiceService->findByCode($request->invoiceCode);
+      // Thử tìm theo invoice code trước, nếu không có thì tìm theo order code
+      try {
+        $invoice = $order->invoice();
+      } catch (\Exception $e) {
+        // Nếu không tìm thấy invoice, thử tìm order và lấy invoice từ order
+        $orderModel = $this->orderService->findByCode($order);
+        if (!$orderModel->invoice) {
+          return response()->json([
+            'success' => false,
+            'message' => 'Order chưa có hóa đơn'
+          ], 404);
+        }
+        $invoice = $orderModel->invoice;
+      }
 
       // Load relationships needed for printing
       $invoice->load(['items.product', 'items.toppings', 'user', 'customer']);
@@ -122,18 +123,15 @@ class PrintController extends Controller
 
   /**
    * Lấy dữ liệu in tem/nhãn cho sản phẩm
-   * POST /api/pos/print/label
+   * POST /api/pos/print/{order}/label
    */
-  public function label(Request $request): JsonResponse
+  public function label(Order $order, Request $request): JsonResponse
   {
     try {
       $request->validate([
-        'orderCode' => 'required|string',
         'itemIds' => 'array',
         'itemIds.*' => 'integer'
       ]);
-
-      $order = $this->orderService->findByCode($request->orderCode);
 
       // Load items with relationships
       $order->load(['items.product', 'items.toppings']);
@@ -169,9 +167,9 @@ class PrintController extends Controller
 
   /**
    * Lấy dữ liệu in kê tiền
-   * POST /api/pos/print/cash-inventory
+   * POST /api/pos/print/{order}/cash-inventory
    */
-  public function cashInventory(Request $request): JsonResponse
+  public function cashInventory($order, Request $request): JsonResponse
   {
     try {
       // Get branch ID using the karinox_branch_id binding or from query parameter
@@ -184,7 +182,13 @@ class PrintController extends Controller
         ], 400);
       }
 
-      $payload = $request->all();
+      // Lấy thông tin order nếu cần
+      $orderModel = $this->orderService->findByCode($order);
+
+      $payload = array_merge($request->all(), [
+        'order_code' => $order,
+        'order_id' => $orderModel->id
+      ]);
 
       return response()->json([
         'success' => true,
