@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
       $table->timestamps();
       $table->unsignedBigInteger('kiotviet_id')->unique()->nullable();
-      $table->enum('type', ['store', 'pickleball'])->default('store');
+      $table->string('type', 20)->default('store');
       $table->string('name');
       $table->string('phone_number')->nullable();
       $table->string('email')->nullable();
