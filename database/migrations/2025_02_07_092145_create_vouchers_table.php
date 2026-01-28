@@ -29,6 +29,7 @@ return new class extends Migration {
       $table->boolean('is_active')->default(true);
       $table->boolean('disable_holiday')->default(false);
       $table->json('applicable_membership_levels')->nullable(); // Hỗ trợ nhiều hạng thành viên
+      $table->json('applicable_arena_member')->nullable(); // Hỗ trợ hội viên arena
       $table->json('valid_days_of_week')->nullable();
       $table->json('valid_weeks_of_month')->nullable();
       $table->json('valid_months')->nullable();

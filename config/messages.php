@@ -20,5 +20,6 @@ return [
     'used' => 'Mã giảm giá đã được sử dụng.',
     'applied_success' => 'Áp dụng mã giảm giá thành công.',
     'apply_error' => 'Có lỗi xảy ra khi áp dụng mã giảm giá.',
+    'invalid_arena_member' => 'Không áp dụng cho hội viên này.',
   ]
 ];

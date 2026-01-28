@@ -82,6 +82,17 @@ class VoucherService
       $this->applyVoucher($order, $voucher->code);
     }
   }
+  public function getVouchersMember()
+  {
+    $vouchers = Voucher::where('is_active', true)->where('voucher_type', VoucherType::MEMBERSHIP)->get();
+    foreach ($vouchers as $voucher) {
+      $validationResult = $this->isValid($voucher, 0, null);
+      if ($validationResult->success) {
+        $validVouchers[] = $voucher;
+      }
+    }
+    return $validVouchers;
+  }
 
   /**
    * Lấy danh sách voucher có thể sử dụng
@@ -334,6 +345,14 @@ class VoucherService
         $customerMembershipId = $customerMembership->id;
         if (!in_array($customerMembershipId, $voucher->applicable_membership_levels)) {
           return ValidationResult::fail(config('messages.voucher.invalid_membership_level'));
+        }
+      }
+      // Kiểm tra hội viên viên hợp lệ
+      if (!empty($voucher->applicable_arena_member)) {
+        $customer = $this->customerService->find($customerId);
+        $arena_member = $customer->arena_member ?? "none";
+        if (!in_array($arena_member, $voucher->applicable_arena_member)) {
+          return ValidationResult::fail(config('messages.voucher.invalid_arena_member'));
         }
       }
     } else {

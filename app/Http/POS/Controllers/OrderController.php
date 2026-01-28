@@ -34,7 +34,7 @@ class OrderController extends Controller
 
   public function update($order_id, Request $request,)
   {
-    $data = $request->only(["customer_id", "note", "items", 'voucher_code', 'reward_points_used', 'payment_method']);
+    $data = $request->only(["note", "items"]);
     $order = $this->orderService->updateOrder($order_id, $data);
     return new OrderResource($order);
   }
@@ -42,16 +42,12 @@ class OrderController extends Controller
   public function addCustomer(Order $order, $customer_id)
   {
     $order = $this->orderService->addCustomer($order, $customer_id);
-    $this->voucherService->autoApplyVoucher($order);
-    $order = $this->orderService->loadOrderRelations($order);
     return new OrderResource($order);
   }
 
-  public function removeCustomer($order_id)
+  public function removeCustomer(Order $order)
   {
-    $this->orderService->removeCustomer($order_id);
-    $this->orderService->removeVoucher($order_id);
-    $order = $this->orderService->removePoint($order_id);
+    $order = $this->orderService->removeCustomer($order);
     return new OrderResource($order);
   }
 
@@ -61,14 +57,14 @@ class OrderController extends Controller
     return new OrderResource($order);
   }
 
-  public function removePoint($order_id)
+  public function removePoint(Order $order)
   {
-    $order = $this->orderService->removePoint($order_id);
+    $order = $this->orderService->removePoint($order);
     return new OrderResource($order);
   }
-  public function removeVoucher($order_id)
+  public function removeVoucher(Order $order)
   {
-    $order = $this->orderService->removeVoucher($order_id);
+    $order = $this->orderService->removeVoucher($order);
     return new OrderResource($order);
   }
 

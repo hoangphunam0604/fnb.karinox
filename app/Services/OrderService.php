@@ -274,31 +274,30 @@ class OrderService
   {
     $order->customer_id = $customerId;
     $order->save();
+    $this->voucherService->autoApplyVoucher($order);
     return $this->loadOrderRelations($order);
   }
-  public function removeCustomer($orderId): Order
+
+  public function removeCustomer(Order $order): Order
   {
-    $order = Order::findOrFail($orderId);
-    $this->pointService->restoreTransactionRewardPoints($order);
     $order->customer_id = null;
     $order->save();
-    $order->refresh();
+    $this->removePoint($order);
+    $this->removeVoucher($order);
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
-  public function removePoint($orderId): Order
+  public function removePoint(Order $order): Order
   {
-    $order = Order::findOrFail($orderId);
     $this->pointService->restoreTransactionRewardPoints($order);
     $order->refresh();
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
-  public function removeVoucher($orderId): Order
+  public function removeVoucher(Order $order): Order
   {
-    $order = Order::findOrFail($orderId);
     $this->voucherService->restoreVoucherUsage($order);
     $order->refresh();
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);

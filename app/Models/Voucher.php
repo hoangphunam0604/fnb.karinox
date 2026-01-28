@@ -32,6 +32,7 @@ class Voucher extends Model
     'is_active', // Có đang kích hoạt không (on/off)
     'disable_holiday', // Nếu true thì không áp dụng vào ngày lễ
     'applicable_membership_levels', // Mảng id hạng thành viên được áp dụng
+    'applicable_arena_member', // Mảng id hội viên arena được áp dụng
     'valid_days_of_week', // Mảng các ngày trong tuần được phép [0-6]
     'valid_weeks_of_month', // Mảng các tuần trong tháng (1-5, 6=tuần cuối)
     'valid_months', // Mảng tháng trong năm [1-12]
@@ -42,6 +43,7 @@ class Voucher extends Model
   protected $casts = [
     'applied_count' => 'integer',
     'applicable_membership_levels' => 'array',
+    'applicable_arena_member' => 'array',
     'valid_days_of_week' => 'array',
     'valid_weeks_of_month' => 'array',
     'valid_months' => 'array',
