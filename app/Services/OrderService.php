@@ -66,6 +66,13 @@ class OrderService
   {
     return Order::with(['items.toppings', 'customer.membershipLevel', 'table'])->where('order_code', strtoupper($code))->first();
   }
+
+  public function loadOrderRelations(Order $order)
+  {
+    $order->refresh();
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    return $order;
+  }
   /**
    * Tìm kiếm đơn đặt hàng theo mã
    */
@@ -249,7 +256,7 @@ class OrderService
   /**
    * Kiểm tra và áp dụng điểm thưởng
    */
-  public function applyRewardPoints(Order $order, int $requestedPoints): Order
+  public function applyPoint(Order $order, int $requestedPoints): Order
   {
     if (!$order->customer || $requestedPoints < 0) {
       return $order;
@@ -263,6 +270,12 @@ class OrderService
     return $order;
   }
 
+  public function addCustomer(Order $order, $customerId): Order
+  {
+    $order->customer_id = $customerId;
+    $order->save();
+    return $this->loadOrderRelations($order);
+  }
   public function removeCustomer($orderId): Order
   {
     $order = Order::findOrFail($orderId);

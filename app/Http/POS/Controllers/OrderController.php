@@ -5,18 +5,18 @@ namespace App\Http\POS\Controllers;
 use App\Http\Common\Controllers\Controller;
 use App\Http\POS\Resources\OrderResource;
 use App\Services\OrderService;
-use App\Events\PrintRequested;
+use App\Services\VoucherService;
 use App\Http\POS\Responses\ApiResponse;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-  protected OrderService $orderService;
 
-  public function __construct(OrderService $orderService)
-  {
-    $this->orderService = $orderService;
-  }
+  public function __construct(
+    protected OrderService $orderService,
+    protected VoucherService $voucherService
+  ) {}
 
   public function getOrderByTableId($tableId, Request $request)
   {
@@ -38,11 +38,26 @@ class OrderController extends Controller
     $order = $this->orderService->updateOrder($order_id, $data);
     return new OrderResource($order);
   }
+
+  public function addCustomer(Order $order, $customer_id)
+  {
+    $order = $this->orderService->addCustomer($order, $customer_id);
+    $this->voucherService->autoApplyVoucher($order);
+    $order = $this->orderService->loadOrderRelations($order);
+    return new OrderResource($order);
+  }
+
   public function removeCustomer($order_id)
   {
     $this->orderService->removeCustomer($order_id);
     $this->orderService->removeVoucher($order_id);
     $order = $this->orderService->removePoint($order_id);
+    return new OrderResource($order);
+  }
+
+  public function usePoint(Order $order, $point)
+  {
+    $order = $this->orderService->applyPoint($order, $point);
     return new OrderResource($order);
   }
 

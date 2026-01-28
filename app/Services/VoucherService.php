@@ -73,6 +73,16 @@ class VoucherService
       ->where('voucher_type', VoucherType::STANDARD)
       ->get();
   }
+
+  public function autoApplyVoucher(Order $order)
+  {
+    if ($order->customer_id && $order->total_price > 0) {
+      $vouchers = $this->getMemberRewards($order->customer_id, $order->total_price);
+      $voucher  = $vouchers->order('discount_value', 'desc')->first();
+      $this->applyVoucher($order, $voucher->code);
+    }
+  }
+
   /**
    * Lấy danh sách voucher có thể sử dụng
    */
