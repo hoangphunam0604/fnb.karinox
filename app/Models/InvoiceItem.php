@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\DiscountType;
 use App\Enums\ProductType;
-use App\Enums\ProductBookingType;
+use App\Enums\ProductArenaType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,7 +17,7 @@ class InvoiceItem extends Model
     'product_name',
     'product_price',
     'product_type',
-    'booking_type',
+    'arena_type',
     'unit_price',
     'discount_type',
     'discount_percent',
@@ -38,7 +38,7 @@ class InvoiceItem extends Model
   ];
   protected $casts = [
     'product_type' => ProductType::class,
-    'booking_type' => ProductBookingType::class,
+    'arena_type' => ProductArenaType::class,
     'discount_type' => DiscountType::class,
     'product_id' => 'integer',
     'product_price' => 'float',

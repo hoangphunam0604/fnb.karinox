@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CommonStatus;
-use App\Enums\ProductBookingType;
+use App\Enums\ProductArenaType;
 use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +25,7 @@ class Product extends Model
     'price', //Giá nhập, giá gốc
     'unit', //Đơn vị
     'status', //Bán | ngừng bán
-    'booking_type', //Đặt vé
+    'arena_type', //Đặt vé
     'allows_sale', //Bán trực tiếp
     'is_reward_point', //Tích điểm
     'is_topping', //Có thể sử dụng làm topping
@@ -38,7 +38,7 @@ class Product extends Model
 
   protected $casts = [
     'product_type' => ProductType::class,
-    'booking_type' => ProductBookingType::class,
+    'arena_type' => ProductArenaType::class,
     'price' => 'int',
     'allows_sale' => 'boolean',
     'is_reward_point' => 'boolean',
@@ -95,7 +95,6 @@ class Product extends Model
    */
   public function isBookingProduct(): bool
   {
-    return $this->product_type === \App\Enums\ProductType::SERVICE
-      && $this->booking_type === ProductBookingType::PICKLEBALL_FIXED;
+    return $this->arena_type === ProductArenaType::FULL_SLOT;
   }
 }

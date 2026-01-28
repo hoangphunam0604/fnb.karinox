@@ -4,14 +4,12 @@ namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Enums\BookingType;
-use App\Enums\ProductBookingType;
-use App\Enums\ProductType;
+use App\Enums\ProductArenaType;
 use App\Models\Booking;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BookingService
@@ -36,7 +34,7 @@ class BookingService
   }
 
   /**
-   * Tạo bookings từ order items có product_type = service và booking_type = pickleball_fixed
+   * Tạo bookings từ order items đặt sân cố định trong order
    */
   public function createBookingsFromOrder(Order $order): void
   {
@@ -54,8 +52,7 @@ class BookingService
   {
     // Nếu product được truyền vào, dùng luôn
     if ($product) {
-      return $product->product_type === ProductType::SERVICE
-        && $product->booking_type === 'pickleball_fixed';
+      return $product->arena_type === ProductArenaType::FULL_SLOT;
     }
 
     // Nếu không, load từ relationship
@@ -63,8 +60,7 @@ class BookingService
       return false;
     }
 
-    return $item->product->product_type === ProductType::SERVICE
-      && $item->product->booking_type === 'pickleball_fixed';
+    return $item->product->arena_type === ProductArenaType::FULL_SLOT;
   }
 
   /**
@@ -197,39 +193,5 @@ class BookingService
     Booking::where('order_id', $order->id)
       ->where('status', BookingStatus::PENDING)
       ->delete();
-  }
-
-  /**
-   * Kiểm tra và hủy các đơn hàng chưa thanh toán sau 30 phút
-   */
-  public function cancelExpiredBookingOrders(): void
-  {
-    $expiredOrders = Order::whereHas('items.product', function ($query) {
-      $query->where('product_type', ProductType::SERVICE)
-        ->where('booking_type', ProductBookingType::PICKLEBALL_FIXED);
-    })
-      ->where('payment_status', '!=', 'paid')
-      ->where('order_status', '!=', 'completed')
-      ->where('order_status', '!=', 'canceled')
-      ->where('created_at', '<=', Carbon::now()->subMinutes(30))
-      ->get();
-
-    foreach ($expiredOrders as $order) {
-      DB::transaction(function () use ($order) {
-        // Xóa bookings
-        $this->cancelBookings($order);
-
-        // Hủy đơn hàng
-        $order->update([
-          'order_status' => 'canceled',
-          'note' => ($order->note ? $order->note . "\n" : '') . 'Tự động hủy do không thanh toán sau 30 phút.'
-        ]);
-
-        Log::info("Auto-cancelled booking order", [
-          'order_id' => $order->id,
-          'order_code' => $order->order_code
-        ]);
-      });
-    }
   }
 }

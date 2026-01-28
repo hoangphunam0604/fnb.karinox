@@ -16,7 +16,7 @@ class OrderItemResource extends JsonResource
       'product_price' => $this->product_price,
       'product_type' => $this->product_type,
       'discount_for_new_product' => $this->discount_for_new_product,
-      'booking_type' => $this->booking_type,
+      'arena_type' => $this->arena_type,
       'sale_price' => $this->sale_price,
       'discount_type' => $this->discount_type,
       'discount_percent' => $this->discount_percent,

@@ -433,7 +433,7 @@ class OrderService
           'product_id' => $product->id,
           'product_type' => $product->product_type,
           'product_type_value' => $product->product_type->value ?? 'null',
-          'booking_type' => $product->booking_type,
+          'arena_type' => $product->arena_type,
           'is_booking' => $product->isBookingProduct()
         ]);
 
@@ -443,7 +443,7 @@ class OrderService
             'order_item_id' => $orderItem->id,
             'product_id' => $product->id,
             'product_type' => $product->product_type->value,
-            'booking_type' => $product->booking_type,
+            'arena_type' => $product->arena_type,
             'old_note' => $oldNote,
             'new_note' => $orderItem->note
           ]);
@@ -475,7 +475,7 @@ class OrderService
           'product_name' => $product->name,
           'product_price' => $product->price,
           'product_type' => $product->product_type,
-          'booking_type' => $product->booking_type,
+          'arena_type' => $product->arena_type,
           'quantity' => $item['quantity'] ?? 1,
           'unit_price' => $unitPrice,
           'sale_price' => $item['sale_price'] ?? $product->price,
@@ -492,7 +492,7 @@ class OrderService
           'product_id' => $product->id,
           'product_type' => $product->product_type,
           'product_type_value' => $product->product_type->value ?? 'null',
-          'booking_type' => $product->booking_type,
+          'arena_type' => $product->arena_type,
           'is_booking' => $product->isBookingProduct(),
           'note' => $item['note'] ?? 'null'
         ]);
@@ -503,7 +503,7 @@ class OrderService
             'order_item_id' => $orderItem->id,
             'product_id' => $product->id,
             'product_type' => $product->product_type->value,
-            'booking_type' => $product->booking_type,
+            'arena_type' => $product->arena_type,
             'note' => $item['note'] ?? null
           ]);
           $this->bookingService->syncBookingsForItem($orderItem, $product);

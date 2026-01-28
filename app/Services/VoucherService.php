@@ -11,10 +11,7 @@ use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use Carbon\Carbon;
 use App\DTO\ValidationResult;
-use App\Enums\ProductBookingType;
 use App\Enums\VoucherType;
-use App\Models\Holiday;
-use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

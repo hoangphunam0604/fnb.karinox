@@ -19,7 +19,7 @@ class ProductRequest extends FormRequest
     $id = $this->id;
     return [
       'menu_id'     => ['nullable', 'exists:menus,id'],
-      'booking_type'     => ['string'],
+      'arena_type'     => ['string'],
       'allows_sale'     => ['boolean'],
       'is_reward_point' => ['boolean'],
       'is_new' => ['boolean'],

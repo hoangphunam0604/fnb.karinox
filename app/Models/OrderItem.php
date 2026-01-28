@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\DiscountType;
 use App\Enums\ProductType;
-use App\Enums\ProductBookingType;
+use App\Enums\ProductArenaType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,7 +18,7 @@ class OrderItem extends Model
     'product_name',
     'product_price',
     'product_type', //Loại sản phẩm: nguyên liệu, hàng hoá, hàng chế biến, combo, dịch vụ
-    'booking_type', //Đặt vé
+    'arena_type', //Đặt vé
     'unit_price',
     'sale_price',
     'discount_type',
@@ -40,7 +40,7 @@ class OrderItem extends Model
 
   protected $casts = [
     'product_type' => ProductType::class,
-    'booking_type' => ProductBookingType::class,
+    'arena_type' => ProductArenaType::class,
     'discount_type' => DiscountType::class,
     'product_id' => 'integer',
     'product_price' => 'float',
@@ -170,7 +170,6 @@ class OrderItem extends Model
   }
   public function isBookingProduct(): bool
   {
-    return $this->product_type === \App\Enums\ProductType::SERVICE
-      && $this->booking_type === ProductBookingType::PICKLEBALL_FIXED;
+    return $this->arena_type === ProductArenaType::FULL_SLOT;
   }
 }

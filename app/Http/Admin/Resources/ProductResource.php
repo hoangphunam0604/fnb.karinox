@@ -16,7 +16,7 @@ class ProductResource extends JsonResource
       'name' => $this->name,
       'price' => $this->price,
       'product_type' => $this->product_type,
-      'booking_type' => $this->booking_type,
+      'arena_type' => $this->arena_type,
       'allows_sale' => $this->allows_sale,
       'is_reward_point' => $this->is_reward_point,
       'is_topping' => $this->is_topping,

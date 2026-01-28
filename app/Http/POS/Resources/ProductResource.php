@@ -26,7 +26,7 @@ class ProductResource extends JsonResource
       'is_reward_point' => $this->is_reward_point,
       'is_new' => $this->is_new,
       'product_type' => $this->product_type,
-      'booking_type' => $this->booking_type,
+      'arena_type' => $this->arena_type,
       'toppings' => ToppingResource::collection($this->whenLoaded('toppings')),
     ];
   }
