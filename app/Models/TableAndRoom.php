@@ -12,10 +12,11 @@ class TableAndRoom extends Model
 
   protected $table = 'tables_and_rooms';
 
-  protected $fillable = ['name', 'area_id', 'branch_id', 'capacity', 'note', 'status', 'order'];
+  protected $fillable = ['name', 'area_id', 'branch_id', 'capacity', 'slots', 'note', 'status', 'order'];
 
   protected $casts = [
     'capacity' => 'integer',
+    'slots' => 'integer',
     'order' => 'integer',
     'status' => TableAndRoomStatus::class,
   ];

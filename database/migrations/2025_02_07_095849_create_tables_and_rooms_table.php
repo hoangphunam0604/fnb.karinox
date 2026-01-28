@@ -18,6 +18,7 @@ return new class extends Migration
       $table->foreignId('branch_id')->constrained()->deleteOnDelete();
       $table->string('name');
       $table->integer('capacity')->default(10);
+      $table->integer('slots')->default(0);
       $table->integer('order')->default(0);
       $table->text('note')->nullable();
 

@@ -29,4 +29,13 @@ class TableAndRoomService  extends BaseService
     }
     return $query;
   }
+
+  public function addSlot($tableId, $slotCount)
+  {
+    $table = $this->find($tableId);
+    if ($table) {
+      $table->slots = $table->slots + $slotCount;
+      $table->save();
+    }
+  }
 }

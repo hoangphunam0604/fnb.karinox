@@ -211,6 +211,7 @@ class OrderService
       // Xác nhận bookings nếu có
       $this->bookingService->confirmBookings($order);
 
+
       //Tạo hoá đơn
       $this->invoiceService->createInvoiceFromOrder($order->id, $print);
 
@@ -418,6 +419,8 @@ class OrderService
         $orderItem->unit_price = $unitPrice;
         $orderItem->discount_type = $item['discount_type'] ?? null;
         $orderItem->discount_note = $item['discount_note'] ?? null;
+        // Ghi nhận giảm giá từ thu ngân
+        // Các cách giảm giá của thành viên / hội viên sẽ được xử lý trong voucher
         // Cập nhật discount values tùy theo type
         if ($orderItem->discount_type === DiscountType::PERCENT) {
           $orderItem->discount_percent = $item['discount_percent'] ??  0;
@@ -434,11 +437,11 @@ class OrderService
           'product_type' => $product->product_type,
           'product_type_value' => $product->product_type->value ?? 'null',
           'arena_type' => $product->arena_type,
-          'is_booking' => $product->isBookingProduct()
+          'is_booking' => $product->isBookingFullSlot()
         ]);
 
-        // Xử lý booking nếu là sản phẩm đặt sân
-        if ($product->isBookingProduct()) {
+        // Xử lý booking nếu là sản phẩm đặt sân full slot và note có thay đổi
+        if ($product->isBookingFullSlot()) {
           Log::info('Syncing bookings for updated order item', [
             'order_item_id' => $orderItem->id,
             'product_id' => $product->id,
@@ -448,6 +451,11 @@ class OrderService
             'new_note' => $orderItem->note
           ]);
           $this->bookingService->syncBookingsForItem($orderItem, $product);
+        }
+
+        // Xử lý booking nếu là sản phẩm đặt chỗ social
+        if ($product->isBookingSocial()) {
+          $this->bookingService->createSocial($orderItem, $product);
         }
         // Xử lý topping
         if (!empty($item['toppings'])) {

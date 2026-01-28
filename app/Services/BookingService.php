@@ -10,10 +10,55 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
+
+  public function __construct(
+    protected TableAndRoomService $tableAndRoomService
+  ) {}
+
+  /**
+   * Tạo booking socail nếu chưa có
+   */
+  public function createSocial(OrderItem $item, $product = null): void
+  {
+    $bookingData = json_decode($item->note, true);
+
+    $startTime = $bookingData['startTime'] ?? '00:00';
+    $endTime = $bookingData['endTime'] ?? '00:00';
+    $dateString = $bookingData['date'];
+
+    // Tính duration_hours
+    $duration = $this->calculateDuration($startTime, $endTime);
+    // Parse date format dd/mm/yyyy
+    $date = Carbon::createFromFormat('d/m/Y', $dateString);
+
+    // Parse time và gắn vào date
+    [$startHour, $startMinute] = explode(':', $startTime);
+    [$endHour, $endMinute] = explode(':', $endTime);
+
+    $startDateTime = $date->copy()->setTime((int)$startHour, (int)$startMinute);
+    $endDateTime = $date->copy()->setTime((int)$endHour, (int)$endMinute);
+
+    // Nếu end time < start time thì end time là ngày hôm sau
+    if ($endDateTime->lessThan($startDateTime)) {
+      $endDateTime->addDay();
+    }
+    if (Booking::where('start_time', $startDateTime)->where('end_time', $endDateTime)->count() == 0)
+      Booking::create([
+        'table_id' => $item->order->table_id,
+        'type' => BookingType::SOCIAL,
+        'status' => BookingStatus::CONFIRMED,
+        'start_time' => $startDateTime,
+        'end_time' => $endDateTime,
+        'duration_hours' => $duration,
+      ]);
+    $this->tableAndRoomService->addSlot($item->order->table_id, $item->quantity);
+  }
+
   /**
    * Đồng bộ bookings cho một order item cụ thể
    * Xóa bookings cũ và tạo mới theo note hiện tại
@@ -39,28 +84,10 @@ class BookingService
   public function createBookingsFromOrder(Order $order): void
   {
     foreach ($order->items as $item) {
-      if ($this->isBookingItem($item)) {
+      if ($item->isBookingFullSlot()) {
         $this->syncBookingsForItem($item);
       }
     }
-  }
-
-  /**
-   * Kiểm tra xem order item có phải là sản phẩm đặt sân cố định không
-   */
-  private function isBookingItem(OrderItem $item, $product = null): bool
-  {
-    // Nếu product được truyền vào, dùng luôn
-    if ($product) {
-      return $product->arena_type === ProductArenaType::FULL_SLOT;
-    }
-
-    // Nếu không, load từ relationship
-    if (!$item->product) {
-      return false;
-    }
-
-    return $item->product->arena_type === ProductArenaType::FULL_SLOT;
   }
 
   /**
@@ -193,5 +220,10 @@ class BookingService
     Booking::where('order_id', $order->id)
       ->where('status', BookingStatus::PENDING)
       ->delete();
+  }
+
+  public function createSocail(Order $order): void
+  {
+    // Logic tạo booking social theo sân nếu sân đó đang trống
   }
 }

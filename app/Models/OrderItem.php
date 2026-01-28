@@ -168,8 +168,20 @@ class OrderItem extends Model
       $item->calculatePrices();
     });
   }
-  public function isBookingProduct(): bool
+
+  /**
+   * Kiểm tra sản phẩm có phải là booking item không
+   */
+  public function isBookingFullSlot(): bool
   {
     return $this->arena_type === ProductArenaType::FULL_SLOT;
+  }
+
+  /**
+   * Kiểm tra sản phẩm có phải là booking item không
+   */
+  public function isBookingSocial(): bool
+  {
+    return $this->arena_type === ProductArenaType::SOCIAL_SLOT;
   }
 }
