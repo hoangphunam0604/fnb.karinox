@@ -19,6 +19,7 @@ return new class extends Migration
       $table->foreignId('membership_level_id')->nullable()->constrained()->nullOnDelete(); // Xếp hạng thành viên
       $table->string('loyalty_card_number')->unique()->nullable(); // Mã thẻ khách hàng thân thiết
       $table->string('arena_member')->nullable(); // Thông tin hội viên arena (JSON)
+      $table->date('arena_member_exp')->nullable(); // Ngày bắt đầu thành viên
       $table->string('phone')->unique(); // Số điện thoại khách hàng, duy nhất
       $table->string('fullname')->nullable(); // Tên khách hàng
       $table->string('email')->unique()->nullable(); // Email khách hàng, duy nhất, có thể null

@@ -17,6 +17,7 @@ class Customer extends Model
     'membership_level_id',
     'loyalty_card_number',
     'arena_member',
+    'arena_member_exp',
     'loyalty_points',
     'reward_points',
     'used_reward_points',
@@ -45,6 +46,8 @@ class Customer extends Model
   ];
 
   protected $casts = [
+    'arena_member_exp'  =>  'date',
+    'birthday'  =>  'date',
     'loyalty_points' => 'integer',
     'reward_points' => 'integer',
     'used_reward_points' => 'integer',
