@@ -253,23 +253,6 @@ class OrderService
   }
 
 
-  /**
-   * Kiểm tra và áp dụng điểm thưởng
-   */
-  public function applyPoint(Order $order, int $requestedPoints): Order
-  {
-    if (!$order->customer || $requestedPoints < 0) {
-      return $order;
-    }
-    // Kiểm tra và Áp dụng điểm thưởng nếu có
-    $this->pointService->useRewardPoints($order, $requestedPoints ?? 0);
-
-    // 4️⃣ Cập nhật tổng tiền sau khi  trừ điểm thưởng
-    $this->updateTotalPrice($order);
-    $order->refresh();
-    return $order;
-  }
-
   public function addCustomer(Order $order, $customerId): Order
   {
     $order->customer_id = $customerId;
@@ -285,6 +268,23 @@ class OrderService
     $this->removePoint($order);
     $this->removeVoucher($order);
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
+    return $order;
+  }
+
+  /**
+   * Kiểm tra và áp dụng điểm thưởng
+   */
+  public function applyPoint(Order $order, int $requestedPoints): Order
+  {
+    if (!$order->customer || $requestedPoints < 0) {
+      return $order;
+    }
+    // Kiểm tra và Áp dụng điểm thưởng nếu có
+    $this->pointService->useRewardPoints($order, $requestedPoints ?? 0);
+
+    // 4️⃣ Cập nhật tổng tiền sau khi  trừ điểm thưởng
+    $this->updateTotalPrice($order);
+    $order->refresh();
     return $order;
   }
 
