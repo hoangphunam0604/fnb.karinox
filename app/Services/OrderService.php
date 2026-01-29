@@ -306,8 +306,8 @@ class OrderService
       ? $order->items->whereIn('id', $orderItemIds)
       : $order->items;
 
-    // Sắp xếp items theo giá tăng dần để ưu tiên áp dụng cho items rẻ trước
-    $targetItems = $targetItems->sortBy('total_price');
+    // Sắp xếp items theo giá tăng dần để ưu tiên áp dụng cho items đắt trước
+    $targetItems = $targetItems->sortBy('total_price', 'desc');
 
     $totalPointsUsed = 0;
     $totalMoneyDiscounted = 0;
