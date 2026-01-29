@@ -28,6 +28,9 @@ class CustomerService extends BaseService
     if (!empty($params['membership_level_id']))
       $query->where('membership_level_id', $params['membership_level_id']);
 
+    if (!empty($params['arena_member']))
+      $query->where('arena_member', $params['arena_member']);
+
     if (!empty($params['status']))
       $query->where('status', $params['status']);
 

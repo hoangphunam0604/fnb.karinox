@@ -432,7 +432,7 @@ class OrderService
       return;
     }
 
-    $arenaMemberType = $customer->arena_member;
+    $arenaMemberType = 'arena_' . $customer->arena_member;
 
     // Lấy tất cả items của order
     $order->loadMissing(['items.product']);
