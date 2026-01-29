@@ -19,6 +19,7 @@ return new class extends Migration
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete(); // Nhân viên bán hàng
       $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete(); // Người nhận đơn
       $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete(); // Khách hàng
+      $table->string('name')->nullable(); // Tên booking
       $table->enum('type', ['full', 'social']); //Bao sân | vé lẻ social
       $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending'); // Trạng thái booking
       $table->dateTime('start_time');

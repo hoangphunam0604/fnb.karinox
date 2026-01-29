@@ -2,6 +2,9 @@
 
 namespace App\Http\POS\Controllers;
 
+use App\Enums\BookingStatus;
+use App\Enums\BookingType;
+use App\Http\POS\Requests\BookingRequest;
 use App\Http\POS\Resources\BookingResource;
 use App\Models\Booking;
 use Carbon\Carbon;
@@ -38,5 +41,74 @@ class BookingController extends Controller
       ->get();
 
     return BookingResource::collection($bookings);
+  }
+
+  /**
+   * Tạo booking mới
+   * 
+   * @param BookingRequest $request
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function store(BookingRequest $request)
+  {
+    $validated = $request->validated();
+
+    $booking = Booking::create([
+      'table_id' => $validated['table_id'],
+      'name' => $validated['name'] ?? 'Social Booking',
+      'type' => BookingType::SOCIAL,
+      'status' => BookingStatus::CONFIRMED,
+      'start_time' => Carbon::parse($validated['start_time']),
+      'end_time' => Carbon::parse($validated['end_time']),
+    ]);
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Tạo booking thành công.',
+      'data' => new BookingResource($booking)
+    ], 201);
+  }
+
+  /**
+   * Cập nhật booking
+   * 
+   * @param BookingRequest $request
+   * @param int $id
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function update(BookingRequest $request, $id)
+  {
+    $booking = Booking::findOrFail($id);
+    $validated = $request->validated();
+
+    $booking->update([
+      'table_id' => $validated['table_id'],
+      'start_time' => Carbon::parse($validated['start_time']),
+      'end_time' => Carbon::parse($validated['end_time']),
+    ]);
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Cập nhật booking thành công.',
+      'data' => new BookingResource($booking->fresh())
+    ]);
+  }
+
+  /**
+   * Xoá booking
+   * 
+   * @param int $id
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function destroy($id)
+  {
+    $booking = Booking::findOrFail($id);
+
+    $booking->delete();
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Xoá booking thành công.'
+    ]);
   }
 }

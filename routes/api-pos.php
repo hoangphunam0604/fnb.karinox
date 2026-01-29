@@ -18,10 +18,16 @@ use App\Http\POS\Controllers\TemplateController;
 Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->prefix('pos')->group(function () {
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
+
+  // Booking routes
   Route::get('/bookings', [BookingController::class, 'index']);
+  Route::post('/bookings', [BookingController::class, 'store']);
+  Route::put('/bookings/{id}', [BookingController::class, 'update']);
+  Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+
   Route::prefix('orders')->group(function () {
     Route::get('/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
-    
+
     Route::put('/{id}', [OrderController::class, 'update']);
     Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
 

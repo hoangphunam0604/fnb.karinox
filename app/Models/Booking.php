@@ -15,6 +15,7 @@ class Booking extends Model
     'user_id',
     'receiver_id',
     'customer_id',
+    'name',
     'type',
     'status',
     'start_time',
@@ -30,6 +31,17 @@ class Booking extends Model
     'end_time' => 'datetime',
     'duration_hours' => 'integer',
   ];
+
+  protected static function boot()
+  {
+    parent::boot();
+
+    static::saving(function ($booking) {
+      if ($booking->start_time && $booking->end_time) {
+        $booking->duration_hours = $booking->start_time->diffInHours($booking->end_time);
+      }
+    });
+  }
 
   public function order(): BelongsTo
   {
