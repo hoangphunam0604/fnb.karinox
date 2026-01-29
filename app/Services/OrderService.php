@@ -141,8 +141,8 @@ class OrderService
       $this->updateTotalPrice($order);
 
       $order->refresh();
-      $this->applyDiscounts($order, $data);
-      $order->refresh();
+      /*  $this->applyDiscounts($order, $data);
+      $order->refresh(); */
       $order->loadMissing(['customer.membershipLevel', 'table']);
       return $order;
     });
@@ -153,22 +153,27 @@ class OrderService
    */
   public function updateTotalPrice(Order $order): void
   {
-    // 1️⃣ Tính tổng tiền sản phẩm & topping (trước giảm giá)
-    $subtotal = $order->items->sum(fn($item) => $item->total_price);
+    // 1️⃣ Tính tổng tiền sản phẩm (giá gốc chưa giảm) = unit_price * quantity
+    $subtotal = $order->items->sum(fn($item) => $item->unit_price * $item->quantity);
 
-    // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
-    $discountAmount = $order->voucher_discount ?? 0;
+    // 2️⃣ Tính tổng giảm giá từ các items (discount + reward)
+    $itemDiscounts = $order->items->sum(
+      fn($item) => ($item->discount_amount ?? 0) * $item->quantity + ($item->reward_discount ?? 0)
+    );
 
-    // 3️⃣ Tính tổng số tiền giảm từ điểm thưởng của các items
+    // 3️⃣ Lấy số tiền giảm giá từ voucher order-level (nếu có)
+    $voucherDiscount = $order->voucher_discount ?? 0;
+
+    // 4️⃣ Tính tổng số tiền giảm từ điểm thưởng (để hiển thị)
     $rewardDiscount = $order->items->sum(fn($item) => $item->reward_discount ?? 0);
 
-    // 4️⃣ Tính tổng tiền cần thanh toán
-    $totalPrice = max($subtotal - $discountAmount - $rewardDiscount, 0);
+    // 5️⃣ Tính tổng tiền cần thanh toán
+    $totalPrice = max($subtotal - $itemDiscounts - $voucherDiscount, 0);
 
-    // 5️⃣ Cập nhật vào đơn hàng
+    // 6️⃣ Cập nhật vào đơn hàng
     $order->update([
       'subtotal_price' => $subtotal,
-      'voucher_discount' => $discountAmount,
+      'voucher_discount' => $voucherDiscount,
       'reward_discount' => $rewardDiscount,
       'total_price' => $totalPrice
     ]);
@@ -617,12 +622,11 @@ class OrderService
 
     foreach ($items as $item) {
       $product = $this->getProduct($item['product_id']);
-      $unitPrice = $product->price;
       if (isset($item['id'])):
         $orderItem = OrderItem::findOrFail($item['id']);
         $oldNote = $orderItem->note;
         $orderItem->quantity = $item['quantity'] ?? 1;
-        $orderItem->unit_price = $unitPrice;
+        $orderItem->unit_price = $item['unit_price'] ??  $orderItem->unit_price;
         $orderItem->discount_type = $item['discount_type'] ?? null;
         $orderItem->discount_note = $item['discount_note'] ?? null;
         // Ghi nhận giảm giá từ thu ngân
@@ -635,7 +639,6 @@ class OrderService
         }
 
         $orderItem->note = $item['note'] ?? $orderItem->note;
-        $orderItem->sale_price = $item['sale_price'] ?? $orderItem->sale_price;
         $orderItem->save(); // calculatePrices() được gọi tự động trong model
 
         Log::info('Update order item - checking booking', [
@@ -671,18 +674,6 @@ class OrderService
           OrderTopping::where('order_item_id', $orderItem->id)->delete();
         }
       else:
-        /* $orderItem = OrderItem::where('product_id', $item['product_id'])
-          ->where('order_id', $order->id)
-          ->where('printed_label', false)
-          ->where('printed_kitchen', false)
-          ->whereDoesntHave('toppings')
-          ->first();
-        if ($orderItem) :
-          // Nếu item có sẵn và không có topping, chưa in tem, chưa in phiếu bếp => tăng số lượng
-          $orderItem->increment('quantity');
-          $orderItem->total_price = $unitPrice * $orderItem->quantity;
-          $orderItem->save();
-        else : */
         $orderItem = OrderItem::create([
           'order_id' => $order->id,
           'product_id' => $product->id,
@@ -691,8 +682,7 @@ class OrderService
           'product_type' => $product->product_type,
           'arena_type' => $product->arena_type,
           'quantity' => $item['quantity'] ?? 1,
-          'unit_price' => $unitPrice,
-          'sale_price' => $item['sale_price'] ?? $product->price,
+          'unit_price' =>  $item['unit_price'] ??  $product->price,
           'discount_type' => $item['discount_type'] ?? null,
           'discount_percent' => $item['discount_percent'] ?? 0,
           'discount_amount' => $item['discount_amount'] ?? 0,

@@ -150,7 +150,17 @@ class OrderItem extends Model
       // Tính sale_price và total_price
       $this->sale_price = round($unitPrice - $this->discount_amount, 2);
     }
-    $this->total_price = round($this->sale_price * $quantity, 2);
+
+    // Kiểm tra nếu đã dùng điểm thưởng
+    $rewardDiscount = $this->reward_discount ?? 0;
+    if ($rewardDiscount > 0) {
+      // Nếu đã đổi điểm thì sale_price và total_price đều = 0
+      $this->sale_price = 0;
+      $this->total_price = 0;
+    } else {
+      // Nếu chưa dùng điểm thì tính bình thường
+      $this->total_price = round($this->sale_price * $quantity, 2);
+    }
   }
 
   /**
