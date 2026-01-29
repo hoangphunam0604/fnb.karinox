@@ -257,6 +257,10 @@ class OrderService
   {
     $order->customer_id = $customerId;
     $order->save();
+
+    // Áp dụng giảm giá arena member trước khi áp dụng voucher
+    $this->applyArenaMemberDiscount($order);
+
     $this->voucherService->autoApplyVoucher($order);
     return $this->loadOrderRelations($order);
   }
@@ -265,6 +269,7 @@ class OrderService
   {
     $order->customer_id = null;
     $order->save();
+    $this->removeArenaMemberDiscount($order);
     $this->removePoint($order);
     $this->removeVoucher($order);
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
@@ -302,6 +307,98 @@ class OrderService
     $order->refresh();
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
+  }
+
+  /**
+   * Áp dụng giảm giá cho gói hội viên arena
+   */
+  private function applyArenaMemberDiscount(Order $order): void
+  {
+    if (!$order->customer_id) {
+      return;
+    }
+
+    $customer = $order->customer;
+
+    // Kiểm tra khách hàng có gói hội viên arena và còn hạn không
+    if (!$customer->arena_member || $customer->arena_member === 'none') {
+      return;
+    }
+
+    // Kiểm tra hạn sử dụng
+    if ($customer->arena_member_exp && $customer->arena_member_exp->isPast()) {
+      return;
+    }
+
+    $arenaMemberType = $customer->arena_member;
+
+    // Lấy tất cả items của order
+    $order->loadMissing(['items.product']);
+
+    foreach ($order->items as $item) {
+      $product = $item->product;
+
+      // Kiểm tra sản phẩm có cấu hình giảm giá arena không
+      if (!$product->arena_discount || !is_array($product->arena_discount)) {
+        continue;
+      }
+
+      // Kiểm tra có giảm giá cho gói hội viên này không
+      if (!isset($product->arena_discount[$arenaMemberType])) {
+        continue;
+      }
+
+      $discountPercent = floatval($product->arena_discount[$arenaMemberType]);
+
+      if ($discountPercent > 0 && $discountPercent <= 100) {
+        // Áp dụng giảm giá theo %
+        $item->discount_type = DiscountType::PERCENT;
+        $item->discount_percent = $discountPercent;
+        $item->discount_amount = 0;
+        $item->discount_note = "Giảm giá hội viên Arena ({$arenaMemberType})";
+        $item->save(); // calculatePrices() sẽ được gọi tự động trong model
+
+        Log::info('Applied arena member discount', [
+          'order_id' => $order->id,
+          'order_item_id' => $item->id,
+          'product_id' => $product->id,
+          'arena_member' => $arenaMemberType,
+          'discount_percent' => $discountPercent
+        ]);
+      }
+    }
+
+    // Cập nhật tổng tiền sau khi áp dụng giảm giá
+    $this->updateTotalPrice($order);
+  }
+
+  /**
+   * Xóa giảm giá hội viên arena khi xóa khách hàng
+   */
+  private function removeArenaMemberDiscount(Order $order): void
+  {
+    $order->loadMissing('items');
+
+    foreach ($order->items as $item) {
+      // Kiểm tra nếu discount_note chứa thông tin giảm giá arena member
+      if ($item->discount_note && str_contains($item->discount_note, 'Giảm giá hội viên Arena')) {
+        // Xóa giảm giá
+        $item->discount_type = null;
+        $item->discount_percent = 0;
+        $item->discount_amount = 0;
+        $item->discount_note = null;
+        $item->save(); // calculatePrices() sẽ được gọi tự động trong model
+
+        Log::info('Removed arena member discount', [
+          'order_id' => $order->id,
+          'order_item_id' => $item->id,
+          'product_id' => $item->product_id
+        ]);
+      }
+    }
+
+    // Cập nhật tổng tiền sau khi xóa giảm giá
+    $this->updateTotalPrice($order);
   }
 
 
