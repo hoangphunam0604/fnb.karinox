@@ -27,6 +27,8 @@ class CustomerRequest extends FormRequest
       'company_name' => ['nullable', 'string'],
       'tax_id' => ['nullable', 'string'],
       'note' => ['nullable', 'string'],
+      'arena_member' => ['nullable'],
+      'arena_member_exp' => ['nullable'],
     ];
   }
   public function messages(): array
