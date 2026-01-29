@@ -62,6 +62,10 @@ Route::prefix('admin')->group(function () {
     Route::put('products/{product}/menu', [ProductController::class, 'updateMenu']);
     Route::post('/products/sync-from-kiot-viet', [ProductController::class, 'syncFromKiotViet']);
 
+    // Arena Services Management
+    Route::post('products/arena-services', [ProductController::class, 'setArenaServices']);
+    Route::get('products/arena-services', [ProductController::class, 'getArenaServices']);
+
     Route::apiResource('products', ProductController::class);
 
     Route::post('print-templates/{id}/set-default', [PrintTemplateController::class, 'setDefault']);

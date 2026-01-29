@@ -5,10 +5,12 @@ namespace App\Http\Admin\Controllers;
 use App\Client\KiotViet;
 use App\Http\Common\Controllers\Controller;
 use App\Http\Admin\Requests\ProductRequest;
+use App\Http\Admin\Requests\SetArenaServicesRequest;
 use App\Http\Admin\Resources\ProductResource;
 use App\Http\Admin\Resources\ProductDetailResource;
 use App\Models\Product;
 use App\Services\ProductService;
+use App\Services\ProductArenaService;
 use App\Services\ProductImportService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,6 +20,7 @@ class ProductController extends Controller
 
   public function __construct(
     protected ProductService $service,
+    protected ProductArenaService $arenaService,
     protected ProductImportService $importService,
     protected KiotViet $kiotVietClient
   ) {}
@@ -146,5 +149,40 @@ class ProductController extends Controller
     $product->menu_id = $request->menu_id;
     $product->save();
     return response()->json(['success' => true, 'message' => 'Cập nhật menu thành công.']);
+  }
+
+  /**
+   * Cài đặt dịch vụ Arena
+   */
+  public function setArenaServices(SetArenaServicesRequest $request)
+  {
+    try {
+      $services = $request->validated()['services'];
+      $result = $this->arenaService->setArenaServices($services);
+
+      return response()->json([
+        'success' => true,
+        'message' => 'Cài đặt dịch vụ Arena thành công.',
+        'data' => $result,
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Có lỗi xảy ra khi cài đặt dịch vụ Arena: ' . $e->getMessage(),
+      ], 500);
+    }
+  }
+
+  /**
+   * Lấy danh sách các dịch vụ Arena đã được cài đặt
+   */
+  public function getArenaServices()
+  {
+    $services = $this->arenaService->getArenaServices();
+
+    return response()->json([
+      'success' => true,
+      'data' => $services,
+    ]);
   }
 }

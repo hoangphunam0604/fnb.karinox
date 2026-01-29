@@ -112,11 +112,18 @@ class ProductService extends BaseService
       $branchIds = $params['branch_ids'] ?? $params['branches'];
       if (is_array($branchIds)) {
         $query->whereHas('branches', function ($subQuery) use ($branchIds) {
-          $subQuery->whereIn('branches.id', $branchIds);
+          $subQuery->whereIn('branches.id', $branchIds)->where('is_selling', true);
         });
       } else {
         $query->whereHas('branches', function ($subQuery) use ($branchIds) {
-          $subQuery->where('branches.id', $branchIds);
+          $subQuery->where('branches.id', $branchIds)->where('is_selling', true);
+        });
+      }
+    elseif (isset($params['only_current_branch']) && $params['only_current_branch'] == true):
+      $branchId = app()->bound('karinox_branch_id') ? app('karinox_branch_id') : null;
+      if ($branchId) {
+        $query->whereHas('branches', function ($subQuery) use ($branchId) {
+          $subQuery->where('branches.id', $branchId)->where('is_selling', true);
         });
       }
     endif;

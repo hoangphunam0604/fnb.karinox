@@ -7,19 +7,31 @@ use Illuminate\Support\Arr;
 enum ProductArenaType: string
 {
   case NONE = 'none';
-  case SOCIAL_SLOT = 'social_slot';
   case FULL_SLOT = 'full_slot';
-  case ARENA_MEMBER = 'member';
-  case ARENA_VIP = 'vip';
+  case SOCIAL_SLOT = 'social_slot';
+  case SOCIAL_MEMBER = 'social_member';
+  case ARENA_MEMBER = 'arena_member';
+  case ARENA_MORNING_MEMBER = 'arena_morning_member';
+  case ARENA_RELAX_MEMBER = 'arena_relax_member';
+  case ARENA_VIP = 'arena_vip';
+  case ARENA_VVIP = 'arena_vvip';
+  case ARENA_MASTER = 'arena_master';
 
   public function getLabel(): string
   {
     return match ($this) {
       self::NONE => 'Sản phẩm thường',
-      self::SOCIAL_SLOT => 'Đặt chỗ social',
       self::FULL_SLOT => 'Đặt sân full',
-      self::ARENA_MEMBER => 'Gói hội viên arena',
-      self::ARENA_VIP => 'Gói hội viên VIP',
+
+      self::SOCIAL_SLOT => 'Đặt chỗ social',
+      self::SOCIAL_MEMBER => 'SOCIAL MEMBER',
+
+      self::ARENA_MEMBER => 'MEMBER',
+      self::ARENA_MORNING_MEMBER => 'MORNING MEMBER',
+      self::ARENA_RELAX_MEMBER => 'RELAX MEMBER',
+      self::ARENA_VIP => 'VIP',
+      self::ARENA_VVIP => 'VVIP',
+      self::ARENA_MASTER => 'MASTER',
     };
   }
 
