@@ -50,7 +50,13 @@ class ProductArenaService
    */
   public function getArenaServices()
   {
-    return Product::where('arena_type', '!=', 'none')
+    // Lấy tất cả các giá trị hợp lệ của ProductArenaType (trừ 'none')
+    $validArenaTypes = array_filter(
+      \App\Enums\ProductArenaType::casesAsArray(),
+      fn($type) => $type !== 'none'
+    );
+
+    return Product::whereIn('arena_type', $validArenaTypes)
       ->select('id', 'code', 'name', 'arena_type', 'price')
       ->get()
       ->map(function ($product) {
