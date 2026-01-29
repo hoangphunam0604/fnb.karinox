@@ -43,15 +43,11 @@ class CustomerService extends BaseService
    */
   public function findCustomer($keyword)
   {
-    try {
-      return Customer::with('membershipLevel')
-        ->where('phone', $keyword)
-        ->orWhere('email', $keyword)
-        ->orWhere('loyalty_card_number', $keyword)
-        ->firstOrFail();
-    } catch (ModelNotFoundException $e) {
-      abort(404, 'Không tìm thấy khách hàng.');
-    }
+    return Customer::with('membershipLevel')
+      ->where('phone', $keyword)
+      ->orWhere('email', $keyword)
+      ->orWhere('loyalty_card_number', $keyword)
+      ->firstOrFail();
   }
 
 

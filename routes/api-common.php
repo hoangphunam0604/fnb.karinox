@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Auth\Controllers\AuthController;
 use App\Http\Common\Controllers\BranchController;
+use App\Http\Common\Controllers\CustomerController;
 
 Route::get('branches', [BranchController::class, 'getUserBranches']);
 Route::get('branches/kiotviet', [BranchController::class, 'getKiotVietBrands']);
 Route::post('branches/select', [BranchController::class, 'selectBranch']);
+Route::post('customers/{code}', [CustomerController::class, 'findByCode']);
 
 Route::group(['prefix' => 'auth'], function () {
   Route::post('login', [AuthController::class, 'login']);

@@ -1,0 +1,56 @@
+body {
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont;
+    margin: 0;
+    background: #f5f6f8;
+}
+
+.header {
+    background: linear-gradient(180deg, #059276, #00483a);
+    padding: 80px 20px;
+    text-align: center;
+    color: #fff;
+}
+
+.avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 10px;
+}
+
+.card {
+    max-width: 420px;
+    margin: -30px auto 20px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+@media screen and (max-width: 440px) {
+    .card {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+}
+.row {
+    margin-bottom: 14px;
+}
+
+.label {
+    font-size: 13px;
+    color: #888;
+}
+
+.value {
+    font-size: 16px;
+    font-weight: 500;
+}
+.uptext {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
