@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
   ->withRouting(
@@ -14,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
     commands: __DIR__ . '/../routes/console.php',
     health: '/up',
   )
+  ->withSchedule(function (Schedule $schedule) {
+    // Reset gói arena member đã hết hạn vào 0h30 mỗi ngày
+    $schedule->command('arena:reset-expired-membership')
+      ->dailyAt('00:30')
+      ->timezone('Asia/Ho_Chi_Minh')
+      ->name('reset-expired-arena-membership')
+      ->withoutOverlapping();
+  })
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->encryptCookies(except: ['appearance']);
 

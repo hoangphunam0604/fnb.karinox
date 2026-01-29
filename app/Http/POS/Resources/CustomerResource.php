@@ -32,6 +32,8 @@ class CustomerResource extends JsonResource
       'birthday'  =>  $this->birthday,
       'gender'  =>  $this->gender,
       'avatar'  =>  $this->avatar,
+      'arena_member'  =>  $this->arena_member,
+      'arena_member_exp'  =>  $this->arena_member_exp ? $this->arena_member_exp->format('d/m/Y') : null,
       'is_birthday_today'  =>  $this->isBirthdayToday(),
       'can_receive_new_member_gifts'  => $this->canReceiveNewMemberGift(),
       'can_receive_birthday_gifts' =>  $this->canReceiveBirthdayGifts(),

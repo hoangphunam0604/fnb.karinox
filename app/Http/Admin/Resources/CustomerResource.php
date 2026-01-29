@@ -29,6 +29,8 @@ class CustomerResource extends JsonResource
       'status' => $this->status,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
+      'arena_member'  =>  $this->arena_member,
+      'arena_member_exp'  =>  $this->arena_member_exp ? $this->arena_member_exp->format('d/m/Y') : null,
       'membership_level' => $this->whenLoaded('membershipLevel', function () {
         return $this->membershipLevel->name ?? null;
       }),
