@@ -103,6 +103,21 @@ class Product extends Model
    */
   public function isBookingSocial(): bool
   {
-    return $this->arena_type === ProductArenaType::SOCIAL_SLOT;
+    return $this->arena_type === ProductArenaType::SOCIAL_MORNING
+      || $this->arena_type === ProductArenaType::SOCIAL_AFTERNOON
+      || $this->arena_type === ProductArenaType::MEMBER_SLOT;
+  }
+
+  /**
+   * Kiểm tra sản phẩm có phải là gói hội viên không
+   */
+  public function isMemberPackage(): bool
+  {
+    return $this->arena_type === ProductArenaType::ARENA_MEMBER
+      || $this->arena_type === ProductArenaType::ARENA_MORNING_MEMBER
+      || $this->arena_type === ProductArenaType::ARENA_RELAX_MEMBER
+      || $this->arena_type === ProductArenaType::ARENA_VIP
+      || $this->arena_type === ProductArenaType::ARENA_VVIP
+      || $this->arena_type === ProductArenaType::ARENA_MASTER;
   }
 }

@@ -8,8 +8,9 @@ enum ProductArenaType: string
 {
   case NONE = 'none';
   case FULL_SLOT = 'full_slot';
-  case SOCIAL_SLOT = 'social_slot';
-  case SOCIAL_MEMBER = 'social_member';
+  case SOCIAL_MORNING = 'social_morning';
+  case SOCIAL_AFTERNOON = 'social_afternoon';
+  case MEMBER_SLOT = 'member_slot';
   case ARENA_MEMBER = 'arena_member';
   case ARENA_MORNING_MEMBER = 'arena_morning_member';
   case ARENA_RELAX_MEMBER = 'arena_relax_member';
@@ -23,8 +24,9 @@ enum ProductArenaType: string
       self::NONE => 'Sản phẩm thường',
       self::FULL_SLOT => 'Đặt sân full',
 
-      self::SOCIAL_SLOT => 'Đặt chỗ social',
-      self::SOCIAL_MEMBER => 'SOCIAL MEMBER',
+      self::SOCIAL_MORNING => 'Đặt chỗ social sáng',
+      self::SOCIAL_AFTERNOON => 'Đặt chỗ social chiều',
+      self::MEMBER_SLOT => 'MEMBER SLOT',
 
       self::ARENA_MEMBER => 'MEMBER',
       self::ARENA_MORNING_MEMBER => 'MORNING MEMBER',
