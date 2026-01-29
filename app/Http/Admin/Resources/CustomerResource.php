@@ -26,6 +26,7 @@ class CustomerResource extends JsonResource
       'reward_points' => $this->reward_points,
       'used_reward_points' => $this->used_reward_points,
       'total_spent' => $this->total_spent,
+      'status' => $this->status,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
       'membership_level' => $this->whenLoaded('membershipLevel', function () {
