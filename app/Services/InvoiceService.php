@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\OrderItem;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceService extends BaseService
 {
@@ -22,12 +23,14 @@ class InvoiceService extends BaseService
     protected PointService $pointService,
     protected VoucherService $voucherService,
     protected StockDeductionService $stockDeductionService,
-    protected CustomerService $customerService
+    protected CustomerService $customerService,
+    protected MemberPackageService $memberPackageService
   ) {
     $this->taxService = $taxService;
     $this->pointService = $pointService;
     $this->voucherService = $voucherService;
     $this->stockDeductionService = $stockDeductionService;
+    $this->memberPackageService = $memberPackageService;
   }
 
   protected function model(): Invoice
@@ -117,6 +120,17 @@ class InvoiceService extends BaseService
       $this->pointService->earnPointsOnTransactionCompletion($invoice);
       // Cập nhật cấp độ thành viên
       $this->customerService->updateMembershipLevel($invoice->customer);
+
+      // Xử lý gói hội viên nếu có
+      try {
+        $this->memberPackageService->processMemberPackages($invoice);
+      } catch (\Exception $e) {
+        // Log lỗi nhưng không throw để không ảnh hưởng đến flow chính
+        Log::error('Error processing member packages', [
+          'invoice_id' => $invoice->id,
+          'error' => $e->getMessage()
+        ]);
+      }
     }
     $invoice->refresh();
     /* 
