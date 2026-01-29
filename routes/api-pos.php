@@ -19,18 +19,26 @@ Route::middleware(['auth:api', 'is_karinox_app', 'set_karinox_branch_id'])->pref
   Route::get('/tables', [TableAndRoomController::class, 'list']);
   Route::get('/products', [ProductController::class, 'index']);
   Route::get('/bookings', [BookingController::class, 'index']);
-  Route::get('/orders/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
-  Route::put('/orders/{id}', [OrderController::class, 'update']);
-  Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
-  Route::put('/orders/{id}/remove/customer', [OrderController::class, 'removeCustomer']);
-  Route::put('/orders/{id}/apply/point', [OrderController::class, 'usePoint']);
-  Route::put('/orders/{id}/remove/point', [OrderController::class, 'removePoint']);
-  Route::put('/orders/{id}/remove/voucher', [OrderController::class, 'removeVoucher']);
-  Route::post('/orders/{id}/notify-kitchen', [OrderController::class, 'notifyKitchen']);
-  // Nhập bàn
-  Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
-  // Chia bàn
-  Route::post('/orders/{id}/split', [OrderController::class, 'split']);
+  Route::prefix('orders')->group(function () {
+    Route::get('/by-table/{table_id}', [OrderController::class, 'getOrderByTableId']);
+    
+    Route::put('/{id}', [OrderController::class, 'update']);
+    Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
+
+    Route::post('/{id}/customer', [OrderController::class, 'addCustomer']);
+    Route::delete('/{id}/customer', [OrderController::class, 'removeCustomer']);
+
+    Route::post('/{id}/voucher', [OrderController::class, 'useVoucher']);
+    Route::delete('/{id}/voucher', [OrderController::class, 'removeVoucher']);
+
+    Route::post('/{id}/point', [OrderController::class, 'usePoint']);
+    Route::delete('/{id}/point', [OrderController::class, 'removePoint']);
+
+    // Nhập bàn
+    Route::post('/orders/{id}/extend', [OrderController::class, 'extend']);
+    // Chia bàn
+    Route::post('/orders/{id}/split', [OrderController::class, 'split']);
+  });
 
   Route::get('/customers', [CustomerController::class, 'index']);
   Route::post('/customers', [CustomerController::class, 'store']);

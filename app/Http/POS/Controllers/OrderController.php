@@ -68,6 +68,16 @@ class OrderController extends Controller
     $order = $this->orderService->removePoint($order, $orderItemIds);
     return new OrderResource($order);
   }
+  public function useVoucher(Order $order, Request $request)
+  {
+    $data = $request->validate([
+      'code' => 'required|string',
+    ]);
+
+    $order = $this->voucherService->applyVoucher($order, $data['code']);
+    return new OrderResource($order);
+  }
+
   public function removeVoucher(Order $order)
   {
     $order = $this->orderService->removeVoucher($order);
