@@ -51,15 +51,21 @@ class OrderController extends Controller
     return new OrderResource($order);
   }
 
-  public function usePoint(Order $order, $point)
+  public function usePoint(Order $order, Request $request)
   {
-    $order = $this->orderService->applyPoint($order, $point);
+    // Lấy danh sách order_item_ids từ request, nếu không có thì áp dụng cho tất cả
+    $orderItemIds = $request->input('order_item_ids', null);
+
+    $order = $this->orderService->applyPoint($order, $orderItemIds);
     return new OrderResource($order);
   }
 
-  public function removePoint(Order $order)
+  public function removePoint(Order $order, Request $request)
   {
-    $order = $this->orderService->removePoint($order);
+    // Lấy danh sách order_item_ids từ request, nếu không có thì xóa tất cả
+    $orderItemIds = $request->input('order_item_ids', null);
+
+    $order = $this->orderService->removePoint($order, $orderItemIds);
     return new OrderResource($order);
   }
   public function removeVoucher(Order $order)

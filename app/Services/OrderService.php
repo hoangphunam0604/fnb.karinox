@@ -159,8 +159,8 @@ class OrderService
     // 2️⃣ Lấy số tiền giảm giá từ voucher (nếu có)
     $discountAmount = $order->voucher_discount ?? 0;
 
-    // 3️⃣ Lấy số tiền giảm từ điểm thưởng (nếu có)
-    $rewardDiscount = $order->reward_discount ?? 0;
+    // 3️⃣ Tính tổng số tiền giảm từ điểm thưởng của các items
+    $rewardDiscount = $order->items->sum(fn($item) => $item->reward_discount ?? 0);
 
     // 4️⃣ Tính tổng tiền cần thanh toán
     $totalPrice = max($subtotal - $discountAmount - $rewardDiscount, 0);
@@ -277,25 +277,122 @@ class OrderService
   }
 
   /**
-   * Kiểm tra và áp dụng điểm thưởng
+   * Áp dụng điểm thưởng cho các items được chọn hoặc tất cả items
+   * @param Order $order
+   * @param array|null $orderItemIds - Mảng ID các items muốn áp dụng, null = áp dụng tất cả
+   * @return Order
    */
-  public function applyPoint(Order $order, int $requestedPoints): Order
+  public function applyPoint(Order $order, ?array $orderItemIds = null): Order
   {
-    if (!$order->customer || $requestedPoints < 0) {
-      return $order;
+    if (!$order->customer) {
+      throw new Exception('Đơn hàng chưa có khách hàng');
     }
-    // Kiểm tra và Áp dụng điểm thưởng nếu có
-    $this->pointService->useRewardPoints($order, $requestedPoints ?? 0);
 
-    // 4️⃣ Cập nhật tổng tiền sau khi  trừ điểm thưởng
+    $customer = $order->customer;
+    $availablePoints = $customer->reward_points - $customer->used_reward_points;
+
+    if ($availablePoints <= 0) {
+      throw new Exception('Khách hàng không có đủ điểm thưởng');
+    }
+
+    // Lấy tỷ lệ quy đổi điểm sang tiền
+    $pointValue = $this->systemSettingService->getRewardPointConversionRate();
+    $availableMoney = $availablePoints * $pointValue;
+
+    $order->loadMissing('items');
+
+    // Lọc các items cần áp dụng điểm
+    $targetItems = $orderItemIds
+      ? $order->items->whereIn('id', $orderItemIds)
+      : $order->items;
+
+    // Sắp xếp items theo giá tăng dần để ưu tiên áp dụng cho items rẻ trước
+    $targetItems = $targetItems->sortBy('total_price');
+
+    $totalPointsUsed = 0;
+    $totalMoneyDiscounted = 0;
+
+    foreach ($targetItems as $item) {
+      // Bỏ qua items đã được áp dụng điểm
+      if ($item->reward_points_used > 0) {
+        continue;
+      }
+
+      $itemPrice = $item->total_price;
+
+      // Chỉ áp dụng nếu còn đủ tiền để đổi hết giá item
+      if ($availableMoney >= $itemPrice) {
+        // Tính số điểm cần để đổi item này
+        $pointsNeeded = ceil($itemPrice / $pointValue);
+
+        $item->reward_points_used = $pointsNeeded;
+        $item->reward_discount = $itemPrice;
+        $item->save();
+
+        $totalPointsUsed += $pointsNeeded;
+        $totalMoneyDiscounted += $itemPrice;
+        $availableMoney -= $itemPrice;
+
+        Log::info('Applied reward points to item', [
+          'order_id' => $order->id,
+          'order_item_id' => $item->id,
+          'points_used' => $pointsNeeded,
+          'discount' => $itemPrice
+        ]);
+      }
+    }
+
+    if ($totalPointsUsed > 0) {
+      // Cập nhật tổng điểm đã sử dụng cho order
+      $this->pointService->useRewardPoints($order, $totalPointsUsed);
+    }
+
+    // Cập nhật tổng tiền
     $this->updateTotalPrice($order);
     $order->refresh();
+    $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;
   }
 
-  public function removePoint(Order $order): Order
+  /**
+   * Xóa điểm thưởng đã áp dụng cho các items
+   * @param Order $order
+   * @param array|null $orderItemIds - Mảng ID các items muốn xóa điểm, null = xóa tất cả
+   * @return Order
+   */
+  public function removePoint(Order $order, ?array $orderItemIds = null): Order
   {
-    $this->pointService->restoreTransactionRewardPoints($order);
+    $order->loadMissing('items');
+
+    // Lọc các items cần xóa điểm
+    $targetItems = $orderItemIds
+      ? $order->items->whereIn('id', $orderItemIds)
+      : $order->items;
+
+    $totalPointsRestored = 0;
+
+    foreach ($targetItems as $item) {
+      if ($item->reward_points_used > 0) {
+        $totalPointsRestored += $item->reward_points_used;
+
+        $item->reward_points_used = 0;
+        $item->reward_discount = 0;
+        $item->save();
+
+        Log::info('Removed reward points from item', [
+          'order_id' => $order->id,
+          'order_item_id' => $item->id
+        ]);
+      }
+    }
+
+    if ($totalPointsRestored > 0) {
+      // Hoàn lại điểm cho khách hàng
+      $this->pointService->restoreTransactionRewardPoints($order);
+    }
+
+    // Cập nhật tổng tiền
+    $this->updateTotalPrice($order);
     $order->refresh();
     $order->loadMissing(['items.toppings', 'customer.membershipLevel', 'table']);
     return $order;

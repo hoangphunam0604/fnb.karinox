@@ -26,6 +26,8 @@ class OrderItem extends Model
     'discount_amount',
     'discount_note',
     'discount_for_new_product',
+    'reward_points_used',
+    'reward_discount',
     'quantity',
     'total_price',
     'status',
@@ -49,6 +51,8 @@ class OrderItem extends Model
     'sale_price' => 'float',
     'discount_percent' => 'float',
     'discount_amount' => 'float',
+    'reward_points_used' => 'integer',
+    'reward_discount' => 'float',
     'quantity' => 'integer',
     'total_price' => 'float',
 
